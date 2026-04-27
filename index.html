@@ -10924,7 +10924,18 @@ function buildPrintHTML(req, opts){
   const hasFtrTxt = settings.ftrMode==='txt' && (settings.ftrAddress||settings.ftrPhone||settings.ftrNote);
   const sigOptions2 = settings.signatureOptions || {};
   const hasSig = !!(sigOptions2.showDoctor||sigOptions2.showLabname||sigOptions2.showSigImg);
-  const sigH = hasSig ? 62 : 0;
+  // التفعيل حصري — خيار واحد فقط مفعّل في كل مرة
+  // ارتفاع مُقدَّر لكل خيار (قيم محافظة لضمان عدم تداخل التحاليل مع الختم/التوقيع)
+  let sigH = 0;
+  if(hasSig){
+    if(sigOptions2.showSigImg && sigOptions2.sigImg){
+      sigH = 165; // صورة التوقيع 140px + padding 9+5 + هامش أمان
+    } else if(sigOptions2.showDoctor && (sigOptions2.doctorName || settings.dir)){
+      sigH = 50; // اسم الطبيب 25px + padding + هامش
+    } else if(sigOptions2.showLabname && sigOptions2.labName){
+      sigH = 48; // اسم المختبر 24px + padding + هامش
+    }
+  }
   // زيادة الارتفاعات لتعويض unprintable area في الطابعات
   const footerH = hasFtrImg ? 62 : hasFtrTxt ? 46 : (settings.hdrMode==='text' ? 48 : 0);
   const totalFooterH = footerH + sigH;
@@ -11480,14 +11491,12 @@ function buildPrintHTML(req, opts){
       var PAGE_H_PX = Math.round(A4_H_MM * DPI_RATIO); // ~1122px
       var TOP_MARGIN_PX = Math.round(4 * DPI_RATIO);   // 4mm هامش body
       var BOT_MARGIN_PX = Math.round(4 * DPI_RATIO);
-      // الذيل + التوقيع + هامش أمان كافٍ بحيث آخر تحليل يبقى قبل الذيل بسطر واحد على الأقل
-      var FOOTER_RESERVED = TOTAL_FOOTER_H + 40;
-      var USABLE_H = PAGE_H_PX - TOP_MARGIN_PX - BOT_MARGIN_PX - FOOTER_RESERVED;
+      // ملاحظة: المساحة الآمنة تُحسب داخل runPagination من ارتفاع الذيل الفعلي + 40px هامش أمان
 
       // مقاس probe ثابت بـ px يعادل 210mm A4 = ~793.7px (نطرح هامش 4mm من كل جانب = 30.2px)
       var PROBE_W_PX = Math.round(210 * DPI_RATIO) - Math.round(8 * DPI_RATIO); // عرض المحتوى الفعلي
 
-      function buildPage(chunksForPage, isFirst, isLast){
+      function buildPage(chunksForPage, isFirst, isLast, footerHeightPx){
         var div = document.createElement('div');
         div.className = 'report-page';
         div.style.padding = '4mm 4mm 0 4mm';
@@ -11495,8 +11504,9 @@ function buildPrintHTML(req, opts){
         for(var i=0;i<chunksForPage.length;i++) html += chunksForPage[i];
         // الملاحظات تظهر في آخر صفحة فقط
         if(isLast && NOTES_HTML) html += NOTES_HTML;
-        // spacer يمنع المحتوى من الاختباء خلف الـ footer الثابت
-        html += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+37)+'px"></div>';
+        // spacer يمنع المحتوى من الاختباء خلف الـ footer/الختم الثابت
+        var fh = (typeof footerHeightPx==='number' && footerHeightPx>0) ? footerHeightPx : TOTAL_FOOTER_H;
+        html += '<div class="page-footer-spacer" style="height:'+(fh+37)+'px"></div>';
         div.innerHTML = html;
         return div;
       }
@@ -11516,13 +11526,21 @@ function buildPrintHTML(req, opts){
         if(!container) return;
         container.innerHTML = '';
 
+        // ── قياس الارتفاع الفعلي للـ footer (الذيل + الختم/التوقيع) من الـ DOM ──
+        // نستخدم أكبر القيمتين: المُقدَّرة من الإعدادات، والفعلية من الـ DOM
+        var footerEl = document.getElementById('print-footer');
+        var actualFooterH = footerEl ? (footerEl.offsetHeight || 0) : 0;
+        var effectiveFooterH = Math.max(TOTAL_FOOTER_H, actualFooterH);
+        // المساحة الآمنة = الصفحة - الهامش - الذيل الفعلي - 40px (سطر واحد على الأقل قبل الذيل/الختم)
+        var SAFE_USABLE_H = PAGE_H_PX - TOP_MARGIN_PX - BOT_MARGIN_PX - effectiveFooterH - 40;
+
         if(CAT_CHUNKS.length === 0){
           // لا توجد تحاليل — صفحة واحدة بالـ header فقط
           var p = document.createElement('div');
           p.className = 'report-page';
           p.style.padding = '4mm 4mm 0 4mm';
           p.innerHTML = HDR_HTML + COL_HDR_HTML +
-            '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+37)+'px"></div>';
+            '<div class="page-footer-spacer" style="height:'+(effectiveFooterH+37)+'px"></div>';
           container.appendChild(p);
           return;
         }
@@ -11557,8 +11575,8 @@ function buildPrintHTML(req, opts){
             // أول chunk في هذه الصفحة — يدخل دائماً (حتى لو كبير، لتجنب صفحة فارغة)
             currentPageChunks.push(chunk);
             currentH += chunkH + extraH;
-          } else if(currentH + chunkH + extraH <= USABLE_H){
-            // يتسع في الصفحة الحالية مع مراعاة الذيل والتوقيع
+          } else if(currentH + chunkH + extraH <= SAFE_USABLE_H){
+            // يتسع في الصفحة الحالية مع مراعاة الذيل والختم/التوقيع
             currentPageChunks.push(chunk);
             currentH += chunkH + extraH;
           } else {
@@ -11572,7 +11590,7 @@ function buildPrintHTML(req, opts){
 
         // ── إنشاء صفحات DOM ──
         for(var k=0; k<pages.length; k++){
-          var pg = buildPage(pages[k], k === 0, k === pages.length - 1);
+          var pg = buildPage(pages[k], k === 0, k === pages.length - 1, effectiveFooterH);
           container.appendChild(pg);
         }
       }
@@ -14440,7 +14458,20 @@ function clearFooterImg(){settings.footerImg='';save('settings',settings);docume
 function toggleSignOption(type){
   const togMap={doctor:'tog-show-doctor',labname:'tog-show-labname',sigimg:'tog-show-sig-img'};
   const el=document.getElementById(togMap[type]);
-  if(el) el.classList.toggle('on');
+  if(!el) return;
+  const wasOn = el.classList.contains('on');
+  // التفعيل حصري: عند تفعيل أحدهم تُطفأ الآخران تلقائياً
+  if(!wasOn){
+    // كان مطفأً → فعّله وأطفئ الآخرَين
+    Object.keys(togMap).forEach(function(k){
+      const t = document.getElementById(togMap[k]);
+      if(t) t.classList.remove('on');
+    });
+    el.classList.add('on');
+  } else {
+    // كان مفعّلاً → أطفئه (يسمح بإطفاء الكل)
+    el.classList.remove('on');
+  }
   updateSigPreview();
 }
 function loadSigImg(input){
@@ -14466,9 +14497,17 @@ function clearSigImg(){
 }
 function saveSignSettings(){
   if(!settings.signatureOptions) settings.signatureOptions={};
-  settings.signatureOptions.showDoctor = document.getElementById('tog-show-doctor')?.classList.contains('on')||false;
-  settings.signatureOptions.showLabname = document.getElementById('tog-show-labname')?.classList.contains('on')||false;
-  settings.signatureOptions.showSigImg = document.getElementById('tog-show-sig-img')?.classList.contains('on')||false;
+  const sD = document.getElementById('tog-show-doctor')?.classList.contains('on')||false;
+  const sL = document.getElementById('tog-show-labname')?.classList.contains('on')||false;
+  const sI = document.getElementById('tog-show-sig-img')?.classList.contains('on')||false;
+  // التفعيل حصري — اختر واحداً فقط بالأولوية إن وُجد أكثر من واحد
+  let dOn=false, lOn=false, iOn=false;
+  if(sD) dOn=true;
+  else if(sL) lOn=true;
+  else if(sI) iOn=true;
+  settings.signatureOptions.showDoctor = dOn;
+  settings.signatureOptions.showLabname = lOn;
+  settings.signatureOptions.showSigImg = iOn;
   settings.signatureOptions.doctorName = (document.getElementById('sig-doctor-name')?.value||'').trim();
   settings.signatureOptions.labName = (document.getElementById('sig-lab-name')?.value||'').trim();
   save('settings',settings);
@@ -14498,9 +14537,14 @@ function loadSignSettingsUI(){
   const togD=document.getElementById('tog-show-doctor');
   const togL=document.getElementById('tog-show-labname');
   const togS=document.getElementById('tog-show-sig-img');
-  if(togD&&opts.showDoctor) togD.classList.add('on'); else if(togD) togD.classList.remove('on');
-  if(togL&&opts.showLabname) togL.classList.add('on'); else if(togL) togL.classList.remove('on');
-  if(togS&&opts.showSigImg) togS.classList.add('on'); else if(togS) togS.classList.remove('on');
+  // التفعيل حصري: إن كان أكثر من واحد مفعّلاً (بيانات قديمة)، اختر واحداً فقط بالأولوية: doctor → labname → sigimg
+  let activeKey = null;
+  if(opts.showDoctor) activeKey = 'doctor';
+  else if(opts.showLabname) activeKey = 'labname';
+  else if(opts.showSigImg) activeKey = 'sigimg';
+  if(togD){ if(activeKey==='doctor') togD.classList.add('on'); else togD.classList.remove('on'); }
+  if(togL){ if(activeKey==='labname') togL.classList.add('on'); else togL.classList.remove('on'); }
+  if(togS){ if(activeKey==='sigimg') togS.classList.add('on'); else togS.classList.remove('on'); }
   const dn=document.getElementById('sig-doctor-name'); if(dn) dn.value=opts.doctorName||'';
   const ln=document.getElementById('sig-lab-name'); if(ln) ln.value=opts.labName||'';
   if(opts.sigImg){
