@@ -11531,52 +11531,73 @@ function buildPrintHTML(req, opts){
         if(!container) return;
         container.innerHTML = '';
 
-        // ── قياس الارتفاع الفعلي للـ footer (الذيل + الختم/التوقيع) من الـ DOM ──
+        // ── قياس الارتفاع الفعلي للـ footer ──
         var footerEl = document.getElementById('print-footer');
         var actualFooterH = footerEl ? (footerEl.offsetHeight || 0) : 0;
         var effectiveFooterH = actualFooterH > 0 ? actualFooterH : TOTAL_FOOTER_H;
-        // المساحة الآمنة = الصفحة - الهامش العلوي/السفلي - الذيل الفعلي - 8px هامش بسيط
-        var SAFE_USABLE_H = PAGE_H_PX - TOP_MARGIN_PX - BOT_MARGIN_PX - effectiveFooterH - 8;
+        // الـ footer مزاح bottom:6mm فوق الحافة، فالمحجوز = ارتفاع الـ footer + 6mm + هامش 8px
+        var BOTTOM_OFFSET = Math.round(6 * DPI_RATIO); // 6mm = ~22px
+        // المساحة المتاحة لمحتوى التحاليل = الصفحة - الهامش العلوي - الذيل - الإزاحة - هامش بسيط
+        var SAFE_USABLE_H = PAGE_H_PX - TOP_MARGIN_PX - effectiveFooterH - BOTTOM_OFFSET - 8;
 
         if(CAT_CHUNKS.length === 0){
-          // لا توجد تحاليل — صفحة واحدة بالـ header فقط
           var p = document.createElement('div');
           p.className = 'report-page';
           p.style.padding = '4mm 4mm 0 4mm';
           p.innerHTML = HDR_HTML + COL_HDR_HTML +
-            '<div class="page-footer-spacer" style="height:'+(effectiveFooterH+8)+'px"></div>';
+            '<div class="page-footer-spacer" style="height:'+(effectiveFooterH+BOTTOM_OFFSET)+'px"></div>';
           container.appendChild(p);
           return;
         }
 
-        // ── إنشاء صفحة قياس مؤقتة بنفس عرض الصفحة المطبوعة لقياس الارتفاعات بدقة ──
-        var measurePage = document.createElement('div');
-        measurePage.style.cssText = 'position:absolute;top:-99999px;left:0;width:'+PAGE_W_PX+'px;padding:4mm 4mm 0 4mm;box-sizing:border-box;visibility:hidden;background:#fff;';
-        document.body.appendChild(measurePage);
-
-        // قياس header (hdr + ptBox + colHdr) داخل صفحة بنفس العرض الفعلي
-        measurePage.innerHTML = HDR_HTML + COL_HDR_HTML;
-        var hdrMeasured = measurePage.offsetHeight || 220;
-
-        // قياس كل chunk داخل نفس الـ container (محاكاة الـ rendering الفعلي)
-        var chunkHeights = [];
+        // ── طريقة موثوقة: ضع كل المحتوى في صفحة اختبار وقِس مواقع النهاية لكل chunk ──
+        // هذا يضمن دقة كاملة لأن القياس يحدث بنفس عرض وأسلوب الـ rendering الفعلي
+        var testPage = document.createElement('div');
+        testPage.style.cssText = 'position:absolute;top:-99999px;left:0;width:'+PAGE_W_PX+'px;padding:4mm 4mm 0 4mm;box-sizing:border-box;visibility:hidden;background:#fff;font-family:'+(document.body.style.fontFamily||'Arial,sans-serif')+';';
+        // نضع marker قبل وبعد كل chunk لقياس الـ offsetTop
+        var html = HDR_HTML + COL_HDR_HTML;
+        html += '<span id="__mk_start" style="display:block;height:0;width:0"></span>';
         for(var i=0;i<CAT_CHUNKS.length;i++){
-          measurePage.innerHTML = HDR_HTML + COL_HDR_HTML + CAT_CHUNKS[i];
-          var totalH = measurePage.offsetHeight || (hdrMeasured + 60);
-          chunkHeights.push(Math.max(totalH - hdrMeasured, 30));
+          html += CAT_CHUNKS[i];
+          html += '<span id="__mk_'+i+'" style="display:block;height:0;width:0"></span>';
+        }
+        if(NOTES_HTML){
+          html += NOTES_HTML;
+          html += '<span id="__mk_notes" style="display:block;height:0;width:0"></span>';
+        }
+        testPage.innerHTML = html;
+        document.body.appendChild(testPage);
+
+        var startTop = (document.getElementById('__mk_start')||{}).offsetTop || 0;
+        // hdrMeasured = ارتفاع رأس الصفحة الفعلي
+        var hdrMeasured = startTop;
+
+        // مواقع نهاية كل chunk (offsetTop للـ marker بعد الـ chunk)
+        var chunkEnds = [];
+        for(var i=0;i<CAT_CHUNKS.length;i++){
+          var mk = document.getElementById('__mk_'+i);
+          chunkEnds.push(mk ? mk.offsetTop : (hdrMeasured + (i+1)*60));
         }
 
-        // قياس الملاحظات إن وجدت
+        // ارتفاع كل chunk مستقلاً
+        var chunkHeights = [];
+        var prevEnd = startTop;
+        for(var i=0;i<CAT_CHUNKS.length;i++){
+          chunkHeights.push(Math.max(chunkEnds[i] - prevEnd, 30));
+          prevEnd = chunkEnds[i];
+        }
+
+        // ارتفاع الـ notes
         var notesH = 0;
         if(NOTES_HTML){
-          measurePage.innerHTML = HDR_HTML + COL_HDR_HTML + NOTES_HTML;
-          notesH = Math.max((measurePage.offsetHeight || hdrMeasured) - hdrMeasured, 0);
+          var notesMk = document.getElementById('__mk_notes');
+          if(notesMk) notesH = Math.max(notesMk.offsetTop - prevEnd, 0);
         }
 
-        document.body.removeChild(measurePage);
+        document.body.removeChild(testPage);
 
         // ── توزيع الـ chunks على صفحات ──
-        var pages = []; // كل صفحة = مصفوفة chunks
+        var pages = [];
         var currentPageChunks = [];
         var currentH = hdrMeasured;
 
@@ -11587,15 +11608,12 @@ function buildPrintHTML(req, opts){
           var extraH = isLastChunk ? notesH : 0;
 
           if(currentPageChunks.length === 0){
-            // أول chunk في هذه الصفحة — يدخل دائماً
             currentPageChunks.push(chunk);
             currentH += chunkH + extraH;
           } else if(currentH + chunkH + extraH <= SAFE_USABLE_H){
-            // يتسع في الصفحة الحالية
             currentPageChunks.push(chunk);
             currentH += chunkH + extraH;
           } else {
-            // لا يتسع — أنهِ الصفحة الحالية وانقل المجموعة بكاملها للصفحة التالية
             pages.push(currentPageChunks);
             currentPageChunks = [chunk];
             currentH = hdrMeasured + chunkH + extraH;
