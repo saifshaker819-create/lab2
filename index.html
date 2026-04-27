@@ -10924,18 +10924,9 @@ function buildPrintHTML(req, opts){
   const hasFtrTxt = settings.ftrMode==='txt' && (settings.ftrAddress||settings.ftrPhone||settings.ftrNote);
   const sigOptions2 = settings.signatureOptions || {};
   const hasSig = !!(sigOptions2.showDoctor||sigOptions2.showLabname||sigOptions2.showSigImg);
-  // التفعيل حصري — خيار واحد فقط مفعّل في كل مرة
-  // ارتفاع تقديري لكل خيار (يُصحَّح لاحقاً بقياس فعلي من الـ DOM)
-  let sigH = 0;
-  if(hasSig){
-    if(sigOptions2.showSigImg && sigOptions2.sigImg){
-      sigH = 150; // صورة التوقيع 140px + padding خفيف
-    } else if(sigOptions2.showDoctor && (sigOptions2.doctorName || settings.dir)){
-      sigH = 40; // اسم الطبيب 25px + padding
-    } else if(sigOptions2.showLabname && sigOptions2.labName){
-      sigH = 38; // اسم المختبر 24px + padding
-    }
-  }
+  // التوقيع لم يعد يحجز شريطاً أفقياً كاملاً — يطفو على يمين الـ footer
+  // ويُسمح للتحاليل بالانطباع في يساره ضمن نفس المساحة
+  const sigH = 0;
   // زيادة الارتفاعات لتعويض unprintable area في الطابعات
   const footerH = hasFtrImg ? 62 : hasFtrTxt ? 46 : (settings.hdrMode==='text' ? 48 : 0);
   const totalFooterH = footerH + sigH;
@@ -11392,8 +11383,10 @@ function buildPrintHTML(req, opts){
     sigParts.push(`<img src="${sigOptions.sigImg}" style="height:140px;width:140px;display:block;margin:0 0 4px 0;object-fit:contain">`);
   }
   if(sigParts.length){
-    // التوقيع في نهاية الـ footer الثابت — لن يتداخل مع التحاليل أبداً
-    sigBlock = `<div style="text-align:right;direction:rtl;padding:5px 14px 4px;background:#fff;line-height:normal">${sigParts.join('')}</div>`;
+    // التوقيع موضوع بـ position:absolute على يمين الـ footer
+    // لا يحجز ارتفاعاً إضافياً ولا شريطاً أفقياً كاملاً
+    // يطفو فوق الذيل من جهة اليمين، ويُسمح للتحاليل أن تنطبع بجواره من جهة اليسار
+    sigBlock = `<div style="position:absolute;right:0;bottom:100%;text-align:right;direction:rtl;padding:5px 14px 4px;background:transparent;line-height:normal;z-index:10">${sigParts.join('')}</div>`;
   }
 
   let ftrInner='';
@@ -11484,22 +11477,21 @@ function buildPrintHTML(req, opts){
       var NOTES_HTML = ${JSON.stringify(notesHtml)};
       var TOTAL_FOOTER_H = ${totalFooterHVal};
 
-      // ── ارتفاع وعرض A4 بـ px عند 96dpi ──
-      // 297mm * (96/25.4) = ~1122.5px ارتفاع
-      // 210mm * (96/25.4) = ~793.7px عرض
+      // ── ارتفاع A4 بـ px عند 96dpi ──
+      // 297mm * (96/25.4) = ~1122.5px
       var A4_H_MM = 297;
-      var A4_W_MM = 210;
       var DPI_RATIO = 96 / 25.4; // px per mm
       var PAGE_H_PX = Math.round(A4_H_MM * DPI_RATIO); // ~1122px
-      var PAGE_W_PX = Math.round(A4_W_MM * DPI_RATIO); // ~794px
       var TOP_MARGIN_PX = Math.round(4 * DPI_RATIO);   // 4mm هامش body
       var BOT_MARGIN_PX = Math.round(4 * DPI_RATIO);
-      // ملاحظة: المساحة الآمنة تُحسب داخل runPagination من ارتفاع الذيل الفعلي + هامش بسيط
+      // الذيل + التوقيع + هامش أمان كافٍ بحيث آخر تحليل يبقى قبل الذيل بسطر واحد على الأقل
+      var FOOTER_RESERVED = TOTAL_FOOTER_H + 40;
+      var USABLE_H = PAGE_H_PX - TOP_MARGIN_PX - BOT_MARGIN_PX - FOOTER_RESERVED;
 
-      // مقاس probe للقياس البديل (غير مستخدم — نستخدم PAGE_W_PX مباشرة)
-      var PROBE_W_PX = PAGE_W_PX - Math.round(8 * DPI_RATIO);
+      // مقاس probe ثابت بـ px يعادل 210mm A4 = ~793.7px (نطرح هامش 4mm من كل جانب = 30.2px)
+      var PROBE_W_PX = Math.round(210 * DPI_RATIO) - Math.round(8 * DPI_RATIO); // عرض المحتوى الفعلي
 
-      function buildPage(chunksForPage, isFirst, isLast, footerHeightPx){
+      function buildPage(chunksForPage, isFirst, isLast){
         var div = document.createElement('div');
         div.className = 'report-page';
         div.style.padding = '4mm 4mm 0 4mm';
@@ -11507,18 +11499,15 @@ function buildPrintHTML(req, opts){
         for(var i=0;i<chunksForPage.length;i++) html += chunksForPage[i];
         // الملاحظات تظهر في آخر صفحة فقط
         if(isLast && NOTES_HTML) html += NOTES_HTML;
-        // spacer يمنع المحتوى من الاختباء خلف الـ footer/الختم الثابت — هامش 8px فقط
-        var fh = (typeof footerHeightPx==='number' && footerHeightPx>0) ? footerHeightPx : TOTAL_FOOTER_H;
-        html += '<div class="page-footer-spacer" style="height:'+(fh+8)+'px"></div>';
+        // spacer يمنع المحتوى من الاختباء خلف الـ footer الثابت
+        html += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+37)+'px"></div>';
         div.innerHTML = html;
         return div;
       }
 
       function measureHtml(html){
-        // قياس داخل عنصر بنفس عرض المحتوى الفعلي للصفحة المطبوعة
         var probe = document.createElement('div');
-        // استخدم العرض الفعلي لـ body المطبوع (210mm - 8mm padding) ولكن نسمح للمتصفح بتحديده
-        probe.style.cssText = 'position:absolute;top:-9999px;left:-9999px;width:'+PROBE_W_PX+'px;visibility:hidden;box-sizing:content-box;font-family:'+(document.body.style.fontFamily||'Arial,sans-serif')+';';
+        probe.style.cssText = 'position:absolute;top:-9999px;left:-9999px;width:'+PROBE_W_PX+'px;visibility:hidden;font-family:'+document.body.style.fontFamily+';';
         probe.innerHTML = html;
         document.body.appendChild(probe);
         var h = probe.offsetHeight || 0;
@@ -11531,73 +11520,33 @@ function buildPrintHTML(req, opts){
         if(!container) return;
         container.innerHTML = '';
 
-        // ── قياس الارتفاع الفعلي للـ footer ──
-        var footerEl = document.getElementById('print-footer');
-        var actualFooterH = footerEl ? (footerEl.offsetHeight || 0) : 0;
-        var effectiveFooterH = actualFooterH > 0 ? actualFooterH : TOTAL_FOOTER_H;
-        // الـ footer مزاح bottom:6mm فوق الحافة، فالمحجوز = ارتفاع الـ footer + 6mm + هامش 8px
-        var BOTTOM_OFFSET = Math.round(6 * DPI_RATIO); // 6mm = ~22px
-        // المساحة المتاحة لمحتوى التحاليل = الصفحة - الهامش العلوي - الذيل - الإزاحة - هامش بسيط
-        var SAFE_USABLE_H = PAGE_H_PX - TOP_MARGIN_PX - effectiveFooterH - BOTTOM_OFFSET - 8;
-
         if(CAT_CHUNKS.length === 0){
+          // لا توجد تحاليل — صفحة واحدة بالـ header فقط
           var p = document.createElement('div');
           p.className = 'report-page';
           p.style.padding = '4mm 4mm 0 4mm';
           p.innerHTML = HDR_HTML + COL_HDR_HTML +
-            '<div class="page-footer-spacer" style="height:'+(effectiveFooterH+BOTTOM_OFFSET)+'px"></div>';
+            '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+37)+'px"></div>';
           container.appendChild(p);
           return;
         }
 
-        // ── طريقة موثوقة: ضع كل المحتوى في صفحة اختبار وقِس مواقع النهاية لكل chunk ──
-        // هذا يضمن دقة كاملة لأن القياس يحدث بنفس عرض وأسلوب الـ rendering الفعلي
-        var testPage = document.createElement('div');
-        testPage.style.cssText = 'position:absolute;top:-99999px;left:0;width:'+PAGE_W_PX+'px;padding:4mm 4mm 0 4mm;box-sizing:border-box;visibility:hidden;background:#fff;font-family:'+(document.body.style.fontFamily||'Arial,sans-serif')+';';
-        // نضع marker قبل وبعد كل chunk لقياس الـ offsetTop
-        var html = HDR_HTML + COL_HDR_HTML;
-        html += '<span id="__mk_start" style="display:block;height:0;width:0"></span>';
-        for(var i=0;i<CAT_CHUNKS.length;i++){
-          html += CAT_CHUNKS[i];
-          html += '<span id="__mk_'+i+'" style="display:block;height:0;width:0"></span>';
-        }
-        if(NOTES_HTML){
-          html += NOTES_HTML;
-          html += '<span id="__mk_notes" style="display:block;height:0;width:0"></span>';
-        }
-        testPage.innerHTML = html;
-        document.body.appendChild(testPage);
+        // ── قياس ارتفاع الـ header (hdr + ptBox + colHdr) ──
+        var hdrMeasured = measureHtml(HDR_HTML + COL_HDR_HTML);
+        if(!hdrMeasured) hdrMeasured = 220; // fallback آمن
 
-        var startTop = (document.getElementById('__mk_start')||{}).offsetTop || 0;
-        // hdrMeasured = ارتفاع رأس الصفحة الفعلي
-        var hdrMeasured = startTop;
-
-        // مواقع نهاية كل chunk (offsetTop للـ marker بعد الـ chunk)
-        var chunkEnds = [];
-        for(var i=0;i<CAT_CHUNKS.length;i++){
-          var mk = document.getElementById('__mk_'+i);
-          chunkEnds.push(mk ? mk.offsetTop : (hdrMeasured + (i+1)*60));
-        }
-
-        // ارتفاع كل chunk مستقلاً
+        // ── قياس ارتفاع كل chunk مرة واحدة فقط ──
         var chunkHeights = [];
-        var prevEnd = startTop;
         for(var i=0;i<CAT_CHUNKS.length;i++){
-          chunkHeights.push(Math.max(chunkEnds[i] - prevEnd, 30));
-          prevEnd = chunkEnds[i];
+          var h = measureHtml(CAT_CHUNKS[i]);
+          chunkHeights.push(h || 60);
         }
 
-        // ارتفاع الـ notes
-        var notesH = 0;
-        if(NOTES_HTML){
-          var notesMk = document.getElementById('__mk_notes');
-          if(notesMk) notesH = Math.max(notesMk.offsetTop - prevEnd, 0);
-        }
-
-        document.body.removeChild(testPage);
+        // ── قياس ارتفاع الملاحظات إن وجدت ──
+        var notesH = NOTES_HTML ? measureHtml(NOTES_HTML) : 0;
 
         // ── توزيع الـ chunks على صفحات ──
-        var pages = [];
+        var pages = []; // كل صفحة = مصفوفة chunks
         var currentPageChunks = [];
         var currentH = hdrMeasured;
 
@@ -11605,15 +11554,19 @@ function buildPrintHTML(req, opts){
           var chunk = CAT_CHUNKS[j];
           var chunkH = chunkHeights[j];
           var isLastChunk = (j === CAT_CHUNKS.length - 1);
+          // إذا هذا آخر chunk، أضف ارتفاع الملاحظات إلى الحساب
           var extraH = isLastChunk ? notesH : 0;
 
           if(currentPageChunks.length === 0){
+            // أول chunk في هذه الصفحة — يدخل دائماً (حتى لو كبير، لتجنب صفحة فارغة)
             currentPageChunks.push(chunk);
             currentH += chunkH + extraH;
-          } else if(currentH + chunkH + extraH <= SAFE_USABLE_H){
+          } else if(currentH + chunkH + extraH <= USABLE_H){
+            // يتسع في الصفحة الحالية مع مراعاة الذيل والتوقيع
             currentPageChunks.push(chunk);
             currentH += chunkH + extraH;
           } else {
+            // لا يتسع — أنهِ الصفحة الحالية وانقل المجموعة بكاملها للصفحة التالية
             pages.push(currentPageChunks);
             currentPageChunks = [chunk];
             currentH = hdrMeasured + chunkH + extraH;
@@ -11623,7 +11576,7 @@ function buildPrintHTML(req, opts){
 
         // ── إنشاء صفحات DOM ──
         for(var k=0; k<pages.length; k++){
-          var pg = buildPage(pages[k], k === 0, k === pages.length - 1, effectiveFooterH);
+          var pg = buildPage(pages[k], k === 0, k === pages.length - 1);
           container.appendChild(pg);
         }
       }
@@ -11639,48 +11592,22 @@ function buildPrintHTML(req, opts){
       }
 
       function init(){
-        // انتظار تحميل صور الـ footer (الختم/التوقيع/صورة الذيل) قبل القياس
-        // هذا ضروري لأن actualFooterH يعتمد على الصور المُحمَّلة
-        var footerEl = document.getElementById('print-footer');
-        var imgs = footerEl ? footerEl.querySelectorAll('img') : [];
-        var pending = 0;
-        var done = false;
-        function go(){
-          if(done) return;
-          done = true;
-          try{ runPagination(); }catch(e){
-            // fallback: صفحة واحدة بكامل المحتوى
-            var container = document.getElementById('all-pages-container');
-            if(container){
-              var fp = document.createElement('div');
-              fp.className = 'report-page';
-              fp.style.padding = '4mm 4mm 0 4mm';
-              var fhtml = HDR_HTML + COL_HDR_HTML;
-              for(var ii=0;ii<CAT_CHUNKS.length;ii++) fhtml += CAT_CHUNKS[ii];
-              if(NOTES_HTML) fhtml += NOTES_HTML;
-              fhtml += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+10)+'px"></div>';
-              fp.innerHTML = fhtml;
-              container.appendChild(fp);
-            }
+        try{ runPagination(); }catch(e){
+          // في حالة فشل pagination — fallback: صفحة واحدة بكامل المحتوى
+          var container = document.getElementById('all-pages-container');
+          if(container){
+            var fp = document.createElement('div');
+            fp.className = 'report-page';
+            fp.style.padding = '4mm 4mm 0 4mm';
+            var fhtml = HDR_HTML + COL_HDR_HTML;
+            for(var ii=0;ii<CAT_CHUNKS.length;ii++) fhtml += CAT_CHUNKS[ii];
+            if(NOTES_HTML) fhtml += NOTES_HTML;
+            fhtml += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+37)+'px"></div>';
+            fp.innerHTML = fhtml;
+            container.appendChild(fp);
           }
-          tryGenQR();
         }
-        // إن لا توجد صور، شغّل فوراً
-        if(!imgs || imgs.length===0){ go(); return; }
-        // إن وُجدت صور، انتظر تحميلها (مع timeout 800ms احتياطي)
-        for(var i=0;i<imgs.length;i++){
-          var im = imgs[i];
-          if(im.complete && im.naturalHeight > 0) continue;
-          pending++;
-          (function(image){
-            function onDone(){ pending--; if(pending<=0) go(); }
-            image.addEventListener('load', onDone);
-            image.addEventListener('error', onDone);
-          })(im);
-        }
-        if(pending===0){ go(); return; }
-        // timeout أمان: ابدأ بعد 800ms حتى لو لم تكتمل الصور
-        setTimeout(function(){ if(!done) go(); }, 800);
+        tryGenQR();
       }
 
       if(document.readyState==='loading'){
@@ -12185,13 +12112,13 @@ function doPrint(reqId){
       try{
         iframe.contentWindow.focus();
         iframe.contentWindow.addEventListener('afterprint', function(){ afterRegularPrint(); });
-        // تأخير 900ms لضمان تحميل صور الذيل/الختم واكتمال pagination داخل iframe
-        setTimeout(function(){ try{ iframe.contentWindow.print(); }catch(e){} }, 900);
+        // تأخير صغير (50ms) لضمان اكتمال pagination داخل iframe قبل الطباعة
+        setTimeout(function(){ try{ iframe.contentWindow.print(); }catch(e){} }, 50);
       }catch(e){
         const w=window.open('','_blank','width=900,height=700');
         w.document.open(); w.document.write(content); w.document.close();
         w.addEventListener('afterprint', function(){ afterRegularPrint(); });
-        setTimeout(()=>{try{w.focus();w.print();}catch(e2){}},900);
+        setTimeout(()=>{try{w.focus();w.print();}catch(e2){}},100);
       }
     };
   } else {
@@ -14517,20 +14444,7 @@ function clearFooterImg(){settings.footerImg='';save('settings',settings);docume
 function toggleSignOption(type){
   const togMap={doctor:'tog-show-doctor',labname:'tog-show-labname',sigimg:'tog-show-sig-img'};
   const el=document.getElementById(togMap[type]);
-  if(!el) return;
-  const wasOn = el.classList.contains('on');
-  // التفعيل حصري: عند تفعيل أحدهم تُطفأ الآخران تلقائياً
-  if(!wasOn){
-    // كان مطفأً → فعّله وأطفئ الآخرَين
-    Object.keys(togMap).forEach(function(k){
-      const t = document.getElementById(togMap[k]);
-      if(t) t.classList.remove('on');
-    });
-    el.classList.add('on');
-  } else {
-    // كان مفعّلاً → أطفئه (يسمح بإطفاء الكل)
-    el.classList.remove('on');
-  }
+  if(el) el.classList.toggle('on');
   updateSigPreview();
 }
 function loadSigImg(input){
@@ -14556,17 +14470,9 @@ function clearSigImg(){
 }
 function saveSignSettings(){
   if(!settings.signatureOptions) settings.signatureOptions={};
-  const sD = document.getElementById('tog-show-doctor')?.classList.contains('on')||false;
-  const sL = document.getElementById('tog-show-labname')?.classList.contains('on')||false;
-  const sI = document.getElementById('tog-show-sig-img')?.classList.contains('on')||false;
-  // التفعيل حصري — اختر واحداً فقط بالأولوية إن وُجد أكثر من واحد
-  let dOn=false, lOn=false, iOn=false;
-  if(sD) dOn=true;
-  else if(sL) lOn=true;
-  else if(sI) iOn=true;
-  settings.signatureOptions.showDoctor = dOn;
-  settings.signatureOptions.showLabname = lOn;
-  settings.signatureOptions.showSigImg = iOn;
+  settings.signatureOptions.showDoctor = document.getElementById('tog-show-doctor')?.classList.contains('on')||false;
+  settings.signatureOptions.showLabname = document.getElementById('tog-show-labname')?.classList.contains('on')||false;
+  settings.signatureOptions.showSigImg = document.getElementById('tog-show-sig-img')?.classList.contains('on')||false;
   settings.signatureOptions.doctorName = (document.getElementById('sig-doctor-name')?.value||'').trim();
   settings.signatureOptions.labName = (document.getElementById('sig-lab-name')?.value||'').trim();
   save('settings',settings);
@@ -14596,14 +14502,9 @@ function loadSignSettingsUI(){
   const togD=document.getElementById('tog-show-doctor');
   const togL=document.getElementById('tog-show-labname');
   const togS=document.getElementById('tog-show-sig-img');
-  // التفعيل حصري: إن كان أكثر من واحد مفعّلاً (بيانات قديمة)، اختر واحداً فقط بالأولوية: doctor → labname → sigimg
-  let activeKey = null;
-  if(opts.showDoctor) activeKey = 'doctor';
-  else if(opts.showLabname) activeKey = 'labname';
-  else if(opts.showSigImg) activeKey = 'sigimg';
-  if(togD){ if(activeKey==='doctor') togD.classList.add('on'); else togD.classList.remove('on'); }
-  if(togL){ if(activeKey==='labname') togL.classList.add('on'); else togL.classList.remove('on'); }
-  if(togS){ if(activeKey==='sigimg') togS.classList.add('on'); else togS.classList.remove('on'); }
+  if(togD&&opts.showDoctor) togD.classList.add('on'); else if(togD) togD.classList.remove('on');
+  if(togL&&opts.showLabname) togL.classList.add('on'); else if(togL) togL.classList.remove('on');
+  if(togS&&opts.showSigImg) togS.classList.add('on'); else if(togS) togS.classList.remove('on');
   const dn=document.getElementById('sig-doctor-name'); if(dn) dn.value=opts.doctorName||'';
   const ln=document.getElementById('sig-lab-name'); if(ln) ln.value=opts.labName||'';
   if(opts.sigImg){
