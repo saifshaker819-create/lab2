@@ -10925,15 +10925,15 @@ function buildPrintHTML(req, opts){
   const sigOptions2 = settings.signatureOptions || {};
   const hasSig = !!(sigOptions2.showDoctor||sigOptions2.showLabname||sigOptions2.showSigImg);
   // التفعيل حصري — خيار واحد فقط مفعّل في كل مرة
-  // ارتفاع مُقدَّر لكل خيار (قيم محافظة لضمان عدم تداخل التحاليل مع الختم/التوقيع)
+  // ارتفاع تقديري لكل خيار (يُصحَّح لاحقاً بقياس فعلي من الـ DOM)
   let sigH = 0;
   if(hasSig){
     if(sigOptions2.showSigImg && sigOptions2.sigImg){
-      sigH = 165; // صورة التوقيع 140px + padding 9+5 + هامش أمان
+      sigH = 150; // صورة التوقيع 140px + padding خفيف
     } else if(sigOptions2.showDoctor && (sigOptions2.doctorName || settings.dir)){
-      sigH = 50; // اسم الطبيب 25px + padding + هامش
+      sigH = 40; // اسم الطبيب 25px + padding
     } else if(sigOptions2.showLabname && sigOptions2.labName){
-      sigH = 48; // اسم المختبر 24px + padding + هامش
+      sigH = 38; // اسم المختبر 24px + padding
     }
   }
   // زيادة الارتفاعات لتعويض unprintable area في الطابعات
@@ -11504,9 +11504,9 @@ function buildPrintHTML(req, opts){
         for(var i=0;i<chunksForPage.length;i++) html += chunksForPage[i];
         // الملاحظات تظهر في آخر صفحة فقط
         if(isLast && NOTES_HTML) html += NOTES_HTML;
-        // spacer يمنع المحتوى من الاختباء خلف الـ footer/الختم الثابت
+        // spacer يمنع المحتوى من الاختباء خلف الـ footer/الختم الثابت — هامش 8px فقط
         var fh = (typeof footerHeightPx==='number' && footerHeightPx>0) ? footerHeightPx : TOTAL_FOOTER_H;
-        html += '<div class="page-footer-spacer" style="height:'+(fh+37)+'px"></div>';
+        html += '<div class="page-footer-spacer" style="height:'+(fh+8)+'px"></div>';
         div.innerHTML = html;
         return div;
       }
@@ -11527,12 +11527,13 @@ function buildPrintHTML(req, opts){
         container.innerHTML = '';
 
         // ── قياس الارتفاع الفعلي للـ footer (الذيل + الختم/التوقيع) من الـ DOM ──
-        // نستخدم أكبر القيمتين: المُقدَّرة من الإعدادات، والفعلية من الـ DOM
+        // الاعتماد الكامل على القياس الفعلي لتفادي الفراغ الزائد
         var footerEl = document.getElementById('print-footer');
         var actualFooterH = footerEl ? (footerEl.offsetHeight || 0) : 0;
-        var effectiveFooterH = Math.max(TOTAL_FOOTER_H, actualFooterH);
-        // المساحة الآمنة = الصفحة - الهامش - الذيل الفعلي - 40px (سطر واحد على الأقل قبل الذيل/الختم)
-        var SAFE_USABLE_H = PAGE_H_PX - TOP_MARGIN_PX - BOT_MARGIN_PX - effectiveFooterH - 40;
+        // إن لم يُقاس بعد، استخدم القيمة المُقدَّرة من الإعدادات
+        var effectiveFooterH = actualFooterH > 0 ? actualFooterH : TOTAL_FOOTER_H;
+        // المساحة الآمنة = الصفحة - الهامش - الذيل الفعلي - 10px فقط (آخر تحليل مباشرة فوق الذيل/الختم)
+        var SAFE_USABLE_H = PAGE_H_PX - TOP_MARGIN_PX - BOT_MARGIN_PX - effectiveFooterH - 10;
 
         if(CAT_CHUNKS.length === 0){
           // لا توجد تحاليل — صفحة واحدة بالـ header فقط
@@ -11540,7 +11541,7 @@ function buildPrintHTML(req, opts){
           p.className = 'report-page';
           p.style.padding = '4mm 4mm 0 4mm';
           p.innerHTML = HDR_HTML + COL_HDR_HTML +
-            '<div class="page-footer-spacer" style="height:'+(effectiveFooterH+37)+'px"></div>';
+            '<div class="page-footer-spacer" style="height:'+(effectiveFooterH+8)+'px"></div>';
           container.appendChild(p);
           return;
         }
