@@ -28286,4 +28286,427 @@ setTimeout(function(){
 
 })();
 
+// ═══════════════════════════════════════════════════════════════
+// 🔗 LAN SYNC — نظام المزامنة عبر الشبكة المحلية
+// يعمل عبر WebSocket مع خادم Node.js على الراوتر المحلي
+// لا يؤثر على عمر الجهاز (RAM فقط، بدون كتابة قرص متكررة)
+// ═══════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+const SYNC = {
+  ws: null,
+  connected: false,
+  url: localStorage.getItem('lansync_url') || '',
+  enabled: localStorage.getItem('lansync_enabled') === '1',
+  deviceId: localStorage.getItem('lansync_device_id') || ('dev_'+Math.random().toString(36).slice(2,10)),
+  deviceName: localStorage.getItem('lansync_device_name') || ('جهاز-'+(navigator.platform||'').slice(0,6)),
+  reconnectTimer: null,
+  reconnectDelay: 2000,
+  applyingRemote: false, // علم لمنع البث الراجع
+  lastSyncTs: {},        // key -> ts (لتفادي التكرار)
+  pendingChanges: new Map(), // طابور لو الاتصال مقطوع
+  peerCount: 0,
+
+  // ── المفاتيح التي تُزامَن ──
+  // كل بيانات MedLab Pro: مرضى + نتائج + إعدادات
+  SYNC_KEYS: new Set([
+    'patients','requests','invoices','doctors','packages','inventory',
+    'qc','tests','testGroups','billing',
+    'cultureRecords','uaRecords','stoolExamRecords','semenRecords',
+    'labInfo','labSettings','printSettings','reportSettings',
+    'currency','users','roles','permissions',
+    'notifications','templates','reagents','calibrations'
+  ]),
+
+  // المفاتيح التي يجب عدم مزامنتها (محلية للجهاز)
+  LOCAL_ONLY: new Set([
+    'lansync_url','lansync_enabled','lansync_device_id','lansync_device_name',
+    'gdrive_access_token','gdrive_refresh_token','gdrive_token_exp','gdrive_auto',
+    'theme_mode','sidebar_collapsed','last_view','session_token',
+    'medlab_admin_users' // المستخدمون مرتبطون بكل جهاز
+  ]),
+
+  init(){
+    // حفظ معرّف الجهاز
+    localStorage.setItem('lansync_device_id', this.deviceId);
+    localStorage.setItem('lansync_device_name', this.deviceName);
+
+    // إنشاء مؤشر الحالة في الواجهة
+    this.createStatusIndicator();
+
+    // اعتراض دوال الحفظ (DB.set / DB.del) لإرسال التحديثات
+    this.hookDB();
+
+    // الاتصال التلقائي إذا كان مُفعَّلاً
+    if(this.enabled && this.url){
+      setTimeout(()=>this.connect(), 1500);
+    }
+
+    // اختصار: Ctrl+Shift+S لفتح إعدادات المزامنة
+    document.addEventListener('keydown', e=>{
+      if(e.ctrlKey && e.shiftKey && e.key==='S'){
+        e.preventDefault();
+        this.openSettings();
+      }
+    });
+  },
+
+  // ── مؤشر الحالة في الزاوية ──
+  createStatusIndicator(){
+    if(document.getElementById('lansync-indicator')) return;
+    const el = document.createElement('div');
+    el.id = 'lansync-indicator';
+    el.style.cssText = 'position:fixed;bottom:14px;left:14px;z-index:99999;background:rgba(20,25,55,.95);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:8px 14px;font-size:12px;font-weight:700;color:#e8eaff;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.4);transition:all .3s;font-family:Tahoma,Arial,sans-serif;direction:rtl';
+    el.innerHTML = '<span id="lansync-dot" style="width:9px;height:9px;border-radius:50%;background:#6b7280;display:inline-block;transition:all .3s"></span><span id="lansync-txt">المزامنة معطّلة</span>';
+    el.title = 'انقر لفتح إعدادات المزامنة (Ctrl+Shift+S)';
+    el.onclick = ()=>this.openSettings();
+    el.onmouseenter = ()=>el.style.transform='translateY(-2px)';
+    el.onmouseleave = ()=>el.style.transform='';
+    document.body.appendChild(el);
+    this.updateIndicator();
+  },
+
+  updateIndicator(){
+    const dot = document.getElementById('lansync-dot');
+    const txt = document.getElementById('lansync-txt');
+    if(!dot||!txt) return;
+    if(!this.enabled){
+      dot.style.background='#6b7280'; dot.style.boxShadow='none';
+      txt.textContent='المزامنة معطّلة';
+    } else if(this.connected){
+      dot.style.background='#10b981'; dot.style.boxShadow='0 0 10px #10b981';
+      txt.textContent = this.peerCount>0 ? `متصل · ${this.peerCount} جهاز آخر` : 'متصل · بانتظار أجهزة';
+    } else {
+      dot.style.background='#ef4444'; dot.style.boxShadow='0 0 8px #ef4444';
+      txt.textContent='غير متصل · يُحاول...';
+    }
+  },
+
+  // ── اعتراض DB.set و DB.del لبثّ التحديثات ──
+  hookDB(){
+    if(typeof DB==='undefined' || DB._hooked) return;
+    const origSet = DB.set.bind(DB);
+    const origDel = DB.del.bind(DB);
+
+    DB.set = (k,v)=>{
+      origSet(k,v);
+      if(!this.applyingRemote && this.SYNC_KEYS.has(k)){
+        this.queueChange('set', k, v);
+      }
+    };
+    DB.del = (k)=>{
+      origDel(k);
+      if(!this.applyingRemote && this.SYNC_KEYS.has(k)){
+        this.queueChange('del', k, null);
+      }
+    };
+    DB._hooked = true;
+  },
+
+  queueChange(op, key, value){
+    if(!this.enabled) return;
+    const ts = Date.now();
+    this.lastSyncTs[key] = ts;
+    const payload = { type: op, key, value, ts, deviceId: this.deviceId };
+    if(this.connected && this.ws && this.ws.readyState===1){
+      try { this.ws.send(JSON.stringify(payload)); }
+      catch { this.pendingChanges.set(key, payload); }
+    } else {
+      // طابور — يُرسل عند إعادة الاتصال
+      this.pendingChanges.set(key, payload);
+    }
+  },
+
+  // ── الاتصال بالخادم ──
+  connect(){
+    if(!this.url){ console.warn('[Sync] لا يوجد URL'); return; }
+    if(this.ws && this.ws.readyState<=1){
+      try{this.ws.close();}catch{}
+    }
+    try{
+      this.ws = new WebSocket(this.url);
+    }catch(e){
+      console.error('[Sync] فشل الاتصال:', e);
+      this.scheduleReconnect();
+      return;
+    }
+
+    this.ws.onopen = ()=>{
+      this.connected = true;
+      this.reconnectDelay = 2000;
+      console.log('[Sync] ✅ متصل بـ', this.url);
+      // تعريف الجهاز
+      this.ws.send(JSON.stringify({
+        type:'hello',
+        deviceId: this.deviceId,
+        deviceName: this.deviceName
+      }));
+      // إرسال أي تغييرات معلّقة
+      if(this.pendingChanges.size>0){
+        for(const [k, payload] of this.pendingChanges){
+          try{ this.ws.send(JSON.stringify(payload)); }catch{}
+        }
+        this.pendingChanges.clear();
+      }
+      this.updateIndicator();
+      if(typeof showNotif==='function'){
+        showNotif('المزامنة','✅ تم الاتصال بخادم المزامنة','success');
+      }
+    };
+
+    this.ws.onmessage = (ev)=>{
+      let msg;
+      try{ msg = JSON.parse(ev.data); }catch{ return; }
+      this.handleMessage(msg);
+    };
+
+    this.ws.onclose = ()=>{
+      this.connected = false;
+      this.peerCount = 0;
+      this.updateIndicator();
+      if(this.enabled) this.scheduleReconnect();
+    };
+
+    this.ws.onerror = (e)=>{
+      console.warn('[Sync] خطأ:', e);
+    };
+  },
+
+  scheduleReconnect(){
+    clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = setTimeout(()=>this.connect(), this.reconnectDelay);
+    // زيادة تدريجية حتى 30 ثانية
+    this.reconnectDelay = Math.min(this.reconnectDelay*1.5, 30000);
+  },
+
+  disconnect(){
+    this.enabled = false;
+    localStorage.setItem('lansync_enabled','0');
+    clearTimeout(this.reconnectTimer);
+    if(this.ws){ try{this.ws.close();}catch{} }
+    this.connected = false;
+    this.updateIndicator();
+  },
+
+  // ── معالجة الرسائل القادمة ──
+  handleMessage(msg){
+    switch(msg.type){
+      case 'snapshot':
+        this.applySnapshot(msg.state);
+        break;
+      case 'update':
+        this.applyRemoteSet(msg.key, msg.value, msg.ts, msg.deviceId);
+        break;
+      case 'delete':
+        this.applyRemoteDel(msg.key, msg.ts, msg.deviceId);
+        break;
+      case 'peer-joined':
+      case 'peer-left':
+        this.peerCount = Math.max(0, (msg.count||1) - 1);
+        this.updateIndicator();
+        break;
+    }
+  },
+
+  // ── دمج Snapshot الكامل عند الاتصال الأول ──
+  async applySnapshot(state){
+    if(!state) return;
+    let changed = 0;
+    this.applyingRemote = true;
+    try{
+      for(const key of Object.keys(state)){
+        if(!this.SYNC_KEYS.has(key)) continue;
+        const remote = state[key];
+        if(!remote) continue;
+        const localTs = this.lastSyncTs[key] || 0;
+        // فقط إذا كانت النسخة البعيدة أحدث
+        if(remote.ts > localTs && remote.deviceId !== this.deviceId){
+          DB.set(key, remote.value);
+          this.lastSyncTs[key] = remote.ts;
+          changed++;
+        }
+      }
+    } finally {
+      this.applyingRemote = false;
+    }
+    if(changed > 0){
+      console.log(`[Sync] 🔄 تم تحديث ${changed} عنصر من الخادم`);
+      // إعادة تحميل المتغيرات العامة بدون refresh الصفحة
+      this.reloadGlobals();
+      if(typeof showNotif==='function'){
+        showNotif('المزامنة',`🔄 تم استلام ${changed} تحديث من الأجهزة الأخرى`,'info');
+      }
+    }
+  },
+
+  applyRemoteSet(key, value, ts, deviceId){
+    if(deviceId === this.deviceId) return; // لا تستقبل تغييراتك أنت
+    if(!this.SYNC_KEYS.has(key)) return;
+    const localTs = this.lastSyncTs[key] || 0;
+    if(ts <= localTs) return; // عندنا نسخة أحدث أو نفس التوقيت
+    this.applyingRemote = true;
+    try{
+      DB.set(key, value);
+      this.lastSyncTs[key] = ts;
+    } finally {
+      this.applyingRemote = false;
+    }
+    this.reloadGlobalKey(key, value);
+    this.refreshUIIfRelevant(key);
+  },
+
+  applyRemoteDel(key, ts, deviceId){
+    if(deviceId === this.deviceId) return;
+    if(!this.SYNC_KEYS.has(key)) return;
+    this.applyingRemote = true;
+    try{ DB.del(key); } finally { this.applyingRemote = false; }
+    this.lastSyncTs[key] = ts;
+    this.refreshUIIfRelevant(key);
+  },
+
+  // ── تحديث المتغيرات العامة من الذاكرة ──
+  reloadGlobalKey(key, value){
+    try{
+      // تحديث المتغيرات الرئيسية
+      const globalMap = {
+        patients:'patients', requests:'requests', invoices:'invoices',
+        doctors:'doctors', packages:'packages', inventory:'inventory',
+        tests:'tests', testGroups:'testGroups', billing:'billing',
+        cultureRecords:'cultureRecords', uaRecords:'uaRecords',
+        stoolExamRecords:'stoolExamRecords', semenRecords:'semenRecords'
+      };
+      const varName = globalMap[key];
+      if(varName && typeof window[varName] !== 'undefined'){
+        window[varName] = value;
+      }
+    }catch(e){ console.warn('[Sync] reloadGlobalKey:', e); }
+  },
+
+  reloadGlobals(){
+    const keys = ['patients','requests','invoices','doctors','packages',
+      'inventory','tests','testGroups','billing','cultureRecords',
+      'uaRecords','stoolExamRecords','semenRecords'];
+    for(const k of keys){
+      const v = DB.get(k);
+      if(v !== null && typeof window[k] !== 'undefined'){
+        window[k] = v;
+      }
+    }
+  },
+
+  // ── إعادة رسم الواجهة عند تحديث بيانات معروضة حالياً ──
+  refreshUIIfRelevant(key){
+    try{
+      const map = {
+        patients: ['refreshPatients','renderPatients','loadPatientsList'],
+        requests: ['refreshRequests','renderRequests'],
+        invoices: ['refreshInvoices','renderInvoices'],
+        doctors:  ['refreshDoctors','renderDoctors'],
+        inventory:['refreshInventory','renderInventory'],
+        tests:    ['refreshTests','renderTests']
+      };
+      const fns = map[key] || [];
+      for(const fn of fns){
+        if(typeof window[fn] === 'function'){
+          try{ window[fn](); break; }catch{}
+        }
+      }
+      // تحديث عدّاد الشريط الجانبي إن وُجد
+      if(key==='patients'){
+        const badge = document.getElementById('nb-patients');
+        if(badge && Array.isArray(window.patients)) badge.textContent = window.patients.length;
+      }
+    }catch(e){ console.warn('[Sync] refreshUI:', e); }
+  },
+
+  // ── نافذة الإعدادات ──
+  openSettings(){
+    let modal = document.getElementById('lansync-modal');
+    if(modal){ modal.remove(); }
+    modal = document.createElement('div');
+    modal.id = 'lansync-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:999999;display:flex;align-items:center;justify-content:center;direction:rtl;font-family:Tahoma,Arial,sans-serif';
+    modal.innerHTML = `
+      <div style="background:linear-gradient(135deg,#151a3a,#0f1330);color:#e8eaff;padding:30px;border-radius:18px;max-width:520px;width:90%;border:1px solid rgba(255,255,255,.1);box-shadow:0 20px 60px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:14px">
+          <h2 style="margin:0;color:#00d4ff;font-size:20px">🔗 إعدادات المزامنة المحلية</h2>
+          <button onclick="document.getElementById('lansync-modal').remove()" style="background:transparent;border:none;color:#e8eaff;font-size:22px;cursor:pointer;width:32px;height:32px;border-radius:50%">×</button>
+        </div>
+
+        <div style="background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);border-radius:10px;padding:12px;margin-bottom:18px;font-size:13px;line-height:1.7">
+          ربط الأجهزة عبر الراوتر المحلي. أي تعديل في جهاز يظهر فوراً في باقي الأجهزة.
+          <br>الحالة: <strong id="lansync-status-line" style="color:${this.connected?'#10b981':'#ef4444'}">${this.connected?'✅ متصل':'❌ غير متصل'}</strong>
+          ${this.connected?` · ${this.peerCount} جهاز آخر`:''}
+        </div>
+
+        <label style="display:block;margin-bottom:8px;font-weight:700;font-size:13px">عنوان الخادم (URL):</label>
+        <input id="lansync-url" type="text" value="${this.url}" placeholder="ws://192.168.1.10:8787" style="width:100%;padding:11px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.3);color:#e8eaff;font-family:monospace;font-size:14px;direction:ltr;text-align:left;margin-bottom:6px">
+        <div style="font-size:11px;color:#9ca3af;margin-bottom:14px">مثال: ws://192.168.1.10:8787 (من شاشة الخادم)</div>
+
+        <label style="display:block;margin-bottom:8px;font-weight:700;font-size:13px">اسم هذا الجهاز:</label>
+        <input id="lansync-name" type="text" value="${this.deviceName}" placeholder="مثلاً: استقبال - كمبيوتر 1" style="width:100%;padding:11px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.3);color:#e8eaff;font-size:14px;margin-bottom:18px">
+
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:rgba(255,255,255,.04);padding:12px;border-radius:10px;margin-bottom:18px">
+          <input id="lansync-enabled" type="checkbox" ${this.enabled?'checked':''} style="width:18px;height:18px;cursor:pointer">
+          <span style="font-weight:700">تفعيل المزامنة التلقائية</span>
+        </label>
+
+        <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:11px;margin-bottom:18px;font-size:12px;line-height:1.7">
+          <strong style="color:#fbbf24">📋 خطوات سريعة:</strong><br>
+          1. على الحاسبة الرئيسية: شغّل <code style="background:rgba(0,0,0,.4);padding:2px 6px;border-radius:4px">start-server.bat</code><br>
+          2. انسخ الـ IP الظاهر في نافذة الخادم<br>
+          3. الصق الرابط في الحقل أعلاه واضغط "حفظ واتصل"
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button onclick="document.getElementById('lansync-modal').remove()" style="padding:10px 18px;background:rgba(255,255,255,.06);color:#e8eaff;border:1px solid rgba(255,255,255,.15);border-radius:8px;cursor:pointer;font-weight:700">إلغاء</button>
+          <button id="lansync-save-btn" style="padding:10px 22px;background:linear-gradient(135deg,#00d4ff,#0099cc);color:#0a0e27;border:none;border-radius:8px;cursor:pointer;font-weight:800">💾 حفظ واتصل</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById('lansync-save-btn').onclick = ()=>{
+      const url = document.getElementById('lansync-url').value.trim();
+      const name = document.getElementById('lansync-name').value.trim() || this.deviceName;
+      const enabled = document.getElementById('lansync-enabled').checked;
+
+      if(enabled && !url){
+        alert('الرجاء إدخال عنوان الخادم'); return;
+      }
+      if(enabled && !/^wss?:\/\//.test(url)){
+        alert('العنوان يجب أن يبدأ بـ ws:// أو wss://'); return;
+      }
+
+      this.url = url;
+      this.deviceName = name;
+      this.enabled = enabled;
+      localStorage.setItem('lansync_url', url);
+      localStorage.setItem('lansync_device_name', name);
+      localStorage.setItem('lansync_enabled', enabled?'1':'0');
+
+      modal.remove();
+
+      if(enabled){
+        this.connect();
+      } else {
+        this.disconnect();
+      }
+    };
+  }
+};
+
+// تشغيل النظام بعد تحميل الصفحة بالكامل
+if(document.readyState === 'complete'){
+  setTimeout(()=>SYNC.init(), 500);
+} else {
+  window.addEventListener('load', ()=>setTimeout(()=>SYNC.init(), 500));
+}
+
+// إتاحة الوصول من Console للتشخيص
+window.LANSYNC = SYNC;
+
+})();
+
 </script>
