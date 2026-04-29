@@ -3576,7 +3576,7 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
               <!-- صورة الرأس -->
               <div class="fg">
                 <label class="fl">🖼️ صورة رأس الورقة</label>
-                <div style="font-size:10px;color:var(--text2);margin-bottom:6px">تملأ الصورة المساحة كاملةً تلقائياً — يُنصح بعرض 794px وارتفاع 120px</div>
+                <div style="font-size:10px;color:var(--text2);margin-bottom:6px">تملأ الصورة المساحة كاملةً تلقائياً — يُنصح بعرض 794px وارتفاع 160px</div>
                 <input type="file" id="st-header-img" accept="image/*" onchange="loadHeaderImg(this)" class="fc" style="padding:7px">
                 <div id="header-img-preview" style="margin-top:8px;display:none">
                   <img id="header-img-show" style="max-height:80px;border-radius:8px;border:1px solid var(--border);width:100%;object-fit:fill;background:#fff;">
@@ -4301,23 +4301,46 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
               </div>
             </div>
 
-            <!-- ①.٥ الناطق الصوتي -->
+            <!-- ①.٥ الإشعار الصوتي -->
             <div style="background:var(--bg-glass);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px">
-              <div style="font-size:13px;font-weight:800;color:var(--primary);margin-bottom:6px">🔊 الناطق الصوتي للمرضى الجاهزين</div>
+              <div style="font-size:13px;font-weight:800;color:var(--primary);margin-bottom:6px">🔊 الإشعار الصوتي عند جاهزية المريض</div>
               <div style="font-size:11px;color:var(--text2);margin-bottom:14px;line-height:1.7">
-                عند تفعيل هذا الخيار: عندما تصبح تحاليل أي مريض <b>جاهزة ✅</b> سيتم نطق اسمه باللغة العربية بصوت واضح على شاشة الانتظار، لتنبيه المريض لاستلام النتائج.<br>
-                <span style="color:var(--warning)">💡 يجب أن تسمح المتصفح بتشغيل الصوت في نافذة شاشة الانتظار</span>
+                عندما يصبح أي مريض <b>جاهزاً ✅</b> ستظهر بطاقة كبيرة على شاشة التلفاز بـ <b>اسم المريض</b> + <b>صوت جرس تنبيه</b> 🔔.<br>
+                <span style="color:var(--success)">💡 اختياري:</span> يمكنك إضافة تسجيل صوتي بصوتك (مرة واحدة) سيُشغّل بعد الجرس مع كل مريض. مثلاً: "تحاليلك جاهزة، يرجى التوجه إلى الاستقبال".
               </div>
-              <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+
+              <!-- زر التشغيل/الإيقاف -->
+              <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:14px;border-bottom:1px dashed var(--border)">
                 <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="wsSpeakToggle(true)">
                   <div id="ws-speak-radio-on" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--primary);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center"><div id="ws-speak-dot-on" style="width:9px;height:9px;border-radius:50%;background:transparent"></div></div>
-                  <span style="font-size:13px;font-weight:700">🔊 تشغيل الناطق الصوتي</span>
+                  <span style="font-size:13px;font-weight:700">🔊 تشغيل الإشعار الصوتي</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="wsSpeakToggle(false)">
                   <div id="ws-speak-radio-off" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--primary);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center"><div id="ws-speak-dot-off" style="width:9px;height:9px;border-radius:50%;background:transparent"></div></div>
-                  <span style="font-size:13px;font-weight:700">🔇 إيقاف الناطق الصوتي</span>
+                  <span style="font-size:13px;font-weight:700">🔇 إيقاف الإشعار الصوتي</span>
                 </div>
-                <button class="btn btn-sm btn-s" onclick="wsTestSpeak()" style="margin-right:auto">🎤 تجربة الصوت</button>
+              </div>
+
+              <!-- التسجيل الصوتي المخصص (اختياري) -->
+              <div style="background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:10px;padding:14px">
+                <div style="font-size:13px;font-weight:800;color:var(--primary);margin-bottom:8px">🎙️ تسجيل صوتي مخصص <span style="font-size:10px;color:var(--text2);font-weight:600">(اختياري)</span></div>
+                <div style="font-size:11px;color:var(--text2);margin-bottom:12px;line-height:1.7">
+                  سجّل جملة بصوتك مرة واحدة (مثلاً: "تحاليلك جاهزة، يرجى التوجه إلى الاستقبال") وستُشغَّل تلقائياً مع كل مريض جاهز.
+                </div>
+
+                <div id="ws-rec-status" style="display:none;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:8px;padding:10px;margin-bottom:10px;text-align:center;font-size:13px;font-weight:800;color:#ff4444">
+                  <span style="display:inline-block;width:10px;height:10px;background:#ff4444;border-radius:50%;margin-left:8px;animation:rec-pulse 1s infinite"></span>
+                  جاري التسجيل... <span id="ws-rec-time">00:00</span>
+                </div>
+                <style>@keyframes rec-pulse{0%,100%{opacity:1}50%{opacity:0.3}}</style>
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  <button id="ws-rec-start" class="btn btn-sm" style="background:#ff4444;color:#fff;border:none;font-weight:800" onclick="wsStartRecording()">🎙️ بدء التسجيل</button>
+                  <button id="ws-rec-stop" class="btn btn-sm" style="background:#666;color:#fff;border:none;font-weight:800;display:none" onclick="wsStopRecording()">⏹️ إيقاف التسجيل</button>
+                  <button id="ws-rec-play" class="btn btn-sm btn-s" onclick="wsPlayRecording()" style="display:none">▶️ تشغيل</button>
+                  <button id="ws-rec-delete" class="btn btn-sm btn-d" onclick="wsDeleteRecording()" style="display:none">🗑️ حذف</button>
+                  <span id="ws-rec-info" style="font-size:11px;color:var(--text2);margin-right:auto"></span>
+                </div>
               </div>
             </div>
 
@@ -11026,7 +11049,7 @@ function buildPrintHTML(req, opts){
   } else if(settings.headerImg&&showHdr){
     // Fix 4: image fills full width AND height (no whitespace)
     hdr=`<div style="width:100%;line-height:0">
-           <img src="${settings.headerImg}" style="width:100%;height:120px;display:block;object-fit:fill">
+           <img src="${settings.headerImg}" style="width:100%;height:160px;display:block;object-fit:fill">
          </div>`;
   } else if(showHdr){
     hdr=`<div style="padding:8px 16px 6px;border-bottom:2px solid #002255;display:flex;justify-content:space-between;align-items:center">
@@ -14123,27 +14146,149 @@ function wsSpeakToggle(enabled){
   if(radOff) radOff.style.borderColor = !enabled ? 'var(--primary)' : 'rgba(255,255,255,0.3)';
 }
 
-// ── تجربة الناطق الصوتي ──
-function wsTestSpeak(){
-  if(!('speechSynthesis' in window)){
-    showNotif('غير مدعوم','المتصفح الحالي لا يدعم الناطق الصوتي','warning');
-    return;
+// ============================================================
+// تسجيل صوتي مخصص (اختياري) — يُحفظ في localStorage كـ Data URL
+// ============================================================
+let _wsRecorder = null;
+let _wsRecChunks = [];
+let _wsRecStartTime = 0;
+let _wsRecTimer = null;
+const WS_VOICE_KEY = 'medlab_voice_recording';
+
+// تحديث واجهة التسجيل (إظهار/إخفاء الأزرار حسب وجود تسجيل)
+function _wsRefreshRecordUI(){
+  const hasRec = !!localStorage.getItem(WS_VOICE_KEY);
+  const playBtn = document.getElementById('ws-rec-play');
+  const delBtn = document.getElementById('ws-rec-delete');
+  const info = document.getElementById('ws-rec-info');
+  if(playBtn) playBtn.style.display = hasRec ? '' : 'none';
+  if(delBtn) delBtn.style.display = hasRec ? '' : 'none';
+  if(info){
+    if(hasRec){
+      const len = localStorage.getItem(WS_VOICE_KEY).length;
+      const kb = Math.round(len/1024);
+      info.innerHTML = '✅ <span style="color:var(--success);font-weight:800">يوجد تسجيل محفوظ</span> ('+kb+' KB)';
+    } else {
+      info.innerHTML = '<span style="opacity:0.6">لا يوجد تسجيل محفوظ</span>';
+    }
   }
+}
+
+async function wsStartRecording(){
   try{
-    window.speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance('السيد المريض، تحاليلك جاهزة، يرجى التوجه إلى الاستقبال لاستلام النتائج');
-    u.lang = 'ar-SA';
-    u.rate = 0.9;
-    u.pitch = 1.0;
-    u.volume = 1.0;
-    // محاولة اختيار صوت عربي إن وُجد
-    var voices = window.speechSynthesis.getVoices();
-    var arVoice = voices.find(function(v){ return /ar(-|_)/i.test(v.lang) || /arabic/i.test(v.name); });
-    if(arVoice) u.voice = arVoice;
-    window.speechSynthesis.speak(u);
-    showNotif('تجربة الصوت','🎤 جاري تشغيل عينة صوتية...','info');
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      showNotif('غير مدعوم','المتصفح لا يدعم تسجيل الصوت','warning');
+      return;
+    }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    _wsRecChunks = [];
+    // استخدم MIME المدعوم من المتصفح
+    let mime = 'audio/webm';
+    if(MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mime = 'audio/webm;codecs=opus';
+    else if(MediaRecorder.isTypeSupported('audio/mp4')) mime = 'audio/mp4';
+    else if(MediaRecorder.isTypeSupported('audio/ogg')) mime = 'audio/ogg';
+
+    _wsRecorder = new MediaRecorder(stream, { mimeType: mime });
+    _wsRecorder.ondataavailable = function(e){ if(e.data && e.data.size > 0) _wsRecChunks.push(e.data); };
+    _wsRecorder.onstop = async function(){
+      try{
+        // إيقاف كل المسارات
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(_wsRecChunks, { type: mime });
+        // تحويل إلى Data URL وحفظ في localStorage
+        const reader = new FileReader();
+        reader.onload = function(){
+          try{
+            const dataUrl = reader.result;
+            // فحص حجم: حد localStorage عادةً 5MB
+            if(dataUrl.length > 4*1024*1024){
+              showNotif('التسجيل طويل جداً','يجب أن يكون التسجيل أقصر من ~30 ثانية','warning');
+              return;
+            }
+            localStorage.setItem(WS_VOICE_KEY, dataUrl);
+            _wsRefreshRecordUI();
+            showNotif('✅ تم الحفظ','تم حفظ التسجيل بنجاح، سيُستخدم تلقائياً مع كل مريض جاهز','success');
+            // إعلام نافذة شاشة الانتظار بالتحديث
+            try{
+              if(window._waitScreenWin && !window._waitScreenWin.closed){
+                window._waitScreenWin.postMessage({ type:'WQ_VOICE_UPDATE', voice: dataUrl }, '*');
+              }
+            }catch(_){}
+          }catch(err){
+            if(err && err.name === 'QuotaExceededError'){
+              showNotif('المساحة ممتلئة','التسجيل أكبر من المساحة المتاحة. حاول تسجيل أقصر.','danger');
+            } else {
+              showNotif('خطأ','تعذر حفظ التسجيل: '+(err.message||err),'danger');
+            }
+          }
+        };
+        reader.readAsDataURL(blob);
+      }catch(err){
+        showNotif('خطأ','فشل معالجة التسجيل: '+(err.message||err),'danger');
+      }
+    };
+    _wsRecorder.start();
+    _wsRecStartTime = Date.now();
+    // تحديث واجهة المؤقت
+    document.getElementById('ws-rec-status').style.display = '';
+    document.getElementById('ws-rec-start').style.display = 'none';
+    document.getElementById('ws-rec-stop').style.display = '';
+    _wsRecTimer = setInterval(function(){
+      const sec = Math.floor((Date.now() - _wsRecStartTime)/1000);
+      const m = String(Math.floor(sec/60)).padStart(2,'0');
+      const s = String(sec%60).padStart(2,'0');
+      const t = document.getElementById('ws-rec-time');
+      if(t) t.textContent = m+':'+s;
+      // إيقاف تلقائي عند 30 ثانية
+      if(sec >= 30) wsStopRecording();
+    }, 250);
+  }catch(err){
+    if(err && err.name === 'NotAllowedError'){
+      showNotif('الميكروفون مرفوض','يجب السماح للموقع باستخدام الميكروفون','warning');
+    } else {
+      showNotif('خطأ','تعذر بدء التسجيل: '+(err.message||err),'danger');
+    }
+  }
+}
+
+function wsStopRecording(){
+  try{
+    if(_wsRecorder && _wsRecorder.state !== 'inactive'){
+      _wsRecorder.stop();
+    }
+    if(_wsRecTimer){ clearInterval(_wsRecTimer); _wsRecTimer = null; }
+    document.getElementById('ws-rec-status').style.display = 'none';
+    document.getElementById('ws-rec-start').style.display = '';
+    document.getElementById('ws-rec-stop').style.display = 'none';
+  }catch(e){}
+}
+
+function wsPlayRecording(){
+  try{
+    const dataUrl = localStorage.getItem(WS_VOICE_KEY);
+    if(!dataUrl){ showNotif('لا يوجد تسجيل','لم يُحفظ أي تسجيل بعد','warning'); return; }
+    const audio = new Audio(dataUrl);
+    audio.volume = 1.0;
+    audio.play().catch(function(err){
+      showNotif('خطأ','تعذر تشغيل التسجيل: '+(err.message||err),'danger');
+    });
+  }catch(e){}
+}
+
+function wsDeleteRecording(){
+  if(!confirm('هل أنت متأكد من حذف التسجيل الصوتي؟')) return;
+  try{
+    localStorage.removeItem(WS_VOICE_KEY);
+    _wsRefreshRecordUI();
+    showNotif('🗑️ تم الحذف','تم حذف التسجيل، سيتم استخدام الجرس فقط بدون نطق','info');
+    // إعلام نافذة شاشة الانتظار بالحذف
+    try{
+      if(window._waitScreenWin && !window._waitScreenWin.closed){
+        window._waitScreenWin.postMessage({ type:'WQ_VOICE_UPDATE', voice: null }, '*');
+      }
+    }catch(_){}
   }catch(e){
-    showNotif('خطأ','تعذر تشغيل الصوت: '+e.message,'danger');
+    showNotif('خطأ','تعذر حذف التسجيل','danger');
   }
 }
 
@@ -14220,6 +14365,8 @@ function _wsInitSettingsUI(){
   wsScrollSpeedChange(ws.speed||'slow');
   // تعيين حالة الناطق الصوتي
   wsSpeakToggle(ws.speakEnabled !== false);
+  // تحديث واجهة التسجيل الصوتي
+  _wsRefreshRecordUI();
   // تحميل قائمة الأطباء
   wsRefreshDoctorList();
 }
@@ -19133,7 +19280,7 @@ function _buildCultureHTML(cid){
 
   let hdrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
-  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:120px;display:block;object-fit:fill">`;
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:160px;display:block;object-fit:fill">`;
   else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-family:Arial,sans-serif;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
 
   let ftrHTML='';
@@ -19646,7 +19793,7 @@ function _buildUAPrintHTML(r){
   const color=s.hdrText?.color||'#003366';
   let hdrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
-  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:120px;display:block;object-fit:fill">`;
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:160px;display:block;object-fit:fill">`;
   else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
@@ -20166,7 +20313,7 @@ function _buildStoolPrintHTML(r){
   const color=s.hdrText?.color||'#003366';
   let hdrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
-  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:120px;display:block;object-fit:fill">`;
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:160px;display:block;object-fit:fill">`;
   else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
@@ -21319,7 +21466,7 @@ function _buildSemenPrintHTML(r){
   const color=s.hdrText?.color||'#003366';
   let hdrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
-  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:120px;display:block;object-fit:fill">`;
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:160px;display:block;object-fit:fill">`;
   else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
@@ -22299,6 +22446,8 @@ function openWaitScreen(){
   +'_inner=document.getElementById("hdmi-scroll-inner");'
   +'_pos=0;'
   +'if(_inner)_inner.style.transform="translateY(0px)";'
+  /* إخفاء النسخة المكررة عندما تكون السرعة = 0 (وضع ثابت) */
+  +'_updateDupVisibility();'
   +'setTimeout(function(){'
   +'var orig=document.getElementById("hdmi-orig");'
   +'_totalH=orig?orig.offsetHeight:0;'
@@ -22312,6 +22461,14 @@ function openWaitScreen(){
   +'_inner.style.transform="translateY(-"+_pos+"px)";'
   +'}'
   +'_raf=requestAnimationFrame(_scrollTick);'
+  +'}'
+  /* ── إخفاء/إظهار النسخة المكررة بناءً على السرعة ── */
+  +'function _updateDupVisibility(){'
+  +'try{'
+  +'var dup = document.getElementById("hdmi-dup");'
+  +'if(!dup) return;'
+  +'dup.style.display = (_spd > 0) ? "block" : "none";'
+  +'}catch(e){}'
   +'}'
   +'(function initScroll(){'
   +'_inner=document.getElementById("hdmi-scroll-inner");'
@@ -22330,31 +22487,7 @@ function openWaitScreen(){
   +'var _speakQueue = [];'          /* طابور النطق */
   +'var _speakBusy = false;'        /* هل النطق نشط الآن */
   +'var _voiceUnlocked = false;'    /* هل تم فك القيد عن تشغيل الصوت تلقائياً */
-  +'var _arVoice = null;'           /* الصوت العربي المختار */
-  /* ── اختيار الصوت العربي الأنسب من الأصوات المتاحة في المتصفح ── */
-  +'function _pickArVoice(){'
-  +'try{'
-  +'if(!("speechSynthesis" in window)) return null;'
-  +'var voices = window.speechSynthesis.getVoices()||[];'
-  +'if(!voices.length) return null;'
-  /* تفضيل: ar-SA > ar-EG > أي ar > أي صوت يحتوي Arabic */
-  +'var pri = ["ar-SA","ar-EG","ar-AE","ar-JO","ar-IQ","ar-KW","ar-BH","ar-OM","ar-QA","ar-LB","ar-LY","ar-MA","ar-DZ","ar-TN","ar-YE","ar-SY","ar-PS"];'
-  +'for(var i=0;i<pri.length;i++){'
-  +'var v = voices.find(function(x){ return (x.lang||"").toLowerCase() === pri[i].toLowerCase(); });'
-  +'if(v) return v;'
-  +'}'
-  +'var anyAr = voices.find(function(x){ return /^ar(-|_)/i.test(x.lang||"") || /arabic/i.test(x.name||""); });'
-  +'return anyAr || null;'
-  +'}catch(e){ return null; }'
-  +'}'
-  /* ── تحميل الأصوات (تأتي بشكل غير متزامن في بعض المتصفحات) ── */
-  +'function _loadVoices(){'
-  +'_arVoice = _pickArVoice();'
-  +'if("speechSynthesis" in window && typeof window.speechSynthesis.onvoiceschanged !== "undefined"){'
-  +'window.speechSynthesis.onvoiceschanged = function(){ _arVoice = _pickArVoice(); };'
-  +'}'
-  +'}'
-  +'_loadVoices();'
+  +'var _arVoice = null;'           /* لم يعد مستخدماً — احتفظنا بالمتغير لتجنب أخطاء */
   /* ── تطبيع الاسم العربي قبل النطق: إزالة أي شيء بين قوسين، حذف الرموز، توحيد المسافات ── */
   +'function _normalizeName(name){'
   +'if(!name) return "";'
@@ -22370,7 +22503,6 @@ function openWaitScreen(){
   +'function _speakNext(){'
   +'if(_speakBusy) return;'
   +'if(!_speakEnabled){ _speakQueue = []; return; }'
-  +'if(!("speechSynthesis" in window)) return;'
   +'var item = _speakQueue.shift();'
   +'if(!item) return;'
   +'_speakBusy = true;'
@@ -22381,47 +22513,69 @@ function openWaitScreen(){
   +'if(toast) toast.classList.add("show");'
   /* تمييز صف المريض في الجدول */
   +'_highlightRow(item.id, true);'
+  /* ① صوت تنبيه (جرس) — يُسمع دائماً */
+  +'try{ _playChime(); }catch(_){}'
+  /* ② تشغيل التسجيل المخصص (إن وُجد) — بعد ثانيتين من الجرس */
+  +'setTimeout(function(){ try{ _doSpeak(item); }catch(_){ } }, 2000);'
+  /* ③ البطاقة تبقى ظاهرة 10 ثوانٍ كاملة بغض النظر عن نتيجة الصوت */
+  +'setTimeout(function(){'
+  +'if(toast) toast.classList.remove("show");'
+  +'_highlightRow(item.id, false);'
+  +'try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(_){}'
+  +'_speakBusy = false;'
+  +'setTimeout(_speakNext, 700);'    /* فجوة قبل التالي */
+  +'}, 10000);'                       /* ⏱️ 10 ثوان */
+  +'}'
+  /* ── جرس تنبيه (دينج-دونج) عبر Web Audio API — يعمل على أي نظام ── */
+  +'function _playChime(){'
   +'try{'
-  +'window.speechSynthesis.cancel();'
-  /* الجملة الأولى: الإعلان */
-  +'var phrase = "السيد " + item.name + "، تحاليلك جاهزة، يرجى التوجه إلى الاستقبال";'
-  +'var u = new SpeechSynthesisUtterance(phrase);'
-  +'u.lang = (_arVoice && _arVoice.lang) ? _arVoice.lang : "ar-SA";'
-  +'u.rate = 0.88;'
-  +'u.pitch = 1.0;'
-  +'u.volume = 1.0;'
-  +'if(_arVoice) u.voice = _arVoice;'
-  +'u.onend = function(){'
-  /* بعد انتهاء النطق: انتظر قليلاً ثم أخفِ البطاقة وانتقل للتالي */
-  +'setTimeout(function(){'
-  +'if(toast) toast.classList.remove("show");'
-  +'_highlightRow(item.id, false);'
-  +'_speakBusy = false;'
-  +'setTimeout(_speakNext, 600);'
-  +'}, 1200);'
-  +'};'
-  +'u.onerror = function(){'
-  +'if(toast) toast.classList.remove("show");'
-  +'_highlightRow(item.id, false);'
-  +'_speakBusy = false;'
-  +'setTimeout(_speakNext, 400);'
-  +'};'
-  +'window.speechSynthesis.speak(u);'
-  /* احتياطي: إذا لم يصدر onend خلال 12 ثانية، أكمل بأي حال */
-  +'setTimeout(function(){'
-  +'if(_speakBusy){'
-  +'if(toast) toast.classList.remove("show");'
-  +'_highlightRow(item.id, false);'
-  +'_speakBusy = false;'
-  +'_speakNext();'
+  +'if(!window._audioCtx){'
+  +'var Ctx = window.AudioContext || window.webkitAudioContext;'
+  +'if(!Ctx) return;'
+  +'window._audioCtx = new Ctx();'
   +'}'
-  +'}, 12000);'
-  +'}catch(err){'
-  +'if(toast) toast.classList.remove("show");'
-  +'_highlightRow(item.id, false);'
-  +'_speakBusy = false;'
-  +'setTimeout(_speakNext, 400);'
+  +'var ctx = window._audioCtx;'
+  +'if(ctx.state === "suspended"){ try{ ctx.resume(); }catch(_){} }'
+  +'function _tone(freq, startT, durT, vol){'
+  +'var o = ctx.createOscillator();'
+  +'var g = ctx.createGain();'
+  +'o.type = "sine";'
+  +'o.frequency.value = freq;'
+  +'var t0 = ctx.currentTime + startT;'
+  +'g.gain.setValueAtTime(0, t0);'
+  +'g.gain.linearRampToValueAtTime(vol, t0+0.04);'
+  +'g.gain.exponentialRampToValueAtTime(0.001, t0+durT);'
+  +'o.connect(g); g.connect(ctx.destination);'
+  +'o.start(t0);'
+  +'o.stop(t0 + durT + 0.05);'
   +'}'
+  /* جرس كلاسيكي ding-dong */
+  +'_tone(880, 0, 0.40, 0.55);'
+  +'_tone(660, 0.35, 0.55, 0.55);'
+  +'}catch(e){}'
+  +'}'
+  /* ── تشغيل التسجيل الصوتي المخصص (إن وُجد) ── */
+  /* لم نعد نحاول النطق التلقائي — فقط تشغيل تسجيل المستخدم إن سجّله */
+  +'function _doSpeak(item){'
+  +'try{'
+  /* البحث عن التسجيل المخصص في localStorage */
+  +'var customAudio = null;'
+  +'try{ customAudio = localStorage.getItem("medlab_voice_recording"); }catch(_){}'
+  +'if(!customAudio) return;'                /* لا تسجيل → اكتفِ بالجرس + البطاقة */
+  +'var audio = document.getElementById("_tts_audio");'
+  +'if(!audio){'
+  +'audio = document.createElement("audio");'
+  +'audio.id = "_tts_audio";'
+  +'audio.style.display = "none";'
+  +'audio.preload = "auto";'
+  +'document.body.appendChild(audio);'
+  +'}'
+  +'audio.src = customAudio;'
+  +'audio.volume = 1.0;'
+  +'audio.play().catch(function(err){'
+  +'try{ console.warn("[MedLab] فشل تشغيل التسجيل:", err && err.message); }catch(_){}'
+  +'});'
+  +'}catch(e){}'
   +'}'
   /* ── تمييز صف المريض المنادى ── */
   +'function _highlightRow(rid, on){'
@@ -22464,35 +22618,78 @@ function openWaitScreen(){
   +'if(unlock) unlock.style.display = "inline-flex";'
   +'}'
   +'}'
-  /* ── فك قيد الصوت بنقرة المستخدم (لتجاوز سياسات autoplay في المتصفحات) ── */
+  /* ── فك قيد الصوت بنقرة المستخدم (لتجاوز سياسات autoplay) ── */
   +'function _unlockVoice(){'
   +'try{'
-  +'if(!("speechSynthesis" in window)){'
-  +'alert("المتصفح لا يدعم الناطق الصوتي");'
-  +'return;'
+  /* ① فك قيد Web Audio API (للجرس) */
+  +'try{'
+  +'var Ctx = window.AudioContext || window.webkitAudioContext;'
+  +'if(Ctx && !window._audioCtx) window._audioCtx = new Ctx();'
+  +'if(window._audioCtx && window._audioCtx.state === "suspended"){ window._audioCtx.resume(); }'
+  +'}catch(_){}'
+  /* ② تشغيل الجرس الترحيبي */
+  +'try{ _playChime(); }catch(_){}'
+  /* ③ تشغيل التسجيل المخصص إن وُجد */
+  +'try{'
+  +'var customAudio = localStorage.getItem("medlab_voice_recording");'
+  +'if(customAudio){'
+  +'var audio = document.getElementById("_tts_audio");'
+  +'if(!audio){'
+  +'audio = document.createElement("audio");'
+  +'audio.id = "_tts_audio";'
+  +'audio.style.display = "none";'
+  +'document.body.appendChild(audio);'
   +'}'
-  +'_arVoice = _pickArVoice();'
-  +'var u = new SpeechSynthesisUtterance("تم تفعيل الناطق الصوتي");'
-  +'u.lang = (_arVoice && _arVoice.lang) ? _arVoice.lang : "ar-SA";'
-  +'u.rate = 0.95; u.volume = 1.0;'
-  +'if(_arVoice) u.voice = _arVoice;'
-  +'window.speechSynthesis.cancel();'
-  +'window.speechSynthesis.speak(u);'
+  +'audio.src = customAudio;'
+  +'audio.volume = 1.0;'
+  +'setTimeout(function(){ try{ audio.play(); }catch(_){} }, 2000);'
+  +'}'
+  +'}catch(_){}'
   +'_voiceUnlocked = true;'
   +'_updateVoiceBadges();'
+  +'_showVoiceStatusMsg();'
+  +'}catch(e){}'
+  +'}'
+  /* ── عرض رسالة بسيطة "تم تفعيل الصوت" ── */
+  +'function _showVoiceStatusMsg(){'
+  +'try{'
+  +'var d = document.getElementById("voice-status");'
+  +'if(!d){'
+  +'d = document.createElement("div");'
+  +'d.id = "voice-status";'
+  +'d.style.cssText = "position:fixed;bottom:14px;right:14px;background:rgba(4,8,20,0.95);border:1px solid rgba(0,232,122,0.4);color:#fff;padding:10px 14px;border-radius:10px;font-size:12px;font-weight:700;z-index:9998;max-width:340px;line-height:1.6;box-shadow:0 8px 30px rgba(0,0,0,0.5)";'
+  +'document.body.appendChild(d);'
+  +'}'
+  +'var hasRecording = false;'
+  +'try{ hasRecording = !!localStorage.getItem("medlab_voice_recording"); }catch(_){}'
+  +'if(hasRecording){'
+  +'d.innerHTML = "✅ <span style=\\"color:#00e87a\\">تم تفعيل الصوت</span><br><span style=\\"opacity:0.7;font-weight:400\\">الجرس + التسجيل المخصص جاهزان</span>";'
+  +'}else{'
+  +'d.innerHTML = "✅ <span style=\\"color:#00e87a\\">تم تفعيل الجرس</span><br><span style=\\"opacity:0.7;font-weight:400\\">يمكنك إضافة تسجيل صوتي من الإعدادات (اختياري)</span>";'
+  +'}'
+  +'setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); }, 6000);'
   +'}catch(e){}'
   +'}'
   /* استدعاء أول لتحديث الشارات */
   +'setTimeout(_updateVoiceBadges, 300);'
   /* ── معالج الرسائل من النافذة الأم ── */
   +'window.addEventListener("message",function(e){'
-  +'if(!e.data||e.data.type!=="WQ_UPDATE")return;'
+  +'if(!e.data) return;'
+  /* رسالة تحديث التسجيل الصوتي */
+  +'if(e.data.type === "WQ_VOICE_UPDATE"){'
+  +'try{'
+  +'if(e.data.voice){ localStorage.setItem("medlab_voice_recording", e.data.voice); }'
+  +'else{ localStorage.removeItem("medlab_voice_recording"); }'
+  +'}catch(_){}'
+  +'return;'
+  +'}'
+  +'if(e.data.type!=="WQ_UPDATE")return;'
   +'var c=e.data.cnt;'
   +'document.getElementById("wsp").textContent=c.pending;'
   +'document.getElementById("wsi").textContent=c.inprogress;'
   +'document.getElementById("wsd").textContent=c.done;'
   +'document.getElementById("wst").textContent=c.total;'
-  +'if(typeof e.data.scrollSpeed==="number"){_spd=e.data.scrollSpeed;}'
+  +'if(typeof e.data.scrollSpeed==="number"){_spd=e.data.scrollSpeed; _updateDupVisibility();}'
   +'var newRows=e.data.rows||"";'
   +'if(newRows!==_lastRows){'
   +'_lastRows=newRows;'
@@ -22531,7 +22728,16 @@ function openWaitScreen(){
   +'});'
   +'<\/script></body></html>');
   win.document.close();
-  setTimeout(function(){ _pushWaitScreenData(); }, 1000);
+  setTimeout(function(){
+    _pushWaitScreenData();
+    // إرسال التسجيل المخصص (إن وُجد) إلى نافذة شاشة الانتظار
+    try{
+      var voice = localStorage.getItem('medlab_voice_recording');
+      if(voice && win && !win.closed){
+        win.postMessage({ type:'WQ_VOICE_UPDATE', voice: voice }, '*');
+      }
+    }catch(_){}
+  }, 1000);
   if(window._wsInterval) clearInterval(window._wsInterval);
   window._wsInterval = setInterval(function(){
     if(!window._waitScreenWin||window._waitScreenWin.closed){ clearInterval(window._wsInterval); return; }
