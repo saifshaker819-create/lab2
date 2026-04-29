@@ -2588,10 +2588,10 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
       </div>
       <button class="hbtn" onclick="nav('settings')">⚙️</button>
       <button class="theme-toggle-btn" id="theme-btn" onclick="toggleTheme()" title="تبديل الوضع"></button>
-      <!-- 🔗 مؤشر مزامنة الشبكة المحلية -->
-      <button id="lansync-top-btn" onclick="lansyncOpenSettings()" title="مزامنة الشبكة المحلية" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:5px;font-family:'Cairo',sans-serif;transition:all 0.2s">
-        <span id="lansync-top-dot" style="width:8px;height:8px;border-radius:50%;background:#555;display:inline-block;flex-shrink:0;transition:all .3s"></span>
-        <span id="lansync-top-label">غير مفعّل</span>
+      <!-- مؤشر المزامنة -->
+      <button id="sync-indicator-btn" onclick="syncNow()" title="مزامنة Google Drive" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:5px;font-family:'Cairo',sans-serif;transition:all 0.2s">
+        <span id="sync-dot" style="width:8px;height:8px;border-radius:50%;background:#555;display:inline-block;flex-shrink:0"></span>
+        <span id="sync-label">غير مفعّل</span>
       </button>
       <div class="uavatar">👨‍⚕️</div>
     </div>
@@ -3968,51 +3968,52 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
           </div>
         </div>
 
-        <!-- 🔗 مزامنة الشبكة المحلية (LAN Sync) -->
-        <div class="st-card" id="stc-lansync">
-          <div class="st-card-hdr" onclick="toggleStCard('stc-lansync')">
+        <!-- مزامنة Google Drive -->
+        <div class="st-card" id="stc-sync">
+          <div class="st-card-hdr" onclick="toggleStCard('stc-sync')">
             <div style="display:flex;align-items:center;gap:12px">
-              <span style="font-size:22px">🔗</span>
-              <div><div class="st-card-title">مزامنة الشبكة المحلية</div><div class="st-card-sub" id="lansync-card-sub">ربط الأجهزة عبر الراوتر — بدون إنترنت</div></div>
+              <span style="font-size:22px">☁️</span>
+              <div><div class="st-card-title">مزامنة Google Drive</div><div class="st-card-sub" id="sync-card-sub">اربط حاسبتين على نفس الواي فاي أو الإنترنت</div></div>
             </div>
-            <span class="st-card-arrow" id="arr-stc-lansync">▼</span>
+            <span class="st-card-arrow" id="arr-stc-sync">▼</span>
           </div>
-          <div class="st-card-body" id="body-stc-lansync" style="display:none">
+          <div class="st-card-body" id="body-stc-sync" style="display:none">
             <div style="background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.2);border-radius:10px;padding:14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.8">
               <div style="font-weight:800;color:var(--primary);margin-bottom:6px">📋 كيف تعمل؟</div>
-              ١. شغّل خادم المزامنة (start-server.bat) على الحاسبة الرئيسية<br>
-              ٢. أدخل عنوان IP الذي يظهر في نافذة الخادم أدناه<br>
-              ٣. فعّل المزامنة — البيانات تتزامن فوراً بين كل الأجهزة
+              ١. اختر مجلد Google Drive المزامن على هذه الحاسبة<br>
+              ٢. افعل نفس الشيء على الحاسبة الثانية بنفس المجلد<br>
+              ٣. البيانات تتزامن تلقائياً بين الحاسبتين كل 10 ثواني
             </div>
-            <div style="background:rgba(0,232,122,0.08);border:1px solid rgba(0,232,122,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--success);display:flex;align-items:center;gap:8px">
-              <span style="font-size:16px">🌐</span>
-              <span>تعمل على <b>كل الأجهزة</b> — حاسبات وهواتف عبر الراوتر المحلي بدون إنترنت</span>
+            <div style="background:rgba(255,204,0,0.08);border:1px solid rgba(255,204,0,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--warning);display:flex;align-items:center;gap:8px">
+              <span style="font-size:16px">💻</span>
+              <span>تعمل فقط على <b>Chrome أو Edge</b> على الحاسبة المكتبية أو اللابتوب — غير مدعومة على الموبايل</span>
             </div>
 
-            <div id="lansync-status-box" style="display:none;background:rgba(0,232,122,0.08);border:1px solid rgba(0,232,122,0.25);border-radius:10px;padding:12px;margin-bottom:14px">
+            <div id="sync-status-box" style="display:none;background:rgba(0,232,122,0.08);border:1px solid rgba(0,232,122,0.25);border-radius:10px;padding:12px;margin-bottom:14px">
               <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
                 <div>
-                  <div style="font-size:12px;font-weight:800;color:var(--success)" id="lansync-status-title">🟢 المزامنة مفعّلة</div>
-                  <div style="font-size:11px;color:var(--text2);margin-top:3px" id="lansync-status-detail">—</div>
+                  <div style="font-size:12px;font-weight:800;color:var(--success)">🟢 المزامنة مفعّلة</div>
+                  <div style="font-size:11px;color:var(--text2);margin-top:3px" id="sync-folder-display">—</div>
                 </div>
                 <div style="text-align:left">
-                  <div style="font-size:10px;color:var(--text2)">الأجهزة المتصلة</div>
-                  <div style="font-size:18px;font-weight:800;color:var(--primary)" id="lansync-status-peers">0</div>
+                  <div style="font-size:10px;color:var(--text2)">آخر مزامنة</div>
+                  <div style="font-size:11px;font-weight:700;color:var(--text)" id="sync-last-time">—</div>
                 </div>
               </div>
             </div>
 
-            <label style="display:block;margin-bottom:6px;font-weight:700;font-size:12px;color:var(--text2)">عنوان الخادم:</label>
-            <input id="lansync-url-input" type="text" placeholder="ws://192.168.1.10:8787" class="fc" style="font-family:monospace;direction:ltr;text-align:left;margin-bottom:10px">
-
-            <label style="display:block;margin-bottom:6px;font-weight:700;font-size:12px;color:var(--text2)">اسم هذا الجهاز:</label>
-            <input id="lansync-name-input" type="text" placeholder="مثلاً: استقبال - كمبيوتر 1" class="fc" style="margin-bottom:14px">
-
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button onclick="lansyncSaveAndConnect()" class="btn btn-p" style="flex:1;min-width:140px">🔗 حفظ واتصال</button>
-              <button onclick="lansyncDisable()" class="btn btn-d" style="flex:1;min-width:140px">🔌 إيقاف المزامنة</button>
+            <div id="sync-setup-box">
+              <div style="font-size:12px;color:var(--text2);margin-bottom:10px">اختر المجلد الذي تريد حفظ بيانات المزامنة فيه (يجب أن يكون داخل Google Drive)</div>
+              <button onclick="syncPickFolder()" class="btn btn-p btn-lg" style="width:100%">📁 اختيار مجلد Google Drive</button>
             </div>
-            <div style="margin-top:10px;font-size:11px;color:var(--text2);text-align:center">المزامنة فورية — أقل من ثانية واحدة</div>
+
+            <div id="sync-active-box" style="display:none;margin-top:12px;display:none">
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button onclick="syncNow()" class="btn btn-p" style="flex:1;min-width:120px">🔄 مزامنة الآن</button>
+                <button onclick="syncDisconnect()" class="btn btn-d" style="flex:1;min-width:120px">🔌 قطع الاتصال</button>
+              </div>
+              <div style="margin-top:10px;font-size:11px;color:var(--text2);text-align:center" id="sync-next-label">المزامنة التلقائية كل 10 ثواني</div>
+            </div>
           </div>
         </div>
 
@@ -4297,6 +4298,26 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
                   <div id="ws-speed-radio-fast" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--primary);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center"><div id="ws-speed-dot-fast" style="width:9px;height:9px;border-radius:50%;background:transparent"></div></div>
                   <span style="font-size:13px;font-weight:700">سريع</span>
                 </div>
+              </div>
+            </div>
+
+            <!-- ①.٥ الناطق الصوتي -->
+            <div style="background:var(--bg-glass);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px">
+              <div style="font-size:13px;font-weight:800;color:var(--primary);margin-bottom:6px">🔊 الناطق الصوتي للمرضى الجاهزين</div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:14px;line-height:1.7">
+                عند تفعيل هذا الخيار: عندما تصبح تحاليل أي مريض <b>جاهزة ✅</b> سيتم نطق اسمه باللغة العربية بصوت واضح على شاشة الانتظار، لتنبيه المريض لاستلام النتائج.<br>
+                <span style="color:var(--warning)">💡 يجب أن تسمح المتصفح بتشغيل الصوت في نافذة شاشة الانتظار</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="wsSpeakToggle(true)">
+                  <div id="ws-speak-radio-on" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--primary);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center"><div id="ws-speak-dot-on" style="width:9px;height:9px;border-radius:50%;background:transparent"></div></div>
+                  <span style="font-size:13px;font-weight:700">🔊 تشغيل الناطق الصوتي</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="wsSpeakToggle(false)">
+                  <div id="ws-speak-radio-off" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--primary);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center"><div id="ws-speak-dot-off" style="width:9px;height:9px;border-radius:50%;background:transparent"></div></div>
+                  <span style="font-size:13px;font-weight:700">🔇 إيقاف الناطق الصوتي</span>
+                </div>
+                <button class="btn btn-sm btn-s" onclick="wsTestSpeak()" style="margin-right:auto">🎤 تجربة الصوت</button>
               </div>
             </div>
 
@@ -7317,6 +7338,14 @@ function startApp(){
     }
   }, 300);
   setTimeout(()=>startInventoryMonitor(), 2000);
+  // تشغيل النسخ التلقائي لـ Google Drive إذا كان مفعلاً
+  setTimeout(()=>{
+    if(localStorage.getItem('gdrive_auto')==='1'){
+      const t=localStorage.getItem('gdrive_access_token');
+      const exp=parseInt(localStorage.getItem('gdrive_token_exp')||'0');
+      if(t&&Date.now()<exp){ _gdriveToken=t; _gdriveStartAutoTimer(); }
+    }
+  }, 3000);
   // تشغيل النسخ الاحتياطي التلقائي المحلي
   setTimeout(initAutoBackup, 4000);
   // تشغيل النقل التلقائي كل دقيقتين إلى IDB
@@ -7745,7 +7774,7 @@ function nav(p){
   if(p==='reports'){renderReports();if(typeof phcInit==='function')phcInit();}
   if(p==='dashboard') updateDashboard();
   if(p==='billing'){renderBillingTests();loadBillingPtDropdown();renderBillingHistory();_syncCurrencySelectors();}
-  if(p==='database'){resetDbAuth();updateDbStats();setTimeout(loadAutoBackupUI,120);setTimeout(()=>_fsaUpdateIndicator(!!_fsaDirHandle),150);}
+  if(p==='database'){resetDbAuth();updateDbStats();setTimeout(_gdriveInitUI,100);setTimeout(loadAutoBackupUI,120);setTimeout(()=>_fsaUpdateIndicator(!!_fsaDirHandle),150);}
   if(p==='culture') renderCultureList();
   if(p==='ua') renderUAList();
   if(p==='stool') renderStoolList();
@@ -13797,7 +13826,7 @@ function toggleStCard(id){
     if(id==='stc-groups') renderSettingsGroups();
     if(id==='stc-ua-stool') renderUAFieldsEditor();
     if(id==='stc-phones') renderPhoneBook();
-    if(id==='stc-lansync') lansyncRenderCard();
+    if(id==='stc-sync') syncRenderCard();
   }
 }
 
@@ -14036,7 +14065,8 @@ function saveCurrencyNow(){settings.currency=document.getElementById('st-currenc
 // إعدادات شاشة الانتظار — سرعة التمرير وتصفية الأطباء
 // ============================================================
 function _wsGetSettings(){
-  if(!settings.waitScreen) settings.waitScreen={speed:'slow',doctorFilter:null};
+  if(!settings.waitScreen) settings.waitScreen={speed:'slow',doctorFilter:null,speakEnabled:true};
+  if(typeof settings.waitScreen.speakEnabled === 'undefined') settings.waitScreen.speakEnabled = true;
   return settings.waitScreen;
 }
 
@@ -14049,6 +14079,44 @@ function wsScrollSpeedChange(val){
     if(radio) radio.style.borderColor = o===val ? 'var(--primary)' : 'rgba(255,255,255,0.3)';
   });
   _wsGetSettings().speed = val;
+}
+
+// ── الناطق الصوتي: تفعيل/إيقاف ──
+function wsSpeakToggle(enabled){
+  _wsGetSettings().speakEnabled = !!enabled;
+  // تحديث UI
+  var dotOn = document.getElementById('ws-speak-dot-on');
+  var dotOff = document.getElementById('ws-speak-dot-off');
+  var radOn = document.getElementById('ws-speak-radio-on');
+  var radOff = document.getElementById('ws-speak-radio-off');
+  if(dotOn)  dotOn.style.background  = enabled ? 'var(--primary)' : 'transparent';
+  if(dotOff) dotOff.style.background = !enabled ? 'var(--primary)' : 'transparent';
+  if(radOn)  radOn.style.borderColor  = enabled ? 'var(--primary)' : 'rgba(255,255,255,0.3)';
+  if(radOff) radOff.style.borderColor = !enabled ? 'var(--primary)' : 'rgba(255,255,255,0.3)';
+}
+
+// ── تجربة الناطق الصوتي ──
+function wsTestSpeak(){
+  if(!('speechSynthesis' in window)){
+    showNotif('غير مدعوم','المتصفح الحالي لا يدعم الناطق الصوتي','warning');
+    return;
+  }
+  try{
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance('السيد المريض، تحاليلك جاهزة، يرجى التوجه إلى الاستقبال لاستلام النتائج');
+    u.lang = 'ar-SA';
+    u.rate = 0.9;
+    u.pitch = 1.0;
+    u.volume = 1.0;
+    // محاولة اختيار صوت عربي إن وُجد
+    var voices = window.speechSynthesis.getVoices();
+    var arVoice = voices.find(function(v){ return /ar(-|_)/i.test(v.lang) || /arabic/i.test(v.name); });
+    if(arVoice) u.voice = arVoice;
+    window.speechSynthesis.speak(u);
+    showNotif('تجربة الصوت','🎤 جاري تشغيل عينة صوتية...','info');
+  }catch(e){
+    showNotif('خطأ','تعذر تشغيل الصوت: '+e.message,'danger');
+  }
 }
 
 function wsRefreshDoctorList(){
@@ -14122,6 +14190,8 @@ function _wsInitSettingsUI(){
   var ws = _wsGetSettings();
   // تعيين السرعة
   wsScrollSpeedChange(ws.speed||'slow');
+  // تعيين حالة الناطق الصوتي
+  wsSpeakToggle(ws.speakEnabled !== false);
   // تحميل قائمة الأطباء
   wsRefreshDoctorList();
 }
@@ -16256,8 +16326,231 @@ async function selectAutoBackupFolder(){
   }
 }
 
-// Google Drive Backup System — تم حذفه نهائياً واستبداله بـ LAN Sync
+// ═══════════════════════════════════════════════════
+// Google Drive Backup System
+// ═══════════════════════════════════════════════════
+const GDRIVE_CLIENT_ID = ''; // يُعبأ من المستخدم
+const GDRIVE_SCOPE     = 'https://www.googleapis.com/auth/drive.file';
+let   _gdriveToken     = null;
+let   _gdriveAutoTimer = null;
 
+function _buildBackupJson(){
+  const data={};
+  getAllDbKeys().forEach(k=>{ data[k]=localStorage.getItem(k); });
+  return JSON.stringify({
+    _medlab_backup:true, _version:'2.1',
+    _exportDate:new Date().toISOString(),
+    _userPrefix:'mlab2_'+(DB._user?DB._user+'_':''),
+    _stats:{patients:patients.length,requests:requests.length,invoices:invoices.length},
+    data
+  },null,2);
+}
+
+function gdriveConnect(){
+  // تحقق من CLIENT_ID
+  const cid = localStorage.getItem('gdrive_client_id')||'';
+  if(!cid){
+    const id = prompt('أدخل Google OAuth Client ID الخاص بمشروعك:','');
+    if(!id){ showNotif('تنبيه','يلزم Client ID للربط مع Google Drive','warning'); return; }
+    localStorage.setItem('gdrive_client_id', id.trim());
+  }
+  const clientId = localStorage.getItem('gdrive_client_id');
+  const redirectUri = window.location.href.split('?')[0];
+  const url = 'https://accounts.google.com/o/oauth2/v2/auth?'+
+    'client_id='+encodeURIComponent(clientId)+
+    '&redirect_uri='+encodeURIComponent(redirectUri)+
+    '&response_type=token'+
+    '&scope='+encodeURIComponent(GDRIVE_SCOPE)+
+    '&prompt=consent';
+  // افتح نافذة Auth
+  const w = window.open(url,'gdrive_auth','width=500,height=600');
+  // استمع لإغلاق النافذة أو رجوع الـ token
+  const interval = setInterval(()=>{
+    try{
+      if(!w||w.closed){
+        clearInterval(interval);
+        // تحقق من الـ hash في URL الحالي (implicit flow)
+        _gdriveCheckToken();
+      }
+    }catch(e){ clearInterval(interval); }
+  },500);
+}
+
+function _gdriveCheckToken(){
+  // تحقق إذا كان الـ token في localStorage (من نافذة Redirect)
+  const t=localStorage.getItem('gdrive_access_token');
+  const exp=parseInt(localStorage.getItem('gdrive_token_exp')||'0');
+  if(t && Date.now()<exp){
+    _gdriveToken=t;
+    _gdriveUpdateUI(true);
+    showNotif('تم','✅ تم الربط مع Google Drive بنجاح','success');
+  }
+}
+
+// استقبال الـ token من URL hash (عند Redirect)
+(function _gdriveHandleRedirect(){
+  const hash=window.location.hash;
+  if(hash.includes('access_token')){
+    const params=new URLSearchParams(hash.slice(1));
+    const token=params.get('access_token');
+    const expiresIn=parseInt(params.get('expires_in')||'3600');
+    if(token){
+      localStorage.setItem('gdrive_access_token',token);
+      localStorage.setItem('gdrive_token_exp',String(Date.now()+expiresIn*1000-60000));
+      // امسح الـ hash
+      history.replaceState(null,'',window.location.pathname+window.location.search);
+    }
+  }
+  // استعادة token محفوظ
+  const saved=localStorage.getItem('gdrive_access_token');
+  const exp=parseInt(localStorage.getItem('gdrive_token_exp')||'0');
+  if(saved&&Date.now()<exp){ _gdriveToken=saved; }
+})();
+
+function _gdriveUpdateUI(connected){
+  const statusEl=document.getElementById('gdrive-status');
+  const connectBtn=document.getElementById('gdrive-connect-btn');
+  const backupBtn=document.getElementById('gdrive-backup-now-btn');
+  const autoTog=document.getElementById('gdrive-auto-tog');
+  const lastEl=document.getElementById('gdrive-last-backup');
+  if(!statusEl) return;
+  if(connected){
+    statusEl.innerHTML='<span style="color:var(--success)">🟢 مرتبط — حساب Google Drive متصل</span>';
+    statusEl.style.background='rgba(0,200,80,0.07)';
+    if(connectBtn){ connectBtn.textContent='🔄 تغيير الحساب'; }
+    if(backupBtn){ backupBtn.disabled=false; backupBtn.style.opacity='1'; }
+    if(autoTog){ autoTog.style.opacity='1'; autoTog.style.pointerEvents='auto'; }
+  } else {
+    statusEl.innerHTML='⚪ غير مرتبط — اضغط "ربط الحساب" للبدء';
+    if(backupBtn){ backupBtn.disabled=true; backupBtn.style.opacity='0.4'; }
+    if(autoTog){ autoTog.style.opacity='0.5'; autoTog.style.pointerEvents='none'; }
+  }
+  const last=localStorage.getItem('gdrive_last_backup');
+  if(last&&lastEl) lastEl.textContent='آخر نسخة: '+last;
+  // استعادة حالة التلقائي
+  const autoOn=localStorage.getItem('gdrive_auto')==='1';
+  if(autoTog){ autoTog.classList.toggle('on',autoOn); }
+  if(connected&&autoOn) _gdriveStartAutoTimer();
+}
+
+async function gdriveBackupNow(){
+  if(!_gdriveToken){
+    // حاول استعادة token محفوظ
+    const t=localStorage.getItem('gdrive_access_token');
+    const exp=parseInt(localStorage.getItem('gdrive_token_exp')||'0');
+    if(t&&Date.now()<exp){ _gdriveToken=t; }
+    else { showNotif('تنبيه','يرجى ربط حساب Google Drive أولاً','warning'); return; }
+  }
+  const btn=document.getElementById('gdrive-backup-now-btn');
+  if(btn){ btn.textContent='⏳ جاري الرفع...'; btn.disabled=true; }
+  try{
+    const json=_buildBackupJson();
+    const dateStr=new Date().toISOString().split('T')[0];
+    const fileName=`MedLab_Auto_${dateStr}.json`;
+    // ابحث عن ملف موجود بنفس الاسم لتحديثه
+    const searchRes=await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${fileName}'+and+trashed=false&fields=files(id)`,
+      {headers:{Authorization:'Bearer '+_gdriveToken}}
+    );
+    const searchData=await searchRes.json();
+    const existingId=searchData.files&&searchData.files[0]?searchData.files[0].id:null;
+    // رفع أو تحديث الملف
+    const metadata={name:fileName,mimeType:'application/json'};
+    if(!existingId){
+      // إنشاء مجلد MedLab Pro إذا لم يكن موجوداً
+      const folderRes=await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=name='MedLab Pro'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false&fields=files(id)`,
+        {headers:{Authorization:'Bearer '+_gdriveToken}}
+      );
+      const folderData=await folderRes.json();
+      let folderId=folderData.files&&folderData.files[0]?folderData.files[0].id:null;
+      if(!folderId){
+        const createFolder=await fetch('https://www.googleapis.com/drive/v3/files',{
+          method:'POST',
+          headers:{Authorization:'Bearer '+_gdriveToken,'Content-Type':'application/json'},
+          body:JSON.stringify({name:'MedLab Pro',mimeType:'application/vnd.google-apps.folder'})
+        });
+        const fd=await createFolder.json();
+        folderId=fd.id;
+      }
+      if(folderId) metadata.parents=[folderId];
+    }
+    const form=new FormData();
+    form.append('metadata',new Blob([JSON.stringify(metadata)],{type:'application/json'}));
+    form.append('file',new Blob([json],{type:'application/json'}));
+    const uploadUrl=existingId
+      ?`https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=multipart`
+      :'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    const res=await fetch(uploadUrl,{
+      method:existingId?'PATCH':'POST',
+      headers:{Authorization:'Bearer '+_gdriveToken},
+      body:form
+    });
+    if(res.ok){
+      const now=new Date().toLocaleString('ar');
+      localStorage.setItem('gdrive_last_backup',now);
+      const lastEl=document.getElementById('gdrive-last-backup');
+      if(lastEl) lastEl.textContent='آخر نسخة: '+now;
+      showNotif('تم الرفع','✅ تم رفع النسخة الاحتياطية إلى Google Drive','success');
+    } else {
+      const err=await res.json();
+      if(err.error&&err.error.code===401){
+        localStorage.removeItem('gdrive_access_token');
+        _gdriveToken=null;
+        _gdriveUpdateUI(false);
+        showNotif('خطأ','انتهت صلاحية الجلسة — يرجى ربط الحساب مجدداً','error');
+      } else {
+        showNotif('خطأ','فشل الرفع: '+(err.error&&err.error.message||'خطأ غير معروف'),'error');
+      }
+    }
+  }catch(e){
+    showNotif('خطأ','فشل الاتصال بـ Google Drive: '+e.message,'error');
+  }finally{
+    if(btn){ btn.textContent='☁️ نسخ احتياطي الآن'; btn.disabled=false; }
+  }
+}
+
+function gdriveToggleAuto(tog){
+  tog.classList.toggle('on');
+  const on=tog.classList.contains('on');
+  localStorage.setItem('gdrive_auto',on?'1':'0');
+  if(on){ _gdriveStartAutoTimer(); showNotif('تم','✅ النسخ التلقائي اليومي مفعّل','success'); }
+  else  { _gdriveStopAutoTimer();  showNotif('تم','⏹ تم إيقاف النسخ التلقائي','info'); }
+}
+
+function _gdriveStartAutoTimer(){
+  _gdriveStopAutoTimer();
+  // احسب الوقت حتى منتصف الليل
+  const now=new Date();
+  const midnight=new Date(now); midnight.setHours(2,0,0,0); // 2:00 صباحاً
+  if(midnight<=now) midnight.setDate(midnight.getDate()+1);
+  const msUntil=midnight.getTime()-now.getTime();
+  _gdriveAutoTimer=setTimeout(function(){
+    gdriveBackupNow();
+    _gdriveAutoTimer=setInterval(gdriveBackupNow, 24*60*60*1000);
+  }, msUntil);
+}
+
+function _gdriveStopAutoTimer(){
+  if(_gdriveAutoTimer){ clearTimeout(_gdriveAutoTimer); clearInterval(_gdriveAutoTimer); _gdriveAutoTimer=null; }
+}
+
+// تهيئة UI عند فتح صفحة قاعدة البيانات
+function _gdriveInitUI(){
+  const t=localStorage.getItem('gdrive_access_token');
+  const exp=parseInt(localStorage.getItem('gdrive_token_exp')||'0');
+  _gdriveUpdateUI(!!(t&&Date.now()<exp));
+  // عرض عنوان البرنامج الحالي في التعليمات
+  const originEl=document.getElementById('gdrive-origin-hint');
+  if(originEl) originEl.textContent=window.location.origin||window.location.href.split('/').slice(0,3).join('/');
+}
+
+function toggleGdriveInstructions(){
+  const el=document.getElementById('gdrive-instructions');
+  if(!el) return;
+  const isHidden=el.style.display==='none';
+  el.style.display=isHidden?'block':'none';
+}
 
 function importDatabase(input){
   const file = input.files[0];
@@ -21905,11 +22198,24 @@ function openWaitScreen(){
   +'.live{display:inline-flex;align-items:center;gap:6px;color:rgba(0,232,122,0.7);font-weight:700;}'
   +'.ldot{width:7px;height:7px;background:#00e87a;border-radius:50%;animation:livepulse 2s infinite;}'
   +'@keyframes livepulse{0%,100%{opacity:1}50%{opacity:0.25}}'
+  /* ── طبقة عرض اسم المريض الجاهز عند النطق ── */
+  +'.call-toast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.85);background:linear-gradient(135deg,rgba(0,232,122,0.95),rgba(0,180,90,0.95));color:#fff;padding:34px 60px;border-radius:24px;box-shadow:0 20px 80px rgba(0,232,122,0.5),0 0 200px rgba(0,232,122,0.3);z-index:9999;text-align:center;opacity:0;pointer-events:none;transition:all 0.45s cubic-bezier(0.34,1.56,0.64,1);border:2px solid rgba(255,255,255,0.25);min-width:520px;}'
+  +'.call-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}'
+  +'.call-toast .ct-ic{font-size:64px;margin-bottom:8px;animation:bell 0.6s ease-in-out infinite alternate;}'
+  +'@keyframes bell{0%{transform:rotate(-12deg)}100%{transform:rotate(12deg)}}'
+  +'.call-toast .ct-ttl{font-size:18px;font-weight:700;opacity:0.92;margin-bottom:10px;letter-spacing:1px;}'
+  +'.call-toast .ct-name{font-size:42px;font-weight:900;line-height:1.2;margin-bottom:8px;text-shadow:0 4px 14px rgba(0,0,0,0.3);}'
+  +'.call-toast .ct-sub{font-size:15px;opacity:0.85;font-weight:600;}'
+  /* صف المريض الجاري نداؤه */
+  +'tr.calling-row td{background:rgba(0,232,122,0.18) !important;animation:rowGlow 1.2s ease-in-out infinite alternate;}'
+  +'@keyframes rowGlow{0%{box-shadow:inset 0 0 0 rgba(0,232,122,0)}100%{box-shadow:inset 0 0 30px rgba(0,232,122,0.4)}}'
   +'</style></head><body>'
   +'<div class="hdr">'
   +'<div class="logo"><div class="logo-ic">🔬</div><div><h1>شاشة قاعة الانتظار</h1><p>MedLab Pro — وضع HDMI</p></div></div>'
   +'<div><div class="clock" id="wsclock">--:--:--</div><div class="date-lbl" id="wsdate"></div></div>'
   +'<div style="display:flex;align-items:center;gap:10px">'
+  +'<div id="voice-badge" class="hdmi-badge" style="background:rgba(0,232,122,0.08);border-color:rgba(0,232,122,0.25);color:#00e87a;display:none"><div class="hdmi-dot" style="background:#00e87a"></div>🔊 الناطق نشط</div>'
+  +'<button id="voice-unlock-btn" class="fs-btn" onclick="_unlockVoice()" title="تفعيل الصوت" style="display:none;background:rgba(255,204,0,0.12);border-color:rgba(255,204,0,0.3);color:#ffcc00;width:auto;padding:0 14px;font-size:13px;font-weight:700;gap:6px">🔊 اضغط لتفعيل الصوت</button>'
   +'<div class="hdmi-badge"><div class="hdmi-dot"></div>📺 HDMI نشط</div>'
   +'<button class="fs-btn" onclick="toggleFS()" title="ملء الشاشة / F11">⛶</button>'
   +'</div>'
@@ -21925,6 +22231,12 @@ function openWaitScreen(){
   +'<span class="live"><span class="ldot"></span> البيانات حية</span>'
   +'<span>⏳ انتظار &nbsp;|&nbsp; 🔬 جاري التحليل &nbsp;|&nbsp; ✅ جاهز</span>'
   +'<span>MedLab Pro &copy; '+yr+'</span>'
+  +'</div>'
+  +'<div id="call-toast" class="call-toast" aria-live="polite">'
+  +'<div class="ct-ic">🔔</div>'
+  +'<div class="ct-ttl">📣 نداء للمريض</div>'
+  +'<div class="ct-name" id="ct-name">—</div>'
+  +'<div class="ct-sub">تحاليلك جاهزة، يرجى التوجه إلى الاستقبال</div>'
   +'</div>'
   +'<script>'
   +'function tick(){var n=new Date();'
@@ -21983,6 +22295,168 @@ function openWaitScreen(){
   +'},200);'
   +'}'
   +'})();'
+  /* ── الناطق الصوتي للمرضى الجاهزين ── */
+  +'var _announcedIds = {};'        /* المرضى الذين تم نطقهم بالفعل في هذه الجلسة */
+  +'var _firstSnapshot = true;'     /* أول استقبال للبيانات: نسجّل القائمة فقط دون نطق (لتجنب نطق كل الجاهزين السابقين عند فتح الشاشة) */
+  +'var _speakEnabled = true;'      /* الحالة الحالية للناطق */
+  +'var _speakQueue = [];'          /* طابور النطق */
+  +'var _speakBusy = false;'        /* هل النطق نشط الآن */
+  +'var _voiceUnlocked = false;'    /* هل تم فك القيد عن تشغيل الصوت تلقائياً */
+  +'var _arVoice = null;'           /* الصوت العربي المختار */
+  /* ── اختيار الصوت العربي الأنسب من الأصوات المتاحة في المتصفح ── */
+  +'function _pickArVoice(){'
+  +'try{'
+  +'if(!("speechSynthesis" in window)) return null;'
+  +'var voices = window.speechSynthesis.getVoices()||[];'
+  +'if(!voices.length) return null;'
+  /* تفضيل: ar-SA > ar-EG > أي ar > أي صوت يحتوي Arabic */
+  +'var pri = ["ar-SA","ar-EG","ar-AE","ar-JO","ar-IQ","ar-KW","ar-BH","ar-OM","ar-QA","ar-LB","ar-LY","ar-MA","ar-DZ","ar-TN","ar-YE","ar-SY","ar-PS"];'
+  +'for(var i=0;i<pri.length;i++){'
+  +'var v = voices.find(function(x){ return (x.lang||"").toLowerCase() === pri[i].toLowerCase(); });'
+  +'if(v) return v;'
+  +'}'
+  +'var anyAr = voices.find(function(x){ return /^ar(-|_)/i.test(x.lang||"") || /arabic/i.test(x.name||""); });'
+  +'return anyAr || null;'
+  +'}catch(e){ return null; }'
+  +'}'
+  /* ── تحميل الأصوات (تأتي بشكل غير متزامن في بعض المتصفحات) ── */
+  +'function _loadVoices(){'
+  +'_arVoice = _pickArVoice();'
+  +'if("speechSynthesis" in window && typeof window.speechSynthesis.onvoiceschanged !== "undefined"){'
+  +'window.speechSynthesis.onvoiceschanged = function(){ _arVoice = _pickArVoice(); };'
+  +'}'
+  +'}'
+  +'_loadVoices();'
+  /* ── تطبيع الاسم العربي قبل النطق: إزالة أي شيء بين قوسين، حذف الرموز، توحيد المسافات ── */
+  +'function _normalizeName(name){'
+  +'if(!name) return "";'
+  +'var s = String(name);'
+  +'s = s.replace(/\\([^)]*\\)/g,"");'        /* إزالة ما بين الأقواس الإنجليزية */
+  +'s = s.replace(/\\[[^\\]]*\\]/g,"");'      /* إزالة ما بين القوسين المربعين */
+  +'s = s.replace(/[A-Za-z0-9_\\-\\.]/g," ");' /* إزالة الأحرف اللاتينية والأرقام */
+  +'s = s.replace(/[^\\u0600-\\u06FF\\s]/g," ");' /* الإبقاء على الحروف العربية والمسافات فقط */
+  +'s = s.replace(/\\s+/g," ").trim();'
+  +'return s;'
+  +'}'
+  /* ── إخراج العنصر التالي من طابور النطق وتشغيله ── */
+  +'function _speakNext(){'
+  +'if(_speakBusy) return;'
+  +'if(!_speakEnabled){ _speakQueue = []; return; }'
+  +'if(!("speechSynthesis" in window)) return;'
+  +'var item = _speakQueue.shift();'
+  +'if(!item) return;'
+  +'_speakBusy = true;'
+  /* عرض البطاقة على الشاشة */
+  +'var toast = document.getElementById("call-toast");'
+  +'var nameEl = document.getElementById("ct-name");'
+  +'if(nameEl) nameEl.textContent = item.displayName || item.name;'
+  +'if(toast) toast.classList.add("show");'
+  /* تمييز صف المريض في الجدول */
+  +'_highlightRow(item.id, true);'
+  +'try{'
+  +'window.speechSynthesis.cancel();'
+  /* الجملة الأولى: الإعلان */
+  +'var phrase = "السيد " + item.name + "، تحاليلك جاهزة، يرجى التوجه إلى الاستقبال";'
+  +'var u = new SpeechSynthesisUtterance(phrase);'
+  +'u.lang = (_arVoice && _arVoice.lang) ? _arVoice.lang : "ar-SA";'
+  +'u.rate = 0.88;'
+  +'u.pitch = 1.0;'
+  +'u.volume = 1.0;'
+  +'if(_arVoice) u.voice = _arVoice;'
+  +'u.onend = function(){'
+  /* بعد انتهاء النطق: انتظر قليلاً ثم أخفِ البطاقة وانتقل للتالي */
+  +'setTimeout(function(){'
+  +'if(toast) toast.classList.remove("show");'
+  +'_highlightRow(item.id, false);'
+  +'_speakBusy = false;'
+  +'setTimeout(_speakNext, 600);'
+  +'}, 1200);'
+  +'};'
+  +'u.onerror = function(){'
+  +'if(toast) toast.classList.remove("show");'
+  +'_highlightRow(item.id, false);'
+  +'_speakBusy = false;'
+  +'setTimeout(_speakNext, 400);'
+  +'};'
+  +'window.speechSynthesis.speak(u);'
+  /* احتياطي: إذا لم يصدر onend خلال 12 ثانية، أكمل بأي حال */
+  +'setTimeout(function(){'
+  +'if(_speakBusy){'
+  +'if(toast) toast.classList.remove("show");'
+  +'_highlightRow(item.id, false);'
+  +'_speakBusy = false;'
+  +'_speakNext();'
+  +'}'
+  +'}, 12000);'
+  +'}catch(err){'
+  +'if(toast) toast.classList.remove("show");'
+  +'_highlightRow(item.id, false);'
+  +'_speakBusy = false;'
+  +'setTimeout(_speakNext, 400);'
+  +'}'
+  +'}'
+  /* ── تمييز صف المريض المنادى ── */
+  +'function _highlightRow(rid, on){'
+  +'try{'
+  +'var rows = document.querySelectorAll("#hdmi-orig tr, #hdmi-dup tr");'
+  +'rows.forEach(function(tr){'
+  +'var idCell = tr.children && tr.children[1];'
+  +'if(!idCell) return;'
+  +'if((idCell.textContent||"").trim() === String(rid)){'
+  +'if(on) tr.classList.add("calling-row"); else tr.classList.remove("calling-row");'
+  +'}'
+  +'});'
+  +'}catch(e){}'
+  +'}'
+  /* ── إضافة مريض إلى طابور النطق ── */
+  +'function _enqueueSpeak(req){'
+  +'if(!_speakEnabled) return;'
+  +'var displayName = (req.name||"").trim();'
+  +'var nName = _normalizeName(displayName);'
+  +'if(!nName) nName = displayName;'  /* إذا فشل التطبيع نستخدم الأصلي */
+  +'if(!nName) return;'
+  +'_speakQueue.push({ id: req.id, name: nName, displayName: displayName });'
+  +'_speakNext();'
+  +'}'
+  /* ── تحديث شارة حالة الصوت في الهيدر ── */
+  +'function _updateVoiceBadges(){'
+  +'var badge = document.getElementById("voice-badge");'
+  +'var unlock = document.getElementById("voice-unlock-btn");'
+  +'if(!_speakEnabled){'
+  +'if(badge) badge.style.display = "none";'
+  +'if(unlock) unlock.style.display = "none";'
+  +'return;'
+  +'}'
+  /* الناطق مفعّل */
+  +'if(_voiceUnlocked){'
+  +'if(badge) badge.style.display = "flex";'
+  +'if(unlock) unlock.style.display = "none";'
+  +'}else{'
+  +'if(badge) badge.style.display = "none";'
+  +'if(unlock) unlock.style.display = "inline-flex";'
+  +'}'
+  +'}'
+  /* ── فك قيد الصوت بنقرة المستخدم (لتجاوز سياسات autoplay في المتصفحات) ── */
+  +'function _unlockVoice(){'
+  +'try{'
+  +'if(!("speechSynthesis" in window)){'
+  +'alert("المتصفح لا يدعم الناطق الصوتي");'
+  +'return;'
+  +'}'
+  +'_arVoice = _pickArVoice();'
+  +'var u = new SpeechSynthesisUtterance("تم تفعيل الناطق الصوتي");'
+  +'u.lang = (_arVoice && _arVoice.lang) ? _arVoice.lang : "ar-SA";'
+  +'u.rate = 0.95; u.volume = 1.0;'
+  +'if(_arVoice) u.voice = _arVoice;'
+  +'window.speechSynthesis.cancel();'
+  +'window.speechSynthesis.speak(u);'
+  +'_voiceUnlocked = true;'
+  +'_updateVoiceBadges();'
+  +'}catch(e){}'
+  +'}'
+  /* استدعاء أول لتحديث الشارات */
+  +'setTimeout(_updateVoiceBadges, 300);'
+  /* ── معالج الرسائل من النافذة الأم ── */
   +'window.addEventListener("message",function(e){'
   +'if(!e.data||e.data.type!=="WQ_UPDATE")return;'
   +'var c=e.data.cnt;'
@@ -21995,6 +22469,36 @@ function openWaitScreen(){
   +'if(newRows!==_lastRows){'
   +'_lastRows=newRows;'
   +'_buildMarquee(newRows||null);'
+  +'}'
+  /* ── منطق الناطق الصوتي ── */
+  +'if(typeof e.data.speakEnabled === "boolean"){'
+  +'var prev = _speakEnabled;'
+  +'_speakEnabled = e.data.speakEnabled;'
+  +'if(!_speakEnabled){'
+  /* أُوقف الصوت → امسح الطابور وأوقف النطق فوراً */
+  +'_speakQueue = [];'
+  +'try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(_){}'
+  +'_speakBusy = false;'
+  +'var toast=document.getElementById("call-toast"); if(toast) toast.classList.remove("show");'
+  +'}'
+  +'_updateVoiceBadges();'
+  +'}'
+  +'var doneList = e.data.doneList || [];'
+  +'if(_firstSnapshot){'
+  /* أول استقبال: سجّل كل الجاهزين الحاليين دون نطقهم */
+  +'doneList.forEach(function(p){ _announcedIds[p.id] = true; });'
+  +'_firstSnapshot = false;'
+  +'}else if(_speakEnabled){'
+  /* اكتشف الجاهزين الجدد فقط ونطقهم */
+  +'doneList.forEach(function(p){'
+  +'if(!_announcedIds[p.id]){'
+  +'_announcedIds[p.id] = true;'
+  +'_enqueueSpeak(p);'
+  +'}'
+  +'});'
+  +'}else{'
+  /* الصوت مغلق: سجّل الجاهزين دون نطق لتجنب نطقهم لاحقاً عند تفعيل الصوت */
+  +'doneList.forEach(function(p){ _announcedIds[p.id] = true; });'
   +'}'
   +'});'
   +'<\/script></body></html>');
@@ -22061,7 +22565,22 @@ function _pushWaitScreenData(){
           +'<td><span class="pill '+sC+'">'+sL+'</span></td></tr>';
       }).join('');
   }
-  try{ win.postMessage({type:'WQ_UPDATE', rows, cnt, scrollSpeed:_wsGetScrollSpeed()}, '*'); }catch(e){}
+  // قائمة المرضى الجاهزين (للناطق الصوتي)
+  var doneList = filteredReqs
+    .filter(function(r){ return r.status==='done'; })
+    .map(function(r){ return { id: r.id, name: (r.patientName||'').toString() }; });
+  var ws = (settings&&settings.waitScreen)||{};
+  var speakEnabled = ws.speakEnabled !== false;
+  try{
+    win.postMessage({
+      type:'WQ_UPDATE',
+      rows: rows,
+      cnt: cnt,
+      scrollSpeed: _wsGetScrollSpeed(),
+      doneList: doneList,
+      speakEnabled: speakEnabled
+    }, '*');
+  }catch(e){}
 }
 
 function updateWaitScreen(){ _pushWaitScreenData(); }
@@ -22468,8 +22987,469 @@ document.addEventListener('DOMContentLoaded', function(){
 </html>
 
 <script>
-// نظام المزامنة عبر Google Drive — تم حذفه نهائياً واستبداله بـ LAN Sync
+// ============================================================
+// 🔄 نظام المزامنة عبر Google Drive (File System Access API)
+// النسخة الذكية — version counter + merge + lock protection
+// ============================================================
+const SYNC_KEYS = ['patients','requests','invoices','packages','inventory','doctors','billing','testGroups','qc','cultureRecords','uaRecords','stoolExamRecords','semenRecords','phoneBook'];
+const SYNC_FILE     = 'medlab-sync.json';
+const SYNC_LOCK     = 'medlab-sync.lock';   // ملف القفل لمنع التضارب
+const SYNC_INTERVAL = 15000;                // كل 15 ثانية (أكثر أماناً من 10)
+const SYNC_DEVICE_ID = (()=>{
+  let id = localStorage.getItem('_sync_device_id');
+  if(!id){ id = 'dev_' + Math.random().toString(36).slice(2,9); localStorage.setItem('_sync_device_id',id); }
+  return id;
+})();
 
+let _syncDirHandle  = null;
+let _syncInterval   = null;
+let _syncLastVer    = 0;     // آخر version counter قرأناه أو كتبناه
+let _syncWriting    = false;
+let _syncBusy       = false; // منع تشغيل دورتين في نفس الوقت
+
+window.addEventListener('load', function(){ _syncRestoreHandle(); });
+
+async function _syncRestoreHandle(){
+  try{
+    const stored = localStorage.getItem('sync_dir_name');
+    if(!stored) return;
+    // لا نحاول الاستعادة على الموبايل
+    if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) return;
+    const h = await _idbGetHandle();
+    if(!h) return;
+    const perm = await h.requestPermission({mode:'readwrite'});
+    if(perm === 'granted'){
+      _syncDirHandle = h;
+      _syncStartPolling();
+      _syncUpdateIndicator('active');
+      syncRenderCard();
+    }
+  }catch(e){
+    // فشل الاستعادة — امسح الـ handle القديم
+    localStorage.removeItem('sync_dir_name');
+    _idbDelHandle();
+  }
+}
+
+async function syncPickFolder(){
+  // تحقق من دعم المتصفح والجهاز
+  const isDesktop = !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const isSupported = 'showDirectoryPicker' in window;
+
+  if(!isSupported || !isDesktop){
+    showNotif('غير مدعوم',
+      '⚠️ هذه الميزة تعمل فقط على Chrome أو Edge على الحاسبة المكتبية أو اللابتوب — لا تعمل على الموبايل',
+      'error');
+    return;
+  }
+  try{
+    const h = await window.showDirectoryPicker({mode:'readwrite',startIn:'desktop'});
+    _syncDirHandle = h;
+    localStorage.setItem('sync_dir_name', h.name);
+    await _idbSetHandle(h);
+    await _syncWrite();
+    _syncStartPolling();
+    _syncUpdateIndicator('active');
+    syncRenderCard();
+    showNotif('مزامنة','✅ تم ربط المجلد وتفعيل المزامنة التلقائية','success');
+  }catch(e){
+    if(e.name==='AbortError') return; // المستخدم ألغى
+    if(e.name==='InvalidStateError'){
+      // الـ handle تغيّر — أعد الاختيار
+      _syncDirHandle = null;
+      localStorage.removeItem('sync_dir_name');
+      await _idbDelHandle();
+      showNotif('تنبيه','يرجى اختيار المجلد مجدداً','error');
+      syncRenderCard();
+    } else {
+      showNotif('خطأ','تعذّر اختيار المجلد: '+e.message,'error');
+    }
+  }
+}
+
+function syncDisconnect(){
+  if(!confirm('إيقاف المزامنة؟ لن تُحذف البيانات.')) return;
+  _syncStopPolling();
+  _syncDirHandle = null;
+  _syncLastVer   = 0;
+  _syncBusy      = false;
+  localStorage.removeItem('sync_dir_name');
+  _idbDelHandle();
+  _syncUpdateIndicator('off');
+  syncRenderCard();
+  showNotif('مزامنة','تم إيقاف المزامنة','info');
+}
+
+async function syncNow(){
+  if(!_syncDirHandle){ showNotif('تنبيه','يرجى اختيار مجلد أولاً','error'); return; }
+  _syncUpdateIndicator('syncing');
+  await _syncCycle();
+}
+
+async function _syncCycle(){
+  if(_syncBusy) return;
+  _syncBusy = true;
+  try{
+    // ① أول شيء: اقرأ فقط الـ version من الملف (خفيف جداً)
+    const remote = await _syncRead();
+
+    // ② إذا لا يوجد ملف → اكتب أول نسخة
+    if(!remote){
+      const localData = _syncCollect();
+      await _syncWrite(1, localData);
+      _syncLastVer = 1;
+      _syncSetLastTime();
+      _syncUpdateIndicator('active');
+      return;
+    }
+
+    const remoteVer = remote.ver || 0;
+
+    // ③ الملف أحدث → نحتاج merge (العمل الثقيل فقط عند الحاجة)
+    if(remoteVer > _syncLastVer){
+      const localData = _syncCollect();
+      const merged    = _syncMerge(remote.data || {}, localData, remote.deviceId);
+      const changed   = _syncApply(merged);
+      _syncLastVer    = remoteVer;
+      if(changed === 'local_newer'){
+        const newVer = remoteVer + 1;
+        await _syncWrite(newVer, _syncCollect());
+        _syncLastVer = newVer;
+      }
+      _syncSetLastTime();
+      _syncUpdateIndicator('active');
+      return;
+    }
+
+    // ④ نفس الـ version — تحقق فقط إذا عندنا تغييرات محلية جديدة
+    // بدل JSON.stringify للكل: نقارن _localTs فقط (خفيف جداً)
+    const localTs  = parseInt(localStorage.getItem('_sync_local_ts')||'0');
+    const remoteTs = remote.data ? (remote.data._localTs||0) : 0;
+    if(localTs > remoteTs){
+      // عندنا تغييرات جديدة → ارفع
+      const localData = _syncCollect();
+      const newVer    = _syncLastVer + 1;
+      await _syncWrite(newVer, localData);
+      _syncLastVer = newVer;
+    }
+    // إذا لا تغييرات → لا تفعل شيئاً (أسرع حالة ممكنة)
+    _syncSetLastTime();
+    _syncUpdateIndicator('active');
+
+  }catch(e){
+    if(e.name==='InvalidStateError'){
+      _syncStopPolling();
+      _syncDirHandle = null;
+      localStorage.removeItem('sync_dir_name');
+      _idbDelHandle();
+      _syncUpdateIndicator('error');
+      syncRenderCard();
+      showNotif('مزامنة','⚠️ انقطع الاتصال بالمجلد — يرجى إعادة الاختيار من الإعدادات','error');
+    } else {
+      _syncUpdateIndicator('error');
+    }
+  } finally {
+    _syncBusy = false;
+  }
+}
+
+function _syncCollect(){
+  const data = {};
+  const pfx  = DB._pfx();
+  SYNC_KEYS.forEach(k=>{
+    try{ data[k] = JSON.parse(localStorage.getItem(pfx+k)||'null'); }catch(e){}
+  });
+  // نحفظ timestamp آخر تعديل محلي بشكل منفصل
+  data._localTs = parseInt(localStorage.getItem('_sync_local_ts')||'0');
+  data._device  = SYNC_DEVICE_ID;
+  return data;
+}
+
+// يُستدعى عند أي تعديل محلي لتسجيل وقت التعديل
+function _syncMarkLocalChange(){
+  localStorage.setItem('_sync_local_ts', String(Date.now()));
+}
+
+// ═══════════════════════════════════════════════════════════
+// merge ذكي على مستوى كل record بشكل منفصل
+// القاعدة: الحقول "لا رجعة فيها" (مثل printed) لا تُعكس أبداً
+// ═══════════════════════════════════════════════════════════
+
+// حقول لا رجعة فيها: إذا صارت true في أي جهاز تبقى true للأبد
+const SYNC_IRREVERSIBLE = ['printed', 'cancelled', 'paid', 'settled'];
+
+function _syncMerge(remoteData, localData, remoteDevice){
+  // نفس الجهاز — لا داعي للدمج
+  if(remoteDevice === SYNC_DEVICE_ID) return localData;
+
+  const merged = {};
+
+  SYNC_KEYS.forEach(k=>{
+    const local  = localData[k];
+    const remote = remoteData[k];
+
+    // أحدهما غائب → خذ الموجود
+    if(!remote && !local){ merged[k] = local; return; }
+    if(!remote)           { merged[k] = local; return; }
+    if(!local)            { merged[k] = remote; return; }
+
+    // كلاهما مصفوفات (patients, requests, invoices...)
+    if(Array.isArray(local) && Array.isArray(remote)){
+      merged[k] = _syncMergeArray(local, remote);
+      return;
+    }
+
+    // كلاهما objects (إعدادات، billing...)
+    if(typeof local === 'object' && typeof remote === 'object'){
+      // دمج سطحي: الأحدث يفوز لكل مفتاح
+      merged[k] = Object.assign({}, remote, local);
+      return;
+    }
+
+    // قيمة بسيطة: Local يفوز (الجهاز الحالي أعلم بنفسه)
+    merged[k] = local;
+  });
+
+  merged._localTs = Math.max(localData._localTs||0, remoteData._localTs||0);
+  merged._device  = SYNC_DEVICE_ID;
+  return merged;
+}
+
+// دمج مصفوفتين من records على مستوى كل عنصر بشكل منفصل
+function _syncMergeArray(localArr, remoteArr){
+  // بناء map من remote بالـ id
+  const remoteMap = new Map();
+  remoteArr.forEach(item => {
+    if(!item) return;
+    const id = item.id || item._id || item.patientId || item.reqId;
+    if(id) remoteMap.set(id, item);
+  });
+
+  // ابدأ بـ local وادمج مع remote لكل عنصر
+  const result = localArr.map(localItem => {
+    if(!localItem) return localItem;
+    const id = localItem.id || localItem._id || localItem.patientId || localItem.reqId;
+    if(!id) return localItem;
+
+    const remoteItem = remoteMap.get(id);
+    if(!remoteItem) return localItem; // عنصر جديد محلياً فقط
+
+    // دمج الحقول: local يفوز إلا إذا remote أحدث في الحقول العادية
+    remoteMap.delete(id); // نزيله لنعرف ما تبقى في remote
+    return _syncMergeRecord(localItem, remoteItem);
+  });
+
+  // العناصر الموجودة في remote فقط (جديدة من الجهاز الآخر) → أضفها
+  remoteMap.forEach(remoteItem => {
+    result.push(remoteItem);
+  });
+
+  return result;
+}
+
+// دمج record واحد:
+// القاعدة: الأحدث _updatedAt يفوز بالكامل
+// استثناء وحيد: حقول IRREVERSIBLE (printed, paid...) — true يفوز دائماً
+function _syncMergeRecord(local, remote){
+  const localTs  = local._updatedAt  || 0;
+  const remoteTs = remote._updatedAt || 0;
+
+  // اختر الفائز بالكامل بناءً على الأحدث
+  const winner = remoteTs > localTs ? remote : local;
+  const loser  = remoteTs > localTs ? local  : remote;
+
+  const merged = Object.assign({}, winner);
+
+  // الاستثناء الوحيد: حقول لا رجعة فيها — true يفوز من أي جهاز
+  SYNC_IRREVERSIBLE.forEach(field => {
+    if(loser[field]) merged[field] = loser[field];
+  });
+
+  return merged;
+}
+
+function _syncApply(data){
+  const pfx = DB._pfx();
+  let changed = false;
+  SYNC_KEYS.forEach(k=>{
+    if(data[k] !== undefined && data[k] !== null){
+      const cur = localStorage.getItem(pfx+k);
+      const nxt = JSON.stringify(data[k]);
+      if(cur !== nxt){ localStorage.setItem(pfx+k, nxt); changed = true; }
+    }
+  });
+  if(changed){
+    loadData(); renderAll(); updateDashboard();
+    showNotif('مزامنة','📥 تم استلام تحديثات من الحاسبة الأخرى','info');
+  }
+  // أعد إشارة: هل البيانات المحلية كانت أحدث (تحتاج رفع)؟
+  const localTs  = parseInt(localStorage.getItem('_sync_local_ts')||'0');
+  const remoteTs = data._localTs || 0;
+  return localTs > remoteTs ? 'local_newer' : 'remote_newer';
+}
+
+async function _syncRead(){
+  try{
+    const fh   = await _syncDirHandle.getFileHandle(SYNC_FILE,{create:false});
+    const file = await fh.getFile();
+    return JSON.parse(await file.text());
+  }catch(e){ return null; }
+}
+
+// _syncWrite الجديد: يكتب مع version counter + deviceId
+async function _syncWrite(ver, data){
+  if(_syncWriting) return;
+  _syncWriting = true;
+  try{
+    const payload = JSON.stringify({
+      ver      : ver,
+      ts       : Date.now(),
+      deviceId : SYNC_DEVICE_ID,
+      data     : data
+    }, null, 0);
+    const fh = await _syncDirHandle.getFileHandle(SYNC_FILE,{create:true});
+    const w  = await fh.createWritable();
+    await w.write(payload);
+    await w.close();
+  }finally{
+    _syncWriting = false;
+  }
+}
+
+function _syncStartPolling(){
+  _syncStopPolling();
+  // تشغيل أول دورة فوراً لكن في وقت فراغ المتصفح
+  _syncSchedule();
+  _syncInterval = setInterval(_syncSchedule, SYNC_INTERVAL);
+}
+function _syncStopPolling(){
+  if(_syncInterval){ clearInterval(_syncInterval); _syncInterval=null; }
+}
+
+// تشغيل المزامنة فقط لما المتصفح فاضي — لا تأثير على الأداء
+function _syncSchedule(){
+  if(_syncBusy) return;
+  if(typeof requestIdleCallback !== 'undefined'){
+    // المتصفح يختار الوقت المناسب (لما المستخدم مو شاغل)
+    requestIdleCallback(()=> _syncCycle(), { timeout: 5000 });
+  } else {
+    // fallback للمتصفحات القديمة
+    setTimeout(_syncCycle, 0);
+  }
+}
+
+function _syncUpdateIndicator(state){
+  const dot   = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  if(!dot||!label) return;
+  const map = {
+    off:     {c:'#555',       t:'غير مفعّل'},
+    active:  {c:'#00e87a',    t:'مزامن ✓'},
+    syncing: {c:'#ffcc00',    t:'يزامن...'},
+    error:   {c:'#ff2244',    t:'خطأ !'}
+  };
+  const s = map[state]||map.off;
+  dot.style.background = s.c;
+  dot.style.boxShadow  = state==='active'?'0 0 6px #00e87a':state==='syncing'?'0 0 6px #ffcc00':'none';
+  label.textContent    = s.t;
+  label.style.color    = state==='active'?'#00e87a':state==='error'?'#ff2244':state==='syncing'?'#ffcc00':'';
+}
+
+function _syncSetLastTime(){
+  const el = document.getElementById('sync-last-time');
+  if(el) el.textContent = new Date().toLocaleTimeString('ar-EG');
+}
+
+function syncRenderCard(){
+  const active    = !!_syncDirHandle;
+  const setupBox  = document.getElementById('sync-setup-box');
+  const activeBox = document.getElementById('sync-active-box');
+  const statusBox = document.getElementById('sync-status-box');
+  const folderEl  = document.getElementById('sync-folder-display');
+  const subEl     = document.getElementById('sync-card-sub');
+  if(!setupBox) return;
+  setupBox.style.display  = active ? 'none'  : 'block';
+  activeBox.style.display = active ? 'flex'  : 'none';
+  statusBox.style.display = active ? 'block' : 'none';
+  if(active){
+    if(folderEl) folderEl.textContent = '📁 ' + (localStorage.getItem('sync_dir_name')||'مجلد محدد');
+    if(subEl)    subEl.textContent    = '🟢 المزامنة مفعّلة تلقائياً';
+  } else {
+    if(subEl)    subEl.textContent    = 'اربط حاسبتين على نفس الواي فاي أو الإنترنت';
+  }
+}
+
+// ربط save() بالمزامنة الفورية + تسجيل وقت التعديل المحلي
+const _origSave = window.save;
+window.save = function(k,v){
+  // أضف _updatedAt لكل عنصر في المصفوفات التي تُزامن
+  // هذا يُمكّن المزامنة الذكية من معرفة أحدث تعديل لكل record
+  if(Array.isArray(v) && SYNC_KEYS.includes(k)){
+    const now = Date.now();
+    v = v.map(item => {
+      if(!item || typeof item !== 'object') return item;
+      // أضف _updatedAt فقط إذا لم يكن موجوداً أو إذا تغيّر الـ record
+      // نستخدم flag مؤقت _dirty الذي يُضاف عند التعديل
+      if(item._dirty){
+        const {_dirty, ...rest} = item;
+        return {...rest, _updatedAt: now};
+      }
+      if(!item._updatedAt) return {...item, _updatedAt: now};
+      return item;
+    });
+  }
+  _origSave(k,v);
+  _syncMarkLocalChange(); // سجّل وقت التعديل دائماً
+  if(_syncDirHandle && !_syncWriting && !_syncBusy){
+    clearTimeout(window._syncDebounce);
+    window._syncDebounce = setTimeout(()=>{
+      const newVer = _syncLastVer + 1;
+      const data   = _syncCollect();
+      _syncWrite(newVer, data).then(()=>{ _syncLastVer = newVer; });
+    }, 1200); // debounce 1.2 ثانية لتجميع التعديلات المتزامنة
+  }
+};
+
+// IndexedDB لحفظ FileSystemDirectoryHandle بين الجلسات
+function _idbOpen(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open('medlab_sync_v1',1);
+    r.onupgradeneeded = e => e.target.result.createObjectStore('handles');
+    r.onsuccess = e => res(e.target.result);
+    r.onerror   = e => rej(e);
+  });
+}
+async function _idbSetHandle(h){
+  const db=await _idbOpen();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction('handles','readwrite');
+    tx.objectStore('handles').put(h,'dirHandle');
+    tx.oncomplete=res; tx.onerror=rej;
+  });
+}
+async function _idbGetHandle(){
+  const db=await _idbOpen();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction('handles','readonly');
+    const r=tx.objectStore('handles').get('dirHandle');
+    r.onsuccess=e=>res(e.target.result||null);
+    r.onerror=rej;
+  });
+}
+async function _idbDelHandle(){
+  const db=await _idbOpen();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction('handles','readwrite');
+    tx.objectStore('handles').delete('dirHandle');
+    tx.oncomplete=res; tx.onerror=rej;
+  });
+}
+
+function _hash(str){
+  let h=0;
+  for(let i=0;i<str.length;i++){ h=Math.imul(31,h)+str.charCodeAt(i)|0; }
+  return h;
+}
 
 // ╔══════════════════════════════════════════════════════════════════════╗
 // ║              LIS BRIDGE — ربط أجهزة المختبر                        ║
@@ -27590,453 +28570,6 @@ setTimeout(function(){
   document.head.appendChild(s);
 
   resetTimer();
-
-})();
-
-// ═══════════════════════════════════════════════════════════════
-// 🔗 LAN SYNC — نظام مزامنة الشبكة المحلية
-// متكامل مع الزر العلوي وكارت الإعدادات
-// يعمل عبر WebSocket مع خادم Node.js على الراوتر المحلي
-// لا يحتاج إنترنت — لا يؤثر على عمر الجهاز
-// ═══════════════════════════════════════════════════════════════
-(function(){
-'use strict';
-
-const SYNC = {
-  ws: null,
-  connected: false,
-  url: localStorage.getItem('lansync_url') || '',
-  enabled: localStorage.getItem('lansync_enabled') === '1',
-  deviceId: localStorage.getItem('lansync_device_id') || ('dev_'+Math.random().toString(36).slice(2,10)),
-  deviceName: localStorage.getItem('lansync_device_name') || ('جهاز-'+(navigator.platform||'').slice(0,6)),
-  reconnectTimer: null,
-  reconnectDelay: 2000,
-  applyingRemote: false,
-  lastSyncTs: {},
-  pendingChanges: new Map(),
-  peerCount: 0,
-
-  // المفاتيح التي تُزامَن — كل البيانات (مرضى + نتائج + إعدادات)
-  SYNC_KEYS: new Set([
-    'patients','requests','invoices','doctors','packages','inventory',
-    'qc','tests','testGroups','billing',
-    'cultureRecords','uaRecords','stoolExamRecords','semenRecords',
-    'phoneBook','labInfo','labSettings','printSettings','reportSettings',
-    'currency','users','roles','permissions',
-    'notifications','templates','reagents','calibrations'
-  ]),
-
-  init(){
-    localStorage.setItem('lansync_device_id', this.deviceId);
-    localStorage.setItem('lansync_device_name', this.deviceName);
-    this.hookDB();
-    this.updateTopButton();
-    if(this.enabled && this.url){
-      setTimeout(()=>this.connect(), 1500);
-    }
-    // اختصار: Ctrl+Shift+S لفتح الإعدادات
-    document.addEventListener('keydown', e=>{
-      if(e.ctrlKey && e.shiftKey && e.key==='S'){
-        e.preventDefault();
-        this.openSettings();
-      }
-    });
-  },
-
-  // ── تحديث الزر العلوي ──
-  updateTopButton(){
-    const dot = document.getElementById('lansync-top-dot');
-    const label = document.getElementById('lansync-top-label');
-    const btn = document.getElementById('lansync-top-btn');
-    if(!dot||!label) return;
-
-    if(!this.enabled){
-      dot.style.background='#6b7280'; dot.style.boxShadow='none';
-      label.textContent='غير مفعّل';
-      if(btn) btn.title='المزامنة معطّلة — انقر للإعداد';
-    } else if(this.connected){
-      dot.style.background='#10b981'; dot.style.boxShadow='0 0 8px rgba(16,185,129,.6)';
-      label.textContent = this.peerCount>0 ? `متصل · ${this.peerCount}` : 'متصل';
-      if(btn) btn.title=`متصل · ${this.peerCount} جهاز آخر`;
-    } else {
-      dot.style.background='#ef4444'; dot.style.boxShadow='0 0 6px rgba(239,68,68,.6)';
-      label.textContent='يحاول...';
-      if(btn) btn.title='غير متصل — يحاول إعادة الاتصال';
-    }
-    // تحديث الكارت في الإعدادات أيضاً
-    this.updateCard();
-  },
-
-  // ── تحديث الكارت في صفحة الإعدادات ──
-  updateCard(){
-    const sub = document.getElementById('lansync-card-sub');
-    const statusBox = document.getElementById('lansync-status-box');
-    const statusTitle = document.getElementById('lansync-status-title');
-    const statusDetail = document.getElementById('lansync-status-detail');
-    const statusPeers = document.getElementById('lansync-status-peers');
-    const urlInput = document.getElementById('lansync-url-input');
-    const nameInput = document.getElementById('lansync-name-input');
-
-    if(urlInput && !urlInput.dataset.touched) urlInput.value = this.url;
-    if(nameInput && !nameInput.dataset.touched) nameInput.value = this.deviceName;
-
-    if(!statusBox) return;
-
-    if(this.enabled && this.connected){
-      statusBox.style.display='block';
-      if(statusTitle) statusTitle.innerHTML='🟢 متصل بخادم المزامنة';
-      if(statusDetail) statusDetail.textContent = this.url + ' · ' + this.deviceName;
-      if(statusPeers) statusPeers.textContent = this.peerCount;
-      if(sub) sub.textContent = `متصل — ${this.peerCount} جهاز آخر`;
-    } else if(this.enabled && !this.connected){
-      statusBox.style.display='block';
-      statusBox.style.background='rgba(239,68,68,.08)';
-      statusBox.style.borderColor='rgba(239,68,68,.25)';
-      if(statusTitle){ statusTitle.innerHTML='🔴 غير متصل — يحاول إعادة الاتصال'; statusTitle.style.color='#ef4444'; }
-      if(statusDetail) statusDetail.textContent = this.url || '—';
-      if(statusPeers) statusPeers.textContent = '0';
-      if(sub) sub.textContent = 'يحاول الاتصال...';
-    } else {
-      statusBox.style.display='none';
-      if(sub) sub.textContent='ربط الأجهزة عبر الراوتر — بدون إنترنت';
-    }
-  },
-
-  // ── اعتراض DB.set و DB.del ──
-  hookDB(){
-    if(typeof DB==='undefined' || DB._lansyncHooked) return;
-    const origSet = DB.set.bind(DB);
-    const origDel = DB.del.bind(DB);
-
-    DB.set = (k,v)=>{
-      origSet(k,v);
-      if(!this.applyingRemote && this.SYNC_KEYS.has(k)){
-        this.queueChange('set', k, v);
-      }
-    };
-    DB.del = (k)=>{
-      origDel(k);
-      if(!this.applyingRemote && this.SYNC_KEYS.has(k)){
-        this.queueChange('del', k, null);
-      }
-    };
-    DB._lansyncHooked = true;
-  },
-
-  queueChange(op, key, value){
-    if(!this.enabled) return;
-    const ts = Date.now();
-    this.lastSyncTs[key] = ts;
-    const payload = { type: op, key, value, ts, deviceId: this.deviceId };
-    if(this.connected && this.ws && this.ws.readyState===1){
-      try { this.ws.send(JSON.stringify(payload)); }
-      catch { this.pendingChanges.set(key, payload); }
-    } else {
-      this.pendingChanges.set(key, payload);
-    }
-  },
-
-  connect(){
-    if(!this.url) return;
-    if(this.ws && this.ws.readyState<=1){ try{this.ws.close();}catch{} }
-    try{
-      this.ws = new WebSocket(this.url);
-    }catch(e){
-      console.error('[LANSync] فشل الاتصال:', e);
-      this.scheduleReconnect();
-      return;
-    }
-
-    this.ws.onopen = ()=>{
-      this.connected = true;
-      this.reconnectDelay = 2000;
-      console.log('[LANSync] ✅ متصل بـ', this.url);
-      this.ws.send(JSON.stringify({
-        type:'hello',
-        deviceId: this.deviceId,
-        deviceName: this.deviceName
-      }));
-      // إرسال أي تغييرات معلّقة
-      if(this.pendingChanges.size>0){
-        for(const [k, payload] of this.pendingChanges){
-          try{ this.ws.send(JSON.stringify(payload)); }catch{}
-        }
-        this.pendingChanges.clear();
-      }
-      this.updateTopButton();
-      if(typeof showNotif==='function'){
-        showNotif('المزامنة','✅ تم الاتصال بخادم المزامنة','success');
-      }
-    };
-
-    this.ws.onmessage = (ev)=>{
-      let msg;
-      try{ msg = JSON.parse(ev.data); }catch{ return; }
-      this.handleMessage(msg);
-    };
-
-    this.ws.onclose = ()=>{
-      this.connected = false;
-      this.peerCount = 0;
-      this.updateTopButton();
-      if(this.enabled) this.scheduleReconnect();
-    };
-
-    this.ws.onerror = (e)=>{
-      console.warn('[LANSync] خطأ:', e);
-    };
-  },
-
-  scheduleReconnect(){
-    clearTimeout(this.reconnectTimer);
-    this.reconnectTimer = setTimeout(()=>this.connect(), this.reconnectDelay);
-    this.reconnectDelay = Math.min(this.reconnectDelay*1.5, 30000);
-  },
-
-  disconnect(){
-    this.enabled = false;
-    localStorage.setItem('lansync_enabled','0');
-    clearTimeout(this.reconnectTimer);
-    if(this.ws){ try{this.ws.close();}catch{} }
-    this.connected = false;
-    this.updateTopButton();
-  },
-
-  handleMessage(msg){
-    switch(msg.type){
-      case 'snapshot':
-        this.applySnapshot(msg.state);
-        break;
-      case 'update':
-        this.applyRemoteSet(msg.key, msg.value, msg.ts, msg.deviceId);
-        break;
-      case 'delete':
-        this.applyRemoteDel(msg.key, msg.ts, msg.deviceId);
-        break;
-      case 'peer-joined':
-      case 'peer-left':
-        this.peerCount = Math.max(0, (msg.count||1) - 1);
-        this.updateTopButton();
-        break;
-    }
-  },
-
-  async applySnapshot(state){
-    if(!state) return;
-    let changed = 0;
-    this.applyingRemote = true;
-    try{
-      for(const key of Object.keys(state)){
-        if(!this.SYNC_KEYS.has(key)) continue;
-        const remote = state[key];
-        if(!remote) continue;
-        const localTs = this.lastSyncTs[key] || 0;
-        if(remote.ts > localTs && remote.deviceId !== this.deviceId){
-          DB.set(key, remote.value);
-          this.lastSyncTs[key] = remote.ts;
-          changed++;
-        }
-      }
-    } finally {
-      this.applyingRemote = false;
-    }
-    if(changed > 0){
-      console.log(`[LANSync] 🔄 تم تحديث ${changed} عنصر من الخادم`);
-      this.reloadGlobals();
-      if(typeof showNotif==='function'){
-        showNotif('المزامنة',`🔄 تم استلام ${changed} تحديث من الأجهزة الأخرى`,'info');
-      }
-    }
-  },
-
-  applyRemoteSet(key, value, ts, deviceId){
-    if(deviceId === this.deviceId) return;
-    if(!this.SYNC_KEYS.has(key)) return;
-    const localTs = this.lastSyncTs[key] || 0;
-    if(ts <= localTs) return;
-    this.applyingRemote = true;
-    try{
-      DB.set(key, value);
-      this.lastSyncTs[key] = ts;
-    } finally {
-      this.applyingRemote = false;
-    }
-    this.reloadGlobalKey(key, value);
-    this.refreshUIIfRelevant(key);
-  },
-
-  applyRemoteDel(key, ts, deviceId){
-    if(deviceId === this.deviceId) return;
-    if(!this.SYNC_KEYS.has(key)) return;
-    this.applyingRemote = true;
-    try{ DB.del(key); } finally { this.applyingRemote = false; }
-    this.lastSyncTs[key] = ts;
-    this.refreshUIIfRelevant(key);
-  },
-
-  reloadGlobalKey(key, value){
-    try{
-      const globalMap = {
-        patients:'patients', requests:'requests', invoices:'invoices',
-        doctors:'doctors', packages:'packages', inventory:'inventory',
-        tests:'tests', testGroups:'testGroups', billing:'billing',
-        cultureRecords:'cultureRecords', uaRecords:'uaRecords',
-        stoolExamRecords:'stoolExamRecords', semenRecords:'semenRecords'
-      };
-      const varName = globalMap[key];
-      if(varName && typeof window[varName] !== 'undefined'){
-        window[varName] = value;
-      }
-    }catch(e){ console.warn('[LANSync] reloadGlobalKey:', e); }
-  },
-
-  reloadGlobals(){
-    const keys = ['patients','requests','invoices','doctors','packages',
-      'inventory','tests','testGroups','billing','cultureRecords',
-      'uaRecords','stoolExamRecords','semenRecords'];
-    for(const k of keys){
-      const v = DB.get(k);
-      if(v !== null && typeof window[k] !== 'undefined'){
-        window[k] = v;
-      }
-    }
-  },
-
-  refreshUIIfRelevant(key){
-    try{
-      const map = {
-        patients: ['refreshPatients','renderPatients','loadPatientsList'],
-        requests: ['refreshRequests','renderRequests'],
-        invoices: ['refreshInvoices','renderInvoices'],
-        doctors:  ['refreshDoctors','renderDoctors'],
-        inventory:['refreshInventory','renderInventory'],
-        tests:    ['refreshTests','renderTests']
-      };
-      const fns = map[key] || [];
-      for(const fn of fns){
-        if(typeof window[fn] === 'function'){
-          try{ window[fn](); break; }catch{}
-        }
-      }
-      if(key==='patients'){
-        const badge = document.getElementById('nb-patients');
-        if(badge && Array.isArray(window.patients)) badge.textContent = window.patients.length;
-      }
-    }catch(e){ console.warn('[LANSync] refreshUI:', e); }
-  },
-
-  // ── نافذة الإعدادات السريعة (من الزر العلوي) ──
-  openSettings(){
-    let modal = document.getElementById('lansync-modal');
-    if(modal){ modal.remove(); }
-    modal = document.createElement('div');
-    modal.id = 'lansync-modal';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:999999;display:flex;align-items:center;justify-content:center;direction:rtl;font-family:Cairo,Tahoma,Arial,sans-serif';
-    modal.innerHTML = `
-      <div style="background:linear-gradient(135deg,#151a3a,#0f1330);color:#e8eaff;padding:30px;border-radius:18px;max-width:520px;width:90%;border:1px solid rgba(255,255,255,.1);box-shadow:0 20px 60px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:14px">
-          <h2 style="margin:0;color:#00d4ff;font-size:20px">🔗 إعدادات المزامنة المحلية</h2>
-          <button onclick="document.getElementById('lansync-modal').remove()" style="background:transparent;border:none;color:#e8eaff;font-size:22px;cursor:pointer;width:32px;height:32px;border-radius:50%">×</button>
-        </div>
-
-        <div style="background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);border-radius:10px;padding:12px;margin-bottom:18px;font-size:13px;line-height:1.7">
-          ربط الأجهزة عبر الراوتر المحلي. أي تعديل في جهاز يظهر فوراً في باقي الأجهزة.
-          <br>الحالة: <strong style="color:${this.connected?'#10b981':(this.enabled?'#ef4444':'#9ca3af')}">${this.connected?'✅ متصل':(this.enabled?'❌ غير متصل':'⚪ معطّلة')}</strong>
-          ${this.connected?` · ${this.peerCount} جهاز آخر`:''}
-        </div>
-
-        <label style="display:block;margin-bottom:8px;font-weight:700;font-size:13px">عنوان الخادم (URL):</label>
-        <input id="lansync-modal-url" type="text" value="${this.url}" placeholder="ws://192.168.1.10:8787" style="width:100%;padding:11px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.3);color:#e8eaff;font-family:monospace;font-size:14px;direction:ltr;text-align:left;margin-bottom:6px;box-sizing:border-box">
-        <div style="font-size:11px;color:#9ca3af;margin-bottom:14px">مثال: ws://192.168.1.10:8787 (من شاشة الخادم)</div>
-
-        <label style="display:block;margin-bottom:8px;font-weight:700;font-size:13px">اسم هذا الجهاز:</label>
-        <input id="lansync-modal-name" type="text" value="${this.deviceName}" placeholder="مثلاً: استقبال - كمبيوتر 1" style="width:100%;padding:11px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.3);color:#e8eaff;font-size:14px;margin-bottom:18px;box-sizing:border-box">
-
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:rgba(255,255,255,.04);padding:12px;border-radius:10px;margin-bottom:18px">
-          <input id="lansync-modal-enabled" type="checkbox" ${this.enabled?'checked':''} style="width:18px;height:18px;cursor:pointer">
-          <span style="font-weight:700">تفعيل المزامنة التلقائية</span>
-        </label>
-
-        <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:11px;margin-bottom:18px;font-size:12px;line-height:1.7">
-          <strong style="color:#fbbf24">📋 خطوات سريعة:</strong><br>
-          1. على الحاسبة الرئيسية: شغّل <code style="background:rgba(0,0,0,.4);padding:2px 6px;border-radius:4px">start-server.bat</code><br>
-          2. انسخ الـ IP الظاهر في نافذة الخادم<br>
-          3. الصق الرابط أعلاه واضغط "حفظ واتصل"
-        </div>
-
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button onclick="document.getElementById('lansync-modal').remove()" style="padding:10px 18px;background:rgba(255,255,255,.06);color:#e8eaff;border:1px solid rgba(255,255,255,.15);border-radius:8px;cursor:pointer;font-weight:700;font-family:Cairo,sans-serif">إلغاء</button>
-          <button id="lansync-modal-save" style="padding:10px 22px;background:linear-gradient(135deg,#00d4ff,#0099cc);color:#0a0e27;border:none;border-radius:8px;cursor:pointer;font-weight:800;font-family:Cairo,sans-serif">💾 حفظ واتصل</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    document.getElementById('lansync-modal-save').onclick = ()=>{
-      const url = document.getElementById('lansync-modal-url').value.trim();
-      const name = document.getElementById('lansync-modal-name').value.trim() || this.deviceName;
-      const enabled = document.getElementById('lansync-modal-enabled').checked;
-
-      if(enabled && !url){ alert('الرجاء إدخال عنوان الخادم'); return; }
-      if(enabled && !/^wss?:\/\//.test(url)){ alert('العنوان يجب أن يبدأ بـ ws:// أو wss://'); return; }
-
-      this.url = url;
-      this.deviceName = name;
-      this.enabled = enabled;
-      localStorage.setItem('lansync_url', url);
-      localStorage.setItem('lansync_device_name', name);
-      localStorage.setItem('lansync_enabled', enabled?'1':'0');
-
-      modal.remove();
-      this.updateCard();
-
-      if(enabled){ this.connect(); } else { this.disconnect(); }
-    };
-  }
-};
-
-// ── الدوال العامة المستدعاة من HTML ──
-window.lansyncOpenSettings = ()=>SYNC.openSettings();
-
-window.lansyncSaveAndConnect = ()=>{
-  const url = (document.getElementById('lansync-url-input').value||'').trim();
-  const name = (document.getElementById('lansync-name-input').value||'').trim() || SYNC.deviceName;
-  if(!url){ if(typeof showNotif==='function') showNotif('تنبيه','الرجاء إدخال عنوان الخادم','warning'); return; }
-  if(!/^wss?:\/\//.test(url)){ if(typeof showNotif==='function') showNotif('خطأ','العنوان يجب أن يبدأ بـ ws:// أو wss://','error'); return; }
-  SYNC.url = url;
-  SYNC.deviceName = name;
-  SYNC.enabled = true;
-  localStorage.setItem('lansync_url', url);
-  localStorage.setItem('lansync_device_name', name);
-  localStorage.setItem('lansync_enabled','1');
-  SYNC.connect();
-  SYNC.updateCard();
-};
-
-window.lansyncDisable = ()=>{
-  SYNC.disconnect();
-  if(typeof showNotif==='function') showNotif('تم','🔌 تم إيقاف المزامنة','info');
-  SYNC.updateCard();
-};
-
-window.lansyncRenderCard = ()=>SYNC.updateCard();
-
-// تتبع تعديل المستخدم لحقول الإدخال (حتى لا نفقد ما يكتب)
-document.addEventListener('input', e=>{
-  if(e.target && (e.target.id==='lansync-url-input' || e.target.id==='lansync-name-input')){
-    e.target.dataset.touched = '1';
-  }
-}, true);
-
-// تشغيل النظام
-if(document.readyState === 'complete'){
-  setTimeout(()=>SYNC.init(), 500);
-} else {
-  window.addEventListener('load', ()=>setTimeout(()=>SYNC.init(), 500));
-}
-
-// إتاحة الوصول للتشخيص من Console
-window.LANSYNC = SYNC;
 
 })();
 
