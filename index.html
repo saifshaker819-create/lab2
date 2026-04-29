@@ -9344,7 +9344,16 @@ function openViewResultsModal(rid){
   document.getElementById('vr-title').innerHTML=`📊 نتائج ${r.id} - ${r.patientName} ${printed?'<span class="bdg bdg-ok" style="margin-right:8px">🖨️ مطبوع</span>':'<span class="bdg bdg-w" style="margin-right:8px">⏸ غير مطبوع</span>'}`;
 
   // جلب آخر 4 طلبات مكتملة لنفس المريض (غير الطلب الحالي)
-  const prevReqs=requests.filter(req=>req.patientId===pt.id&&req.id!==rid&&req.status==='done').sort((a,b)=>new Date(b.resultDate||b.date)-new Date(a.resultDate||a.date));
+  // استبعاد أي طلب بنفس تاريخ الطلب الحالي (لا يُحسب كنتيجة "سابقة")
+  const _curDayVR = ((r.resultDate||r.date||'')+'').slice(0,10);
+  const prevReqs=requests.filter(req=>{
+    if(req.patientId!==pt.id) return false;
+    if(req.id===rid) return false;
+    if(req.status!=='done') return false;
+    const rDay = ((req.resultDate||req.date||'')+'').slice(0,10);
+    if(_curDayVR && rDay && rDay===_curDayVR) return false;
+    return true;
+  }).sort((a,b)=>new Date(b.resultDate||b.date)-new Date(a.resultDate||a.date));
 
   let rows='';
   const reqTests=r.tests.map(tid=>tests.find(t=>t.id===tid)).filter(Boolean);
@@ -9771,8 +9780,16 @@ function loadResultEntry(){
   const ptGender=pt.gender||'male';
   const tbody=document.getElementById('res-entry-tbody');
   // جلب جميع الطلبات المكتملة لنفس المريض مرتبة من الأحدث
-  const _24hAgo=Date.now()-24*60*60*1000;
-  const prevReqs=requests.filter(r=>r.patientId===pt.id&&r.id!==id&&r.status==='done'&&new Date(r.resultDate||r.date).getTime()<_24hAgo).sort((a,b)=>new Date(b.resultDate||b.date)-new Date(a.resultDate||a.date));
+  // استبعاد أي طلب بنفس تاريخ الطلب الحالي (نفس اليوم لا يُعدّ نتيجة سابقة)
+  const _curDayRE = ((req.resultDate||req.date||'')+'').slice(0,10);
+  const prevReqs=requests.filter(r=>{
+    if(r.patientId!==pt.id) return false;
+    if(r.id===id) return false;
+    if(r.status!=='done') return false;
+    const rDay = ((r.resultDate||r.date||'')+'').slice(0,10);
+    if(_curDayRE && rDay && rDay===_curDayRE) return false;
+    return true;
+  }).sort((a,b)=>new Date(b.resultDate||b.date)-new Date(a.resultDate||a.date));
   tbody.innerHTML=reqTests.map(t=>{
     // Fix 2: Special exam row — inline button that opens modal without leaving page
     if(t.isSpecialExam){
@@ -10927,7 +10944,18 @@ function buildPrintHTML(req, opts){
   sortedGroupKeys.forEach(k=>{ grouped[k]=sortTestsInGroup(k, grouped[k]); });
   const ptAge    = parseFloat(pt.ageVal)||Math.floor((Date.now()-new Date(pt.dob||0).getTime())/31557600000)||0;
   const ptGender = pt.gender||'male';
-  const prevReqs = requests.filter(r=>r.patientId===pt.id&&r.id!==req.id&&r.status==='done')
+  // ── تاريخ الطلب الحالي (YYYY-MM-DD) لاستبعاد أي نتائج سابقة بنفس اليوم ──
+  // المنطق: إذا أُعيد التحليل في نفس اليوم فالنتيجة الأولى ليست "سابقة" بل نسخة مكررة من نفس الزيارة،
+  // ولا يجب أن تظهر في عمود Last Result.
+  const _curDay = ((req.resultDate||req.date||'')+'').slice(0,10);
+  const prevReqs = requests.filter(r=>{
+                              if(r.patientId!==pt.id) return false;
+                              if(r.id===req.id) return false;
+                              if(r.status!=='done') return false;
+                              const rDay = ((r.resultDate||r.date||'')+'').slice(0,10);
+                              if(_curDay && rDay && rDay===_curDay) return false; // ← نفس اليوم: استبعاد
+                              return true;
+                            })
                            .sort((a,b)=>new Date(b.resultDate||b.date)-new Date(a.resultDate||a.date));
 
   // أحجام الخط من الإعدادات
