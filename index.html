@@ -12411,53 +12411,41 @@ function generatePDFBlob(callback){
   }
 
   function _renderPage(htmlStr, isFirstPage, onDone, onErr){
-    // استخدام iframe بدل container — أسلم مع HTML الكامل (يحتوي <html> و <body>)
-    const iframe=document.createElement('iframe');
-    iframe.style.cssText='position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:none;background:#fff;';
-    document.body.appendChild(iframe);
-    const iDoc=iframe.contentDocument||iframe.contentWindow.document;
+    // ── استخدام container في document الأصلي (للحفاظ على الخطوط والـ CSS) ──
+    const container=document.createElement('div');
+    // مهم: visibility:hidden أفضل من display:none لأنه يحسب الأبعاد، و opacity:0 يخفي بصرياً
+    container.style.cssText='position:fixed;top:0;left:0;width:794px;min-height:200px;background:#fff;z-index:99991;font-family:Cairo,sans-serif;direction:ltr;visibility:visible;opacity:0;pointer-events:none;';
+    container.innerHTML='<style>'+printCSS+'</style>'+htmlStr;
+    document.body.appendChild(container);
 
-    // ── إذا htmlStr يحتوي <html> أو <body>، استخدمه كما هو، وإلا غلّفه ──
-    const hasFullDoc=/<\s*html[\s>]|<\s*body[\s>]/i.test(htmlStr);
-    const fullHTML=hasFullDoc
-      ? htmlStr.replace(/<\/head>/i,'<style>'+printCSS+'</style></head>')
-      : '<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:#fff;width:794px}'+printCSS+'</style></head><body>'+htmlStr+'</body></html>';
-
-    iDoc.open(); iDoc.write(fullHTML); iDoc.close();
-
-    // ── انتظار حقيقي: حتى يحسب المتصفح أبعاد body ──
+    // ── انتظار حتى يحسب المتصفح الأبعاد فعلياً ──
     let attempts=0;
     function _waitReady(){
       attempts++;
-      const body=iDoc.body;
-      const ready = body && body.offsetWidth>0 && body.offsetHeight>0;
-      if(ready || attempts>40){ // أقصى انتظار ~4 ثوانٍ
-        // انتظار إضافي قصير للخطوط
-        const fontsReady = (iDoc.fonts && iDoc.fonts.ready) || Promise.resolve();
-        fontsReady.then(function(){
-          setTimeout(_capture, 150);
-        }).catch(function(){ setTimeout(_capture, 150); });
+      const ready = container.offsetWidth>0 && container.offsetHeight>0;
+      if(ready || attempts>40){
+        document.fonts.ready.then(function(){
+          setTimeout(_capture, 200);
+        }).catch(function(){ setTimeout(_capture, 200); });
       } else {
         setTimeout(_waitReady, 100);
       }
     }
 
     function _capture(){
-      const body=iDoc.body;
-      // إذا الأبعاد ما زالت صفر، أبلغ بخطأ واضح
-      if(!body || !body.offsetWidth || !body.offsetHeight){
-        try{document.body.removeChild(iframe);}catch(e){}
-        return onErr(new Error('تعذّر حساب أبعاد التقرير. تحقق من اكتمال البيانات وأعد المحاولة.'));
+      // فحص أخير قبل الالتقاط
+      if(!container.offsetWidth || !container.offsetHeight){
+        try{document.body.removeChild(container);}catch(e){}
+        return onErr(new Error('تعذّر حساب أبعاد التقرير. تأكد من اكتمال البيانات وأعد المحاولة.'));
       }
-      html2canvas(body,{
+      html2canvas(container,{
         scale:2,useCORS:true,backgroundColor:'#ffffff',
         logging:false,allowTaint:true,letterRendering:true,
-        width:body.scrollWidth,
-        height:body.scrollHeight,
-        windowWidth:body.scrollWidth,
-        windowHeight:body.scrollHeight
+        width:794,windowWidth:794,
+        height:container.offsetHeight,
+        windowHeight:container.offsetHeight
       }).then(function(canvas){
-        try{document.body.removeChild(iframe);}catch(e){}
+        try{document.body.removeChild(container);}catch(e){}
         if(!canvas || !canvas.width || !canvas.height || !isFinite(canvas.width) || !isFinite(canvas.height)){
           return onErr(new Error('فشل التقاط الصفحة (canvas فارغ). أعد المحاولة.'));
         }
@@ -12495,14 +12483,11 @@ function generatePDFBlob(callback){
         }
         onDone();
       }).catch(function(err){
-        try{document.body.removeChild(iframe);}catch(e){}
+        try{document.body.removeChild(container);}catch(e){}
         onErr(err);
       });
     }
 
-    // ── حقن html2canvas في iframe إن لم يكن موجوداً (لأن html2canvas يستخدم window) ──
-    // نُلتقط من خارج iframe، لذا نستخدم html2canvas الرئيسي مع تمرير body الـ iframe.
-    // هذا يعمل لأن html2canvas يستطيع التقاط أي عنصر DOM بما فيه عناصر iframe (نفس الأصل).
     setTimeout(_waitReady, 100);
   }
 
