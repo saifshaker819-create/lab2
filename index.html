@@ -3576,22 +3576,11 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
               <!-- صورة الرأس -->
               <div class="fg">
                 <label class="fl">🖼️ صورة رأس الورقة</label>
-                <div style="font-size:10px;color:var(--text2);margin-bottom:6px">تملأ الصورة المساحة كاملةً تلقائياً — يُنصح بعرض 794px وارتفاع 160px</div>
+                <div style="font-size:10px;color:var(--text2);margin-bottom:6px">تملأ الصورة المساحة كاملةً تلقائياً — يُنصح بعرض 794px وارتفاع 120px</div>
                 <input type="file" id="st-header-img" accept="image/*" onchange="loadHeaderImg(this)" class="fc" style="padding:7px">
                 <div id="header-img-preview" style="margin-top:8px;display:none">
                   <img id="header-img-show" style="max-height:80px;border-radius:8px;border:1px solid var(--border);width:100%;object-fit:fill;background:#fff;">
                   <button class="btn btn-d btn-sm" style="margin-top:6px" onclick="clearHeaderImg()">🗑️ إزالة الصورة</button>
-                </div>
-              </div>
-
-              <!-- 📏 ارتفاع رأس التقرير -->
-              <div class="fg" style="background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:10px">
-                <label class="fl" style="font-size:12px;font-weight:800;color:var(--primary)">📏 ارتفاع رأس ورقة التقرير</label>
-                <div style="font-size:10px;color:var(--text2);margin-bottom:8px">القيمة بالبكسل (px) — الحد الأدنى 70 والأقصى 230 — يُطبَّق على: التحاليل العامة، الإدرار، البراز، السائل المنوي، الزرع. (طباعة CBC الفارغة تحتفظ بحجمها الثابت 120px)</div>
-                <div style="display:flex;gap:8px;align-items:center">
-                  <input type="number" id="st-hdr-img-h" class="fc" min="70" max="230" step="1" placeholder="170" style="flex:1">
-                  <span style="font-size:12px;color:var(--text2);font-weight:700">px</span>
-                  <button class="btn btn-p btn-sm" onclick="saveHdrImgHeight()" style="white-space:nowrap;padding:8px 14px">💾 حفظ</button>
                 </div>
               </div>
 
@@ -3613,17 +3602,6 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
                   <div id="footer-img-preview" style="margin-top:8px;display:none">
                     <img id="footer-img-show" style="max-height:60px;border-radius:8px;border:1px solid var(--border);width:100%;object-fit:fill;background:#fff;">
                     <button class="btn btn-d btn-sm" style="margin-top:6px" onclick="clearFooterImg()">🗑️ إزالة الصورة</button>
-                  </div>
-
-                  <!-- 📏 ارتفاع تذييل التقرير -->
-                  <div class="fg" style="background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:12px;margin-bottom:0">
-                    <label class="fl" style="font-size:12px;font-weight:800;color:var(--primary)">📏 ارتفاع تذييل ورقة التقرير</label>
-                    <div style="font-size:10px;color:var(--text2);margin-bottom:8px">القيمة بالبكسل (px) — الحد الأدنى 70 والأقصى 230 — يُطبَّق على جميع التقارير</div>
-                    <div style="display:flex;gap:8px;align-items:center">
-                      <input type="number" id="st-ftr-img-h" class="fc" min="70" max="230" step="1" placeholder="50" style="flex:1">
-                      <span style="font-size:12px;color:var(--text2);font-weight:700">px</span>
-                      <button class="btn btn-p btn-sm" onclick="saveFtrImgHeight()" style="white-space:nowrap;padding:8px 14px">💾 حفظ</button>
-                    </div>
                   </div>
                 </div>
 
@@ -4319,49 +4297,6 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
                 <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="wsScrollSpeedChange('fast')">
                   <div id="ws-speed-radio-fast" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--primary);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center"><div id="ws-speed-dot-fast" style="width:9px;height:9px;border-radius:50%;background:transparent"></div></div>
                   <span style="font-size:13px;font-weight:700">سريع</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- ①.٥ الإشعار الصوتي -->
-            <div style="background:var(--bg-glass);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px">
-              <div style="font-size:13px;font-weight:800;color:var(--primary);margin-bottom:6px">🔊 الإشعار الصوتي عند جاهزية المريض</div>
-              <div style="font-size:11px;color:var(--text2);margin-bottom:14px;line-height:1.7">
-                عندما يصبح أي مريض <b>جاهزاً ✅</b> ستظهر بطاقة كبيرة على شاشة التلفاز بـ <b>اسم المريض</b> + <b>صوت جرس تنبيه</b> 🔔.<br>
-                <span style="color:var(--success)">💡 اختياري:</span> يمكنك إضافة تسجيل صوتي بصوتك (مرة واحدة) سيُشغّل بعد الجرس مع كل مريض. مثلاً: "تحاليلك جاهزة، يرجى التوجه إلى الاستقبال".
-              </div>
-
-              <!-- زر التشغيل/الإيقاف -->
-              <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:14px;border-bottom:1px dashed var(--border)">
-                <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="wsSpeakToggle(true)">
-                  <div id="ws-speak-radio-on" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--primary);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center"><div id="ws-speak-dot-on" style="width:9px;height:9px;border-radius:50%;background:transparent"></div></div>
-                  <span style="font-size:13px;font-weight:700">🔊 تشغيل الإشعار الصوتي</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="wsSpeakToggle(false)">
-                  <div id="ws-speak-radio-off" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--primary);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center"><div id="ws-speak-dot-off" style="width:9px;height:9px;border-radius:50%;background:transparent"></div></div>
-                  <span style="font-size:13px;font-weight:700">🔇 إيقاف الإشعار الصوتي</span>
-                </div>
-              </div>
-
-              <!-- التسجيل الصوتي المخصص (اختياري) -->
-              <div style="background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:10px;padding:14px">
-                <div style="font-size:13px;font-weight:800;color:var(--primary);margin-bottom:8px">🎙️ تسجيل صوتي مخصص <span style="font-size:10px;color:var(--text2);font-weight:600">(اختياري)</span></div>
-                <div style="font-size:11px;color:var(--text2);margin-bottom:12px;line-height:1.7">
-                  سجّل جملة بصوتك مرة واحدة (مثلاً: "تحاليلك جاهزة، يرجى التوجه إلى الاستقبال") وستُشغَّل تلقائياً مع كل مريض جاهز.
-                </div>
-
-                <div id="ws-rec-status" style="display:none;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:8px;padding:10px;margin-bottom:10px;text-align:center;font-size:13px;font-weight:800;color:#ff4444">
-                  <span style="display:inline-block;width:10px;height:10px;background:#ff4444;border-radius:50%;margin-left:8px;animation:rec-pulse 1s infinite"></span>
-                  جاري التسجيل... <span id="ws-rec-time">00:00</span>
-                </div>
-                <style>@keyframes rec-pulse{0%,100%{opacity:1}50%{opacity:0.3}}</style>
-
-                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                  <button id="ws-rec-start" class="btn btn-sm" style="background:#ff4444;color:#fff;border:none;font-weight:800" onclick="wsStartRecording()">🎙️ بدء التسجيل</button>
-                  <button id="ws-rec-stop" class="btn btn-sm" style="background:#666;color:#fff;border:none;font-weight:800;display:none" onclick="wsStopRecording()">⏹️ إيقاف التسجيل</button>
-                  <button id="ws-rec-play" class="btn btn-sm btn-s" onclick="wsPlayRecording()" style="display:none">▶️ تشغيل</button>
-                  <button id="ws-rec-delete" class="btn btn-sm btn-d" onclick="wsDeleteRecording()" style="display:none">🗑️ حذف</button>
-                  <span id="ws-rec-info" style="font-size:11px;color:var(--text2);margin-right:auto"></span>
                 </div>
               </div>
             </div>
@@ -6204,10 +6139,9 @@ Menopause — 25–135 IU/L" style="font-size:12px;resize:vertical;line-height:1
   setTimeout(applyAll, 2000);
 
   if(window.MutationObserver){
-    var _moTimer1;
     var mo = new MutationObserver(function(muts){
       var hasNew = muts.some(function(m){ return m.addedNodes.length>0; });
-      if(hasNew){ clearTimeout(_moTimer1); _moTimer1=setTimeout(applyAll, 300); }
+      if(hasNew) setTimeout(applyAll, 50);
     });
     document.addEventListener('DOMContentLoaded', function(){
       mo.observe(document.body, {childList:true, subtree:true});
@@ -6283,10 +6217,9 @@ Menopause — 25–135 IU/L" style="font-size:12px;resize:vertical;line-height:1
   setTimeout(_run, 2000);
   // مراقبة إضافة عناصر جديدة للـ DOM (مودالات ديناميكية)
   if(window.MutationObserver){
-    var _moTimer2;
     var _mo = new MutationObserver(function(muts){
       var hasNew = muts.some(function(m){ return m.addedNodes.length>0; });
-      if(hasNew){ clearTimeout(_moTimer2); _moTimer2=setTimeout(_run, 300); }
+      if(hasNew) setTimeout(_run, 50);
     });
     document.addEventListener('DOMContentLoaded', function(){
       _mo.observe(document.body, {childList:true, subtree:true});
@@ -6478,17 +6411,6 @@ const DB={
         // بيانات كبيرة: IDB فقط — امسح من localStorage فوراً
         localStorage.removeItem(pk);
         IDB.set(pk,v).catch(e=>console.warn('[DB] IDB set error',k,e));
-      } else if(k==='settings' && v && typeof v==='object'){
-        // الإعدادات: استبعد الحقول الكبيرة من localStorage (تذهب لـ IDB عبر setBig)
-        const slim={};
-        for(const key in v){
-          if(key==='headerImg'||key==='footerImg'||
-             key==='_uaFieldsCustom'||key==='_stoolFieldsCustom'||key==='_semenFieldsCustom'||
-             key==='hdrImgH'||key==='ftrImgH') continue;
-          slim[key]=v[key];
-        }
-        const compressed=LZS.compress(JSON.stringify(slim));
-        localStorage.setItem(pk,compressed);
       } else {
         // إعدادات خفيفة: localStorage
         const compressed=LZS.compress(JSON.stringify(v));
@@ -6523,85 +6445,6 @@ const DB={
 // load/save — نفس الواجهة القديمة بالضبط (لا يتغير باقي الكود)
 function load(k,def){return DB.get(k)||def;}
 function save(k,v){DB.set(k,v);}
-
-// ══════════════════════════════════════════════════════════════
-// BIG settings on IDB (صور الرأس/التذييل + الحقول المخصصة لتحاليل الإدرار/البراز/المنوي)
-// تذهب مباشرة لـ IDB بمفاتيح مستقلة، ولا تُخزَّن في كائن settings (لتفادي امتلاء localStorage)
-// ══════════════════════════════════════════════════════════════
-const _BIG_KEYS=new Set(['headerImg','footerImg','uaFieldsCustom','stoolFieldsCustom','semenFieldsCustom','hdrImgH','ftrImgH']);
-const _BIG_MC={};   // كاش ذاكرة فوري لقيم BIG (بدون تأخير)
-
-async function getBig(k){
-  try{
-    const pk=DB._pfx()+'big_'+k;
-    if(_BIG_MC[pk]!==undefined) return _BIG_MC[pk];
-    const v=await IDB.get(pk);
-    _BIG_MC[pk]=(v===null?'':v);
-    return _BIG_MC[pk];
-  }catch{return '';}
-}
-
-async function setBig(k,v){
-  try{
-    const pk=DB._pfx()+'big_'+k;
-    _BIG_MC[pk]=v;     // كاش فوري
-    await IDB.set(pk,v);
-    return true;
-  }catch(e){
-    console.warn('[MedLab] setBig error',k,e);
-    return false;
-  }
-}
-
-async function delBig(k){
-  try{
-    const pk=DB._pfx()+'big_'+k;
-    delete _BIG_MC[pk];
-    await IDB.del(pk);
-    return true;
-  }catch{return false;}
-}
-
-// قراءة متزامنة من الكاش (تُستدعى من شفرة الطباعة بعد تحميل القيم)
-function getBigCached(k){
-  const pk=DB._pfx()+'big_'+k;
-  return _BIG_MC[pk]||'';
-}
-
-// تحميل كل قيم BIG من IDB إلى الكاش، مع هجرة من settings القديمة
-async function loadAllBigToCache(){
-  try{
-    // هجرة: انقل القيم القديمة من settings إلى IDB إن وُجدت
-    const migrations=[
-      {settingsKey:'headerImg',         bigKey:'headerImg'},
-      {settingsKey:'footerImg',         bigKey:'footerImg'},
-      {settingsKey:'_uaFieldsCustom',   bigKey:'uaFieldsCustom'},
-      {settingsKey:'_stoolFieldsCustom',bigKey:'stoolFieldsCustom'},
-      {settingsKey:'_semenFieldsCustom',bigKey:'semenFieldsCustom'},
-    ];
-    let settingsChanged=false;
-    for(const {settingsKey,bigKey} of migrations){
-      const old=settings[settingsKey];
-      if(old){
-        // إذا لم يكن في IDB بعد، انقله
-        const existing=await IDB.get(DB._pfx()+'big_'+bigKey);
-        if(existing===null||existing===undefined||existing===''){
-          await IDB.set(DB._pfx()+'big_'+bigKey, old);
-        }
-        delete settings[settingsKey];
-        settingsChanged=true;
-      }
-    }
-    if(settingsChanged){ try{ save('settings',settings); }catch{} }
-
-    // حمّل كل القيم لتكون متاحة بشكل متزامن من الكاش
-    for(const k of _BIG_KEYS){
-      const pk=DB._pfx()+'big_'+k;
-      const v=await IDB.get(pk);
-      _BIG_MC[pk]=(v===null||v===undefined?'':v);
-    }
-  }catch(e){console.warn('[MedLab] loadAllBigToCache error',e);}
-}
 
 // مفاتيح البيانات الرئيسية (للتوافق مع الكود القديم)
 const _ARCHIVE_KEYS=[..._IDB_KEYS];
@@ -7458,45 +7301,6 @@ function startApp(){
   loadInvPtDropdown();
   updateDashboard();
   updateBadges();
-
-  // ── تحميل القيم الكبيرة (الصور + الحقول المخصصة) من IDB، ثم إعادة تطبيقها ──
-  loadAllBigToCache().then(()=>{
-    // 1) الصور: ضعها في settings (للطباعة) واعرضها في الإعدادات
-    const hImg = getBigCached('headerImg');
-    if(hImg){
-      settings.headerImg = hImg;
-      const showH = document.getElementById('header-img-show');
-      const prvH  = document.getElementById('header-img-preview');
-      if(showH) showH.src = hImg;
-      if(prvH)  prvH.style.display = 'block';
-    }
-    const fImg = getBigCached('footerImg');
-    if(fImg){
-      settings.footerImg = fImg;
-      const showF = document.getElementById('footer-img-show');
-      const prvF  = document.getElementById('footer-img-preview');
-      if(showF) showF.src = fImg;
-      if(prvF)  prvF.style.display = 'block';
-    }
-    // 1.5) ارتفاع رأس/تذييل التقرير (في الذاكرة فقط — تُقرأ من IDB)
-    const hH = getBigCached('hdrImgH');
-    settings.hdrImgH = (typeof hH==='number' && hH>=HDR_FTR_H_MIN && hH<=HDR_FTR_H_MAX) ? hH : HDR_IMG_H_DEFAULT;
-    const inpHH = document.getElementById('st-hdr-img-h');
-    if(inpHH) inpHH.value = settings.hdrImgH;
-
-    const fH = getBigCached('ftrImgH');
-    settings.ftrImgH = (typeof fH==='number' && fH>=HDR_FTR_H_MIN && fH<=HDR_FTR_H_MAX) ? fH : FTR_IMG_H_DEFAULT;
-    const inpFH = document.getElementById('st-ftr-img-h');
-    if(inpFH) inpFH.value = settings.ftrImgH;
-
-    // 2) الحقول المخصصة لتحاليل الإدرار/البراز/المنوي
-    applyCustomExamFields();
-    // إعادة رسم محرّرات الحقول إن كانت مفتوحة حالياً
-    try{ if(document.getElementById('ua-fields-editor'))    renderUAFieldsEditor();    }catch{}
-    try{ if(document.getElementById('stool-fields-editor')) renderStoolFieldsEditor(); }catch{}
-    try{ if(document.getElementById('semen-fields-editor')) renderSemenFieldsEditor(); }catch{}
-  }).catch(e=>console.warn('[MedLab] loadAllBigToCache failed',e));
-
   setTimeout(()=>showNotif('مرحباً','النظام جاهز للعمل 🔬','success'),500);
   // تهيئة عداد ESR بعد تعيين المستخدم (لضمان صحة prefix التخزين)
   setTimeout(function(){
@@ -9518,16 +9322,7 @@ function openViewResultsModal(rid){
   document.getElementById('vr-title').innerHTML=`📊 نتائج ${r.id} - ${r.patientName} ${printed?'<span class="bdg bdg-ok" style="margin-right:8px">🖨️ مطبوع</span>':'<span class="bdg bdg-w" style="margin-right:8px">⏸ غير مطبوع</span>'}`;
 
   // جلب آخر 4 طلبات مكتملة لنفس المريض (غير الطلب الحالي)
-  // استبعاد أي طلب بنفس تاريخ الطلب الحالي (لا يُحسب كنتيجة "سابقة")
-  const _curDayVR = ((r.resultDate||r.date||'')+'').slice(0,10);
-  const prevReqs=requests.filter(req=>{
-    if(req.patientId!==pt.id) return false;
-    if(req.id===rid) return false;
-    if(req.status!=='done') return false;
-    const rDay = ((req.resultDate||req.date||'')+'').slice(0,10);
-    if(_curDayVR && rDay && rDay===_curDayVR) return false;
-    return true;
-  }).sort((a,b)=>new Date(b.resultDate||b.date)-new Date(a.resultDate||a.date));
+  const prevReqs=requests.filter(req=>req.patientId===pt.id&&req.id!==rid&&req.status==='done').sort((a,b)=>new Date(b.resultDate||b.date)-new Date(a.resultDate||a.date));
 
   let rows='';
   const reqTests=r.tests.map(tid=>tests.find(t=>t.id===tid)).filter(Boolean);
@@ -9954,16 +9749,8 @@ function loadResultEntry(){
   const ptGender=pt.gender||'male';
   const tbody=document.getElementById('res-entry-tbody');
   // جلب جميع الطلبات المكتملة لنفس المريض مرتبة من الأحدث
-  // استبعاد أي طلب بنفس تاريخ الطلب الحالي (نفس اليوم لا يُعدّ نتيجة سابقة)
-  const _curDayRE = ((req.resultDate||req.date||'')+'').slice(0,10);
-  const prevReqs=requests.filter(r=>{
-    if(r.patientId!==pt.id) return false;
-    if(r.id===id) return false;
-    if(r.status!=='done') return false;
-    const rDay = ((r.resultDate||r.date||'')+'').slice(0,10);
-    if(_curDayRE && rDay && rDay===_curDayRE) return false;
-    return true;
-  }).sort((a,b)=>new Date(b.resultDate||b.date)-new Date(a.resultDate||a.date));
+  const _24hAgo=Date.now()-24*60*60*1000;
+  const prevReqs=requests.filter(r=>r.patientId===pt.id&&r.id!==id&&r.status==='done'&&new Date(r.resultDate||r.date).getTime()<_24hAgo).sort((a,b)=>new Date(b.resultDate||b.date)-new Date(a.resultDate||a.date));
   tbody.innerHTML=reqTests.map(t=>{
     // Fix 2: Special exam row — inline button that opens modal without leaving page
     if(t.isSpecialExam){
@@ -11071,7 +10858,6 @@ function loadPrintPreviewSide(){
 function buildPrintHTML(req, opts){
   opts = opts || {};
   const blankBody = opts.blankBody === true;
-  const cbcBlank  = opts.cbcBlank  === true;  // طباعة CBC الفارغة → رأس بارتفاع 120
   const pt       = patients.find(p=>p.id===req.patientId)||{};
   // Only exclude special exams (UA/Stool) from regular report — they print separately
   // التحاليل المحسوبة (isCalc) تطبع أيضاً في صفحة منفردة
@@ -11119,18 +10905,7 @@ function buildPrintHTML(req, opts){
   sortedGroupKeys.forEach(k=>{ grouped[k]=sortTestsInGroup(k, grouped[k]); });
   const ptAge    = parseFloat(pt.ageVal)||Math.floor((Date.now()-new Date(pt.dob||0).getTime())/31557600000)||0;
   const ptGender = pt.gender||'male';
-  // ── تاريخ الطلب الحالي (YYYY-MM-DD) لاستبعاد أي نتائج سابقة بنفس اليوم ──
-  // المنطق: إذا أُعيد التحليل في نفس اليوم فالنتيجة الأولى ليست "سابقة" بل نسخة مكررة من نفس الزيارة،
-  // ولا يجب أن تظهر في عمود Last Result.
-  const _curDay = ((req.resultDate||req.date||'')+'').slice(0,10);
-  const prevReqs = requests.filter(r=>{
-                              if(r.patientId!==pt.id) return false;
-                              if(r.id===req.id) return false;
-                              if(r.status!=='done') return false;
-                              const rDay = ((r.resultDate||r.date||'')+'').slice(0,10);
-                              if(_curDay && rDay && rDay===_curDay) return false; // ← نفس اليوم: استبعاد
-                              return true;
-                            })
+  const prevReqs = requests.filter(r=>r.patientId===pt.id&&r.id!==req.id&&r.status==='done')
                            .sort((a,b)=>new Date(b.resultDate||b.date)-new Date(a.resultDate||a.date));
 
   // أحجام الخط من الإعدادات
@@ -11147,13 +10922,9 @@ function buildPrintHTML(req, opts){
   const hasFtrTxt = settings.ftrMode==='txt' && (settings.ftrAddress||settings.ftrPhone||settings.ftrNote);
   const sigOptions2 = settings.signatureOptions || {};
   const hasSig = !!(sigOptions2.showDoctor||sigOptions2.showLabname||sigOptions2.showSigImg);
-  // التوقيع لم يعد يحجز شريطاً أفقياً كاملاً — يطفو على يمين الـ footer
-  // ويُسمح للتحاليل بالانطباع في يساره ضمن نفس المساحة
-  const sigH = 0;
+  const sigH = hasSig ? 62 : 0;
   // زيادة الارتفاعات لتعويض unprintable area في الطابعات
-  // قراءة ارتفاع التذييل من الإعدادات (افتراضي 50px لتطابق التقارير الأخرى)
-  const _ftrUserH = (typeof settings.ftrImgH==='number' && settings.ftrImgH>=70 && settings.ftrImgH<=230) ? settings.ftrImgH : 50;
-  const footerH = hasFtrImg ? _ftrUserH : hasFtrTxt ? 46 : (settings.hdrMode==='text' ? 48 : 0);
+  const footerH = hasFtrImg ? 62 : hasFtrTxt ? 46 : (settings.hdrMode==='text' ? 48 : 0);
   const totalFooterH = footerH + sigH;
   // هامش سفلي للصفحة = إجمالي ارتفاع الذيل + 6mm احتياطي
   const pageBottomMm = totalFooterH>0 ? Math.ceil(totalFooterH*0.265+6) : 4;
@@ -11196,11 +10967,6 @@ function buildPrintHTML(req, opts){
   `;
 
   // ─── Header ───────────────────────────────────────────
-  // ارتفاع صورة الرأس:
-  //   • طباعة CBC الفارغة → 120px ثابت (لا يتأثر بإعدادات المستخدم)
-  //   • باقي التقارير → القيمة المحفوظة من إعدادات المستخدم (افتراضي 170)
-  const _hdrUserH = (typeof settings.hdrImgH==='number' && settings.hdrImgH>=70 && settings.hdrImgH<=230) ? settings.hdrImgH : 170;
-  const _hdrImgH = cbcBlank ? 120 : _hdrUserH;
   let hdr='';
   if(settings.hdrMode==='text'&&showHdr){
     // Fix 5: نص مخصص للرأس
@@ -11208,7 +10974,7 @@ function buildPrintHTML(req, opts){
   } else if(settings.headerImg&&showHdr){
     // Fix 4: image fills full width AND height (no whitespace)
     hdr=`<div style="width:100%;line-height:0">
-           <img src="${settings.headerImg}" style="width:100%;height:${_hdrImgH}px;display:block;object-fit:fill">
+           <img src="${settings.headerImg}" style="width:100%;height:120px;display:block;object-fit:fill">
          </div>`;
   } else if(showHdr){
     hdr=`<div style="padding:8px 16px 6px;border-bottom:2px solid #002255;display:flex;justify-content:space-between;align-items:center">
@@ -11334,8 +11100,6 @@ function buildPrintHTML(req, opts){
   </div>`;
 
   // ─── نتائج التحاليل ────────────────────────────────────
-  // catChunks: مصفوفة كل عنصر = HTML كامل لمجموعة فرعية واحدة (بدون فاصل سابق)
-  const catChunks = [];
   let body='';
   if(!blankBody){
   let _visibleCatCount = 0; // عداد المجموعات المعروضة فعلاً
@@ -11353,16 +11117,14 @@ function buildPrintHTML(req, opts){
     const ci = _visibleCatCount; // استخدم العداد الفعلي للفاصل
     _visibleCatCount++;
 
-    // بداية chunk لهذه المجموعة الفرعية — الفاصل يُضاف داخل الـ chunk نفسه (باستثناء الأولى)
-    let _chunkHtml = '';
     if(ci>0){
       const _catDotted=settings.div_cat_dotted;
       const _catSolid=settings.div_cat_solid;
-      if(_catSolid)       _chunkHtml+=`<div style="margin:5px 6px;border-top:2px solid #888"></div>`;
-      else if(_catDotted) _chunkHtml+=`<div style="margin:5px 6px;border-top:2px dotted #aab8c8"></div>`;
-      else                _chunkHtml+=`<div style="margin:4px 6px;border-top:1px dotted #aab8c8"></div>`;
+      if(_catSolid)       body+=`<div style="margin:5px 6px;border-top:2px solid #888"></div>`;
+      else if(_catDotted) body+=`<div style="margin:5px 6px;border-top:2px dotted #aab8c8"></div>`;
+      else                body+=`<div style="margin:4px 6px;border-top:1px dotted #aab8c8"></div>`;
     }
-    _chunkHtml+=`<div style="margin:4px 6px 0;direction:ltr">
+    body+=`<div style="margin:4px 6px 0;direction:ltr">
       <div style="padding:3px 10px 2px">
         <div style="display:inline-block;font-size:${subcatFs};font-weight:900;color:${sectionColor};font-family:'Times New Roman',Times,serif;text-transform:capitalize;letter-spacing:0.5px;white-space:nowrap;border-bottom:2px solid ${sectionColor};padding-bottom:2px">${cat.toLowerCase()}</div>
       </div>
@@ -11423,7 +11185,7 @@ function buildPrintHTML(req, opts){
           const inpResultBox=`<div style="border:1.5px solid ${inpBoxBorder};border-radius:5px;background:#fff;padding:3px 6px;font-size:${pfs};font-weight:900;color:${inpValColor};min-width:80px;max-width:160px;text-align:center;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center"><span>${inpVal}</span></div>`;
           const inpShowUnit = inpUnit && inpUnit!=='qualitative';
           const inpRefHtml = `<div style="display:block;font-size:${pfs}">${inpRefTxt==='—'?`<span style="font-size:${pfs}">—</span>`:`<span style="font-size:${pfs};font-weight:600;color:#000">${inpRefTxt}</span>${inpShowUnit?`&nbsp;&nbsp;<span style="font-size:${pfs};font-weight:600;color:#444">${inpUnit}</span>`:''}`}</div>`;
-          _chunkHtml+=`
+          body+=`
       <div style="margin:0 6px;display:flex;align-items:flex-start;direction:ltr;padding:2px 0">
         <div style="flex:4;font-size:${pfs};font-weight:600;color:#000000;padding-top:3px">
           ● ${inpName}
@@ -11435,8 +11197,8 @@ function buildPrintHTML(req, opts){
         <div style="flex:3;padding:2px 4px 0 6px">${inpRefHtml}</div>
         <div style="flex:2"></div>
       </div>`;
-          if(settings.div_test_dotted) _chunkHtml+=`<div style="margin:1px 6px;border-top:1px dotted #cccccc"></div>`;
-          else if(settings.div_test_solid) _chunkHtml+=`<div style="margin:1px 6px;border-top:1px solid #cccccc"></div>`;
+          if(settings.div_test_dotted) body+=`<div style="margin:1px 6px;border-top:1px dotted #cccccc"></div>`;
+          else if(settings.div_test_solid) body+=`<div style="margin:1px 6px;border-top:1px solid #cccccc"></div>`;
         });
       }
 
@@ -11565,7 +11327,7 @@ function buildPrintHTML(req, opts){
       // مربع النتيجة — القيمة فقط بدون وحدة
       const resultBox=`<div style="border:1.5px solid ${boxBorder};border-radius:5px;background:#fff;padding:3px 6px;font-size:${pfs};font-weight:900;color:${valColor};min-width:80px;max-width:160px;text-align:center;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center"><span>${displayValFull}</span></div>`;
 
-      _chunkHtml+=`
+      body+=`
       <div style="margin:0 6px;display:flex;align-items:flex-start;direction:ltr;padding:2px 0">
         <div style="flex:4;font-size:${pfs};font-weight:600;color:#000000;padding-top:3px">
           ● ${t.nameShort&&t.nameShort.trim()?t.nameShort.trim():t.nameEn}
@@ -11588,13 +11350,10 @@ function buildPrintHTML(req, opts){
       const isLastTestInCat = t.id === testsWithResults[testsWithResults.length-1]?.id;
       const skipTestSep = hasSectionSep && isLastTestInCat;
       if(!skipTestSep){
-        if(_testSolid)       _chunkHtml+=`<div style="margin:1px 6px;border-top:1px solid #cccccc"></div>`;
-        else if(_testDotted) _chunkHtml+=`<div style="margin:1px 6px;border-top:1px dotted #cccccc"></div>`;
+        if(_testSolid)       body+=`<div style="margin:1px 6px;border-top:1px solid #cccccc"></div>`;
+        else if(_testDotted) body+=`<div style="margin:1px 6px;border-top:1px dotted #cccccc"></div>`;
       }
     });
-    // أضف الـ chunk إلى المصفوفة وإلى body
-    catChunks.push(_chunkHtml);
-    body += _chunkHtml;
   });
   } // end if(!blankBody)
 
@@ -11613,10 +11372,8 @@ function buildPrintHTML(req, opts){
     sigParts.push(`<img src="${sigOptions.sigImg}" style="height:140px;width:140px;display:block;margin:0 0 4px 0;object-fit:contain">`);
   }
   if(sigParts.length){
-    // التوقيع موضوع بـ position:absolute على يمين الـ footer
-    // لا يحجز ارتفاعاً إضافياً ولا شريطاً أفقياً كاملاً
-    // يطفو فوق الذيل من جهة اليمين، ويُسمح للتحاليل أن تنطبع بجواره من جهة اليسار
-    sigBlock = `<div style="position:absolute;right:0;bottom:100%;text-align:right;direction:rtl;padding:5px 14px 4px;background:transparent;line-height:normal;z-index:10">${sigParts.join('')}</div>`;
+    // التوقيع في نهاية الـ footer الثابت — لن يتداخل مع التحاليل أبداً
+    sigBlock = `<div style="text-align:right;direction:rtl;padding:5px 14px 4px;background:#fff;line-height:normal">${sigParts.join('')}</div>`;
   }
 
   let ftrInner='';
@@ -11637,15 +11394,13 @@ function buildPrintHTML(req, opts){
     ftrInner = sigBlock;
   }
 
-  // ─── حالة blankBody: نُرجع HTML بسيط كما كان ─────────────
-  // هذا للتوافق مع buildCalcTestPrintHTML الذي يستبدل BLANK_BODY_PLACEHOLDER
-  if(blankBody){
-    return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
     <style>${css}</style></head>
     <body>
-    <div id="print-content" style="background:#ffffff;font-family:'Inter',Arial,sans-serif;direction:ltr;width:100%;padding:4mm 4mm 0 4mm">
-      ${hdr}${ptBox}<!--BLANK_BODY_PLACEHOLDER-->
-      <div id="print-spacer" style="height:${totalFooterH+37}px"></div>
+    <div id="print-content" style="background:#ffffff;font-family:'Inter',Arial,sans-serif;direction:ltr;width:100%">
+      ${hdr}${ptBox}${blankBody?'<!--BLANK_BODY_PLACEHOLDER-->':separator+colHdr+body}
+      ${(!blankBody&&req.resultNotes)?`<div style="margin:4px 8px;padding:4px 8px;border-left:3px solid #ffaa00;background:#fffdf0;font-size:9px;color:#444;direction:ltr;font-weight:700"><b>Note:</b> ${req.resultNotes}</div>`:''}
+      <div id="print-spacer"></div>
     </div>
     <div id="print-footer" style="line-height:normal">
       ${ftrInner}
@@ -11662,189 +11417,6 @@ function buildPrintHTML(req, opts){
         try{new QRCode(el,{text:url,width:50,height:50,correctLevel:QRCode.CorrectLevel.M});}catch(e){}
       }
       if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',tryGenQR);}else{tryGenQR();}
-    })();
-    <\/script>
-    </body></html>`;
-  }
-
-  // ─── بناء الصفحات مع pagination ذكي ─────────────────────
-  // catChunksJson: بيانات الـ chunks لنقلها إلى script الطباعة داخل HTML
-  const catChunksJson = JSON.stringify(catChunks);
-  const hdrHtml = hdr + ptBox;
-  const colHdrHtml = separator + colHdr;
-  const notesHtml = req.resultNotes
-    ? `<div style="margin:4px 8px;padding:4px 8px;border-left:3px solid #ffaa00;background:#fffdf0;font-size:9px;color:#444;direction:ltr;font-weight:700"><b>Note:</b> ${req.resultNotes}</div>`
-    : '';
-  const ftrHtml = ftrInner;
-  const totalFooterHVal = totalFooterH;
-
-  // CSS الإضافي للصفحات المتعددة
-  const multiPageCss = `
-    .report-page{background:#ffffff;width:100%;position:relative;box-sizing:border-box;}
-    .report-page+.report-page{page-break-before:always;break-before:page;}
-    .page-footer-spacer{display:block;}
-    @media print{
-      .report-page{page-break-inside:auto;}
-      .report-page+.report-page{page-break-before:always;break-before:page;}
-      #print-footer{position:fixed;bottom:6mm;left:0;right:0;background:#ffffff;z-index:9999;}
-    }
-  `;
-
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <style>${css}${multiPageCss}</style></head>
-    <body>
-    <div id="all-pages-container"></div>
-    <div id="print-footer" style="line-height:normal">
-      ${ftrHtml}
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-    <script>
-    (function(){
-      // ── بيانات الصفحة ──
-      var HDR_HTML = ${JSON.stringify(hdrHtml)};
-      var COL_HDR_HTML = ${JSON.stringify(colHdrHtml)};
-      var CAT_CHUNKS = ${catChunksJson};
-      var NOTES_HTML = ${JSON.stringify(notesHtml)};
-      var TOTAL_FOOTER_H = ${totalFooterHVal};
-
-      // ── ارتفاع A4 بـ px عند 96dpi ──
-      // 297mm * (96/25.4) = ~1122.5px
-      var A4_H_MM = 297;
-      var DPI_RATIO = 96 / 25.4; // px per mm
-      var PAGE_H_PX = Math.round(A4_H_MM * DPI_RATIO); // ~1122px
-      var TOP_MARGIN_PX = Math.round(4 * DPI_RATIO);   // 4mm هامش body
-      var BOT_MARGIN_PX = Math.round(4 * DPI_RATIO);
-      // الذيل + التوقيع + هامش أمان كافٍ بحيث آخر تحليل يبقى قبل الذيل بسطر واحد على الأقل
-      var FOOTER_RESERVED = TOTAL_FOOTER_H + 40;
-      var USABLE_H = PAGE_H_PX - TOP_MARGIN_PX - BOT_MARGIN_PX - FOOTER_RESERVED;
-
-      // مقاس probe ثابت بـ px يعادل 210mm A4 = ~793.7px (نطرح هامش 4mm من كل جانب = 30.2px)
-      var PROBE_W_PX = Math.round(210 * DPI_RATIO) - Math.round(8 * DPI_RATIO); // عرض المحتوى الفعلي
-
-      function buildPage(chunksForPage, isFirst, isLast){
-        var div = document.createElement('div');
-        div.className = 'report-page';
-        div.style.padding = '4mm 4mm 0 4mm';
-        var html = HDR_HTML + COL_HDR_HTML;
-        for(var i=0;i<chunksForPage.length;i++) html += chunksForPage[i];
-        // الملاحظات تظهر في آخر صفحة فقط
-        if(isLast && NOTES_HTML) html += NOTES_HTML;
-        // spacer يمنع المحتوى من الاختباء خلف الـ footer الثابت
-        html += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+37)+'px"></div>';
-        div.innerHTML = html;
-        return div;
-      }
-
-      function measureHtml(html){
-        var probe = document.createElement('div');
-        probe.style.cssText = 'position:absolute;top:-9999px;left:-9999px;width:'+PROBE_W_PX+'px;visibility:hidden;font-family:'+document.body.style.fontFamily+';';
-        probe.innerHTML = html;
-        document.body.appendChild(probe);
-        var h = probe.offsetHeight || 0;
-        document.body.removeChild(probe);
-        return h;
-      }
-
-      function runPagination(){
-        var container = document.getElementById('all-pages-container');
-        if(!container) return;
-        container.innerHTML = '';
-
-        if(CAT_CHUNKS.length === 0){
-          // لا توجد تحاليل — صفحة واحدة بالـ header فقط
-          var p = document.createElement('div');
-          p.className = 'report-page';
-          p.style.padding = '4mm 4mm 0 4mm';
-          p.innerHTML = HDR_HTML + COL_HDR_HTML +
-            '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+37)+'px"></div>';
-          container.appendChild(p);
-          return;
-        }
-
-        // ── قياس ارتفاع الـ header (hdr + ptBox + colHdr) ──
-        var hdrMeasured = measureHtml(HDR_HTML + COL_HDR_HTML);
-        if(!hdrMeasured) hdrMeasured = 220; // fallback آمن
-
-        // ── قياس ارتفاع كل chunk مرة واحدة فقط ──
-        var chunkHeights = [];
-        for(var i=0;i<CAT_CHUNKS.length;i++){
-          var h = measureHtml(CAT_CHUNKS[i]);
-          chunkHeights.push(h || 60);
-        }
-
-        // ── قياس ارتفاع الملاحظات إن وجدت ──
-        var notesH = NOTES_HTML ? measureHtml(NOTES_HTML) : 0;
-
-        // ── توزيع الـ chunks على صفحات ──
-        var pages = []; // كل صفحة = مصفوفة chunks
-        var currentPageChunks = [];
-        var currentH = hdrMeasured;
-
-        for(var j = 0; j < CAT_CHUNKS.length; j++){
-          var chunk = CAT_CHUNKS[j];
-          var chunkH = chunkHeights[j];
-          var isLastChunk = (j === CAT_CHUNKS.length - 1);
-          // إذا هذا آخر chunk، أضف ارتفاع الملاحظات إلى الحساب
-          var extraH = isLastChunk ? notesH : 0;
-
-          if(currentPageChunks.length === 0){
-            // أول chunk في هذه الصفحة — يدخل دائماً (حتى لو كبير، لتجنب صفحة فارغة)
-            currentPageChunks.push(chunk);
-            currentH += chunkH + extraH;
-          } else if(currentH + chunkH + extraH <= USABLE_H){
-            // يتسع في الصفحة الحالية مع مراعاة الذيل والتوقيع
-            currentPageChunks.push(chunk);
-            currentH += chunkH + extraH;
-          } else {
-            // لا يتسع — أنهِ الصفحة الحالية وانقل المجموعة بكاملها للصفحة التالية
-            pages.push(currentPageChunks);
-            currentPageChunks = [chunk];
-            currentH = hdrMeasured + chunkH + extraH;
-          }
-        }
-        if(currentPageChunks.length > 0) pages.push(currentPageChunks);
-
-        // ── إنشاء صفحات DOM ──
-        for(var k=0; k<pages.length; k++){
-          var pg = buildPage(pages[k], k === 0, k === pages.length - 1);
-          container.appendChild(pg);
-        }
-      }
-
-      // ── QR Code ──
-      function tryGenQR(){
-        var el=document.getElementById('qr-print-${barcodeId}');
-        if(!el||typeof QRCode==='undefined'){setTimeout(tryGenQR,200);return;}
-        el.innerHTML='';
-        var baseUrl='${getBaseUrl().replace(/'/g,"\\'")}';
-        var url=(baseUrl?baseUrl+'?patient=${encodeURIComponent(barcodeId)}':'');
-        try{new QRCode(el,{text:url,width:50,height:50,correctLevel:QRCode.CorrectLevel.M});}catch(e){}
-      }
-
-      function init(){
-        try{ runPagination(); }catch(e){
-          // في حالة فشل pagination — fallback: صفحة واحدة بكامل المحتوى
-          var container = document.getElementById('all-pages-container');
-          if(container){
-            var fp = document.createElement('div');
-            fp.className = 'report-page';
-            fp.style.padding = '4mm 4mm 0 4mm';
-            var fhtml = HDR_HTML + COL_HDR_HTML;
-            for(var ii=0;ii<CAT_CHUNKS.length;ii++) fhtml += CAT_CHUNKS[ii];
-            if(NOTES_HTML) fhtml += NOTES_HTML;
-            fhtml += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+37)+'px"></div>';
-            fp.innerHTML = fhtml;
-            container.appendChild(fp);
-          }
-        }
-        tryGenQR();
-      }
-
-      if(document.readyState==='loading'){
-        document.addEventListener('DOMContentLoaded', init);
-      } else {
-        init();
-      }
     })();
     <\/script>
     </body></html>`;
@@ -12342,8 +11914,7 @@ function doPrint(reqId){
       try{
         iframe.contentWindow.focus();
         iframe.contentWindow.addEventListener('afterprint', function(){ afterRegularPrint(); });
-        // تأخير صغير (50ms) لضمان اكتمال pagination داخل iframe قبل الطباعة
-        setTimeout(function(){ try{ iframe.contentWindow.print(); }catch(e){} }, 50);
+        iframe.contentWindow.print();
       }catch(e){
         const w=window.open('','_blank','width=900,height=700');
         w.document.open(); w.document.write(content); w.document.close();
@@ -12411,84 +11982,57 @@ function generatePDFBlob(callback){
   }
 
   function _renderPage(htmlStr, isFirstPage, onDone, onErr){
-    // ── استخدام container في document الأصلي (للحفاظ على الخطوط والـ CSS) ──
     const container=document.createElement('div');
-    // مهم: visibility:hidden أفضل من display:none لأنه يحسب الأبعاد، و opacity:0 يخفي بصرياً
-    container.style.cssText='position:fixed;top:0;left:0;width:794px;min-height:200px;background:#fff;z-index:99991;font-family:Cairo,sans-serif;direction:ltr;visibility:visible;opacity:0;pointer-events:none;';
+    container.style.cssText='position:fixed;top:0;left:-9999px;width:794px;background:#fff;z-index:99991;font-family:Cairo,sans-serif;direction:ltr;';
     container.innerHTML='<style>'+printCSS+'</style>'+htmlStr;
     document.body.appendChild(container);
 
-    // ── انتظار حتى يحسب المتصفح الأبعاد فعلياً ──
-    let attempts=0;
-    function _waitReady(){
-      attempts++;
-      const ready = container.offsetWidth>0 && container.offsetHeight>0;
-      if(ready || attempts>40){
-        document.fonts.ready.then(function(){
-          setTimeout(_capture, 200);
-        }).catch(function(){ setTimeout(_capture, 200); });
-      } else {
-        setTimeout(_waitReady, 100);
-      }
-    }
+    document.fonts.ready.then(function(){
+      setTimeout(function(){
+        html2canvas(container,{
+          scale:2,useCORS:true,backgroundColor:'#ffffff',
+          logging:false,allowTaint:true,letterRendering:true,
+          width:794,windowWidth:794
+        }).then(function(canvas){
+          document.body.removeChild(container);
+          const imgData=canvas.toDataURL('image/jpeg',0.95);
+          const imgW=pageW;
+          const imgH=(canvas.height*imgW)/canvas.width;
 
-    function _capture(){
-      // فحص أخير قبل الالتقاط
-      if(!container.offsetWidth || !container.offsetHeight){
-        try{document.body.removeChild(container);}catch(e){}
-        return onErr(new Error('تعذّر حساب أبعاد التقرير. تأكد من اكتمال البيانات وأعد المحاولة.'));
-      }
-      html2canvas(container,{
-        scale:2,useCORS:true,backgroundColor:'#ffffff',
-        logging:false,allowTaint:true,letterRendering:true,
-        width:794,windowWidth:794,
-        height:container.offsetHeight,
-        windowHeight:container.offsetHeight
-      }).then(function(canvas){
-        try{document.body.removeChild(container);}catch(e){}
-        if(!canvas || !canvas.width || !canvas.height || !isFinite(canvas.width) || !isFinite(canvas.height)){
-          return onErr(new Error('فشل التقاط الصفحة (canvas فارغ). أعد المحاولة.'));
-        }
-        const imgData=canvas.toDataURL('image/jpeg',0.95);
-        const imgW=pageW;
-        const imgH=(canvas.height*imgW)/canvas.width;
-        if(!isFinite(imgH) || imgH<=0){
-          return onErr(new Error('أبعاد الصورة غير صالحة'));
-        }
+          if(!isFirstPage) doc.addPage();
 
-        if(!isFirstPage) doc.addPage();
-
-        if(imgH<=pageH){
-          doc.addImage(imgData,'JPEG',0,0,imgW,imgH);
-        } else {
-          const pageCanvas=document.createElement('canvas');
-          const ctx=pageCanvas.getContext('2d');
-          const scaleFactor=canvas.width/pageW;
-          const pageHeightPx=Math.round(pageH*scaleFactor);
-          let srcY=0;
-          let isFirst=true;
-          while(srcY<canvas.height){
-            if(!isFirst) doc.addPage();
-            const sliceH=Math.min(pageHeightPx, canvas.height-srcY);
-            pageCanvas.width=canvas.width;
-            pageCanvas.height=pageHeightPx;
-            ctx.fillStyle='#ffffff';
-            ctx.fillRect(0,0,pageCanvas.width,pageCanvas.height);
-            ctx.drawImage(canvas,0,srcY,canvas.width,sliceH,0,0,canvas.width,sliceH);
-            const sliceData=pageCanvas.toDataURL('image/jpeg',0.95);
-            doc.addImage(sliceData,'JPEG',0,0,imgW,pageH);
-            srcY+=pageHeightPx;
-            isFirst=false;
+          if(imgH<=pageH){
+            // صفحة واحدة — ضع الصورة مع توسيط عمودي إذا كانت أصغر
+            doc.addImage(imgData,'JPEG',0,0,imgW,imgH);
+          } else {
+            // الصورة أطول من A4 — قطّعها بحيث كل شريحة = صفحة A4 كاملة
+            const pageCanvas=document.createElement('canvas');
+            const ctx=pageCanvas.getContext('2d');
+            const scaleFactor=canvas.width/pageW;
+            const pageHeightPx=Math.round(pageH*scaleFactor);
+            let srcY=0;
+            let isFirst=true;
+            while(srcY<canvas.height){
+              if(!isFirst) doc.addPage();
+              const sliceH=Math.min(pageHeightPx, canvas.height-srcY);
+              pageCanvas.width=canvas.width;
+              pageCanvas.height=pageHeightPx; // دائماً A4 كاملة
+              ctx.fillStyle='#ffffff';
+              ctx.fillRect(0,0,pageCanvas.width,pageCanvas.height);
+              ctx.drawImage(canvas,0,srcY,canvas.width,sliceH,0,0,canvas.width,sliceH);
+              const sliceData=pageCanvas.toDataURL('image/jpeg',0.95);
+              doc.addImage(sliceData,'JPEG',0,0,imgW,pageH);
+              srcY+=pageHeightPx;
+              isFirst=false;
+            }
           }
-        }
-        onDone();
-      }).catch(function(err){
-        try{document.body.removeChild(container);}catch(e){}
-        onErr(err);
-      });
-    }
-
-    setTimeout(_waitReady, 100);
+          onDone();
+        }).catch(function(err){
+          try{document.body.removeChild(container);}catch(e){}
+          onErr(err);
+        });
+      },120);
+    });
   }
 
   // ── معالجة الصفحات بالتسلسل ──
@@ -14302,8 +13846,7 @@ function saveCurrencyNow(){settings.currency=document.getElementById('st-currenc
 // إعدادات شاشة الانتظار — سرعة التمرير وتصفية الأطباء
 // ============================================================
 function _wsGetSettings(){
-  if(!settings.waitScreen) settings.waitScreen={speed:'slow',doctorFilter:null,speakEnabled:true};
-  if(typeof settings.waitScreen.speakEnabled === 'undefined') settings.waitScreen.speakEnabled = true;
+  if(!settings.waitScreen) settings.waitScreen={speed:'slow',doctorFilter:null};
   return settings.waitScreen;
 }
 
@@ -14316,166 +13859,6 @@ function wsScrollSpeedChange(val){
     if(radio) radio.style.borderColor = o===val ? 'var(--primary)' : 'rgba(255,255,255,0.3)';
   });
   _wsGetSettings().speed = val;
-}
-
-// ── الناطق الصوتي: تفعيل/إيقاف ──
-function wsSpeakToggle(enabled){
-  _wsGetSettings().speakEnabled = !!enabled;
-  // تحديث UI
-  var dotOn = document.getElementById('ws-speak-dot-on');
-  var dotOff = document.getElementById('ws-speak-dot-off');
-  var radOn = document.getElementById('ws-speak-radio-on');
-  var radOff = document.getElementById('ws-speak-radio-off');
-  if(dotOn)  dotOn.style.background  = enabled ? 'var(--primary)' : 'transparent';
-  if(dotOff) dotOff.style.background = !enabled ? 'var(--primary)' : 'transparent';
-  if(radOn)  radOn.style.borderColor  = enabled ? 'var(--primary)' : 'rgba(255,255,255,0.3)';
-  if(radOff) radOff.style.borderColor = !enabled ? 'var(--primary)' : 'rgba(255,255,255,0.3)';
-}
-
-// ============================================================
-// تسجيل صوتي مخصص (اختياري) — يُحفظ في localStorage كـ Data URL
-// ============================================================
-let _wsRecorder = null;
-let _wsRecChunks = [];
-let _wsRecStartTime = 0;
-let _wsRecTimer = null;
-const WS_VOICE_KEY = 'medlab_voice_recording';
-
-// تحديث واجهة التسجيل (إظهار/إخفاء الأزرار حسب وجود تسجيل)
-function _wsRefreshRecordUI(){
-  const hasRec = !!localStorage.getItem(WS_VOICE_KEY);
-  const playBtn = document.getElementById('ws-rec-play');
-  const delBtn = document.getElementById('ws-rec-delete');
-  const info = document.getElementById('ws-rec-info');
-  if(playBtn) playBtn.style.display = hasRec ? '' : 'none';
-  if(delBtn) delBtn.style.display = hasRec ? '' : 'none';
-  if(info){
-    if(hasRec){
-      const len = localStorage.getItem(WS_VOICE_KEY).length;
-      const kb = Math.round(len/1024);
-      info.innerHTML = '✅ <span style="color:var(--success);font-weight:800">يوجد تسجيل محفوظ</span> ('+kb+' KB)';
-    } else {
-      info.innerHTML = '<span style="opacity:0.6">لا يوجد تسجيل محفوظ</span>';
-    }
-  }
-}
-
-async function wsStartRecording(){
-  try{
-    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-      showNotif('غير مدعوم','المتصفح لا يدعم تسجيل الصوت','warning');
-      return;
-    }
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    _wsRecChunks = [];
-    // استخدم MIME المدعوم من المتصفح
-    let mime = 'audio/webm';
-    if(MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mime = 'audio/webm;codecs=opus';
-    else if(MediaRecorder.isTypeSupported('audio/mp4')) mime = 'audio/mp4';
-    else if(MediaRecorder.isTypeSupported('audio/ogg')) mime = 'audio/ogg';
-
-    _wsRecorder = new MediaRecorder(stream, { mimeType: mime });
-    _wsRecorder.ondataavailable = function(e){ if(e.data && e.data.size > 0) _wsRecChunks.push(e.data); };
-    _wsRecorder.onstop = async function(){
-      try{
-        // إيقاف كل المسارات
-        stream.getTracks().forEach(t => t.stop());
-        const blob = new Blob(_wsRecChunks, { type: mime });
-        // تحويل إلى Data URL وحفظ في localStorage
-        const reader = new FileReader();
-        reader.onload = function(){
-          try{
-            const dataUrl = reader.result;
-            // فحص حجم: حد localStorage عادةً 5MB
-            if(dataUrl.length > 4*1024*1024){
-              showNotif('التسجيل طويل جداً','يجب أن يكون التسجيل أقصر من ~30 ثانية','warning');
-              return;
-            }
-            localStorage.setItem(WS_VOICE_KEY, dataUrl);
-            _wsRefreshRecordUI();
-            showNotif('✅ تم الحفظ','تم حفظ التسجيل بنجاح، سيُستخدم تلقائياً مع كل مريض جاهز','success');
-            // إعلام نافذة شاشة الانتظار بالتحديث
-            try{
-              if(window._waitScreenWin && !window._waitScreenWin.closed){
-                window._waitScreenWin.postMessage({ type:'WQ_VOICE_UPDATE', voice: dataUrl }, '*');
-              }
-            }catch(_){}
-          }catch(err){
-            if(err && err.name === 'QuotaExceededError'){
-              showNotif('المساحة ممتلئة','التسجيل أكبر من المساحة المتاحة. حاول تسجيل أقصر.','danger');
-            } else {
-              showNotif('خطأ','تعذر حفظ التسجيل: '+(err.message||err),'danger');
-            }
-          }
-        };
-        reader.readAsDataURL(blob);
-      }catch(err){
-        showNotif('خطأ','فشل معالجة التسجيل: '+(err.message||err),'danger');
-      }
-    };
-    _wsRecorder.start();
-    _wsRecStartTime = Date.now();
-    // تحديث واجهة المؤقت
-    document.getElementById('ws-rec-status').style.display = '';
-    document.getElementById('ws-rec-start').style.display = 'none';
-    document.getElementById('ws-rec-stop').style.display = '';
-    _wsRecTimer = setInterval(function(){
-      const sec = Math.floor((Date.now() - _wsRecStartTime)/1000);
-      const m = String(Math.floor(sec/60)).padStart(2,'0');
-      const s = String(sec%60).padStart(2,'0');
-      const t = document.getElementById('ws-rec-time');
-      if(t) t.textContent = m+':'+s;
-      // إيقاف تلقائي عند 30 ثانية
-      if(sec >= 30) wsStopRecording();
-    }, 250);
-  }catch(err){
-    if(err && err.name === 'NotAllowedError'){
-      showNotif('الميكروفون مرفوض','يجب السماح للموقع باستخدام الميكروفون','warning');
-    } else {
-      showNotif('خطأ','تعذر بدء التسجيل: '+(err.message||err),'danger');
-    }
-  }
-}
-
-function wsStopRecording(){
-  try{
-    if(_wsRecorder && _wsRecorder.state !== 'inactive'){
-      _wsRecorder.stop();
-    }
-    if(_wsRecTimer){ clearInterval(_wsRecTimer); _wsRecTimer = null; }
-    document.getElementById('ws-rec-status').style.display = 'none';
-    document.getElementById('ws-rec-start').style.display = '';
-    document.getElementById('ws-rec-stop').style.display = 'none';
-  }catch(e){}
-}
-
-function wsPlayRecording(){
-  try{
-    const dataUrl = localStorage.getItem(WS_VOICE_KEY);
-    if(!dataUrl){ showNotif('لا يوجد تسجيل','لم يُحفظ أي تسجيل بعد','warning'); return; }
-    const audio = new Audio(dataUrl);
-    audio.volume = 1.0;
-    audio.play().catch(function(err){
-      showNotif('خطأ','تعذر تشغيل التسجيل: '+(err.message||err),'danger');
-    });
-  }catch(e){}
-}
-
-function wsDeleteRecording(){
-  if(!confirm('هل أنت متأكد من حذف التسجيل الصوتي؟')) return;
-  try{
-    localStorage.removeItem(WS_VOICE_KEY);
-    _wsRefreshRecordUI();
-    showNotif('🗑️ تم الحذف','تم حذف التسجيل، سيتم استخدام الجرس فقط بدون نطق','info');
-    // إعلام نافذة شاشة الانتظار بالحذف
-    try{
-      if(window._waitScreenWin && !window._waitScreenWin.closed){
-        window._waitScreenWin.postMessage({ type:'WQ_VOICE_UPDATE', voice: null }, '*');
-      }
-    }catch(_){}
-  }catch(e){
-    showNotif('خطأ','تعذر حذف التسجيل','danger');
-  }
 }
 
 function wsRefreshDoctorList(){
@@ -14549,10 +13932,6 @@ function _wsInitSettingsUI(){
   var ws = _wsGetSettings();
   // تعيين السرعة
   wsScrollSpeedChange(ws.speed||'slow');
-  // تعيين حالة الناطق الصوتي
-  wsSpeakToggle(ws.speakEnabled !== false);
-  // تحديث واجهة التسجيل الصوتي
-  _wsRefreshRecordUI();
   // تحميل قائمة الأطباء
   wsRefreshDoctorList();
 }
@@ -14850,79 +14229,17 @@ function _confirmDbPin(){
 function loadHeaderImg(input){
   const f=input.files[0];if(!f)return;
   const reader=new FileReader();
-  reader.onload=async e=>{
-    const dataUrl=e.target.result;
-    settings.headerImg=dataUrl;                // متاح فوراً في الذاكرة لشفرة الطباعة
-    document.getElementById('header-img-show').src=dataUrl;
-    document.getElementById('header-img-preview').style.display='block';
-    const ok=await setBig('headerImg',dataUrl);  // الحفظ الفعلي على IDB
-    showNotif('تم', ok?'تم رفع صورة الرأس وحفظها في قاعدة البيانات ✅':'تم رفع الصورة لكن فشل الحفظ ⚠️', ok?'success':'error');
-  };
+  reader.onload=e=>{settings.headerImg=e.target.result;save('settings',settings);document.getElementById('header-img-show').src=e.target.result;document.getElementById('header-img-preview').style.display='block';showNotif('تم','تم رفع صورة الرأس ✅','success');};
   reader.readAsDataURL(f);
 }
 function loadFooterImg(input){
   const f=input.files[0];if(!f)return;
   const reader=new FileReader();
-  reader.onload=async e=>{
-    const dataUrl=e.target.result;
-    settings.footerImg=dataUrl;
-    document.getElementById('footer-img-show').src=dataUrl;
-    document.getElementById('footer-img-preview').style.display='block';
-    const ok=await setBig('footerImg',dataUrl);
-    showNotif('تم', ok?'تم رفع صورة التذييل وحفظها في قاعدة البيانات ✅':'تم رفع الصورة لكن فشل الحفظ ⚠️', ok?'success':'error');
-  };
+  reader.onload=e=>{settings.footerImg=e.target.result;save('settings',settings);document.getElementById('footer-img-show').src=e.target.result;document.getElementById('footer-img-preview').style.display='block';showNotif('تم','تم رفع صورة التذييل ✅','success');};
   reader.readAsDataURL(f);
 }
-function clearHeaderImg(){
-  settings.headerImg='';
-  delBig('headerImg').catch(()=>{});
-  document.getElementById('header-img-preview').style.display='none';
-  document.getElementById('st-header-img').value='';
-}
-function clearFooterImg(){
-  settings.footerImg='';
-  delBig('footerImg').catch(()=>{});
-  document.getElementById('footer-img-preview').style.display='none';
-  document.getElementById('st-footer-img').value='';
-}
-
-// ── حفظ ارتفاع رأس/تذييل التقرير في IndexedDB ──────────────
-const HDR_IMG_H_DEFAULT = 170;
-const FTR_IMG_H_DEFAULT = 50;
-const HDR_FTR_H_MIN = 70;
-const HDR_FTR_H_MAX = 230;
-
-async function saveHdrImgHeight(){
-  const inp=document.getElementById('st-hdr-img-h');
-  if(!inp) return;
-  const raw=parseInt(inp.value,10);
-  if(isNaN(raw)){
-    showNotif('تنبيه','أدخل قيمة رقمية صحيحة','warning'); return;
-  }
-  if(raw<HDR_FTR_H_MIN||raw>HDR_FTR_H_MAX){
-    showNotif('تنبيه',`القيمة يجب أن تكون بين ${HDR_FTR_H_MIN} و ${HDR_FTR_H_MAX} px`,'warning'); return;
-  }
-  settings.hdrImgH=raw;
-  inp.value=raw;
-  const ok=await setBig('hdrImgH',raw);
-  showNotif('تم', ok?`✅ تم حفظ ارتفاع الرأس (${raw}px) — سيُطبَّق في كل التقارير`:'فشل الحفظ ⚠️', ok?'success':'error');
-}
-
-async function saveFtrImgHeight(){
-  const inp=document.getElementById('st-ftr-img-h');
-  if(!inp) return;
-  const raw=parseInt(inp.value,10);
-  if(isNaN(raw)){
-    showNotif('تنبيه','أدخل قيمة رقمية صحيحة','warning'); return;
-  }
-  if(raw<HDR_FTR_H_MIN||raw>HDR_FTR_H_MAX){
-    showNotif('تنبيه',`القيمة يجب أن تكون بين ${HDR_FTR_H_MIN} و ${HDR_FTR_H_MAX} px`,'warning'); return;
-  }
-  settings.ftrImgH=raw;
-  inp.value=raw;
-  const ok=await setBig('ftrImgH',raw);
-  showNotif('تم', ok?`✅ تم حفظ ارتفاع التذييل (${raw}px) — سيُطبَّق في كل التقارير`:'فشل الحفظ ⚠️', ok?'success':'error');
-}
+function clearHeaderImg(){settings.headerImg='';save('settings',settings);document.getElementById('header-img-preview').style.display='none';document.getElementById('st-header-img').value='';}
+function clearFooterImg(){settings.footerImg='';save('settings',settings);document.getElementById('footer-img-preview').style.display='none';document.getElementById('st-footer-img').value='';}
 
 // ── دوال التوقيع والتذييل ──────────────────────────────────
 function toggleSignOption(type){
@@ -17527,9 +16844,7 @@ function openConv(cid, on, ou){
   if(fbDb) fbDb.ref('uc/'+meUsername+'/'+cid).update({ ur:0 });
   listenMessages(cid);
   if(fbDb){
-    if(window._onlineStatusRef) window._onlineStatusRef.off();
-    window._onlineStatusRef = fbDb.ref('dir/'+ou+'/online');
-    window._onlineStatusRef.on('value', function(s){
+    fbDb.ref('dir/'+ou+'/online').on('value', function(s){
       var el=document.getElementById('chat-conv-status');
       if(el) el.textContent=s.val()?'● متصل الآن':'● غير متصل';
     });
@@ -19528,12 +18843,12 @@ function _buildCultureHTML(cid){
 
   let hdrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
-  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:${(typeof s.hdrImgH==='number'&&s.hdrImgH>=70&&s.hdrImgH<=230)?s.hdrImgH:170}px;display:block;object-fit:fill">`;
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:120px;display:block;object-fit:fill">`;
   else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-family:Arial,sans-serif;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
 
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
-  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=70&&s.ftrImgH<=230)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
+  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:50px;object-fit:fill;display:block">`;
   else if(s.footer) ftrHTML=`<div style="padding:4px 16px;font-size:12px;color:#555;border-top:1px solid ${color};text-align:center">${s.footer}</div>`;
 
   // ─── Patient info — same style as regular test print ───────────
@@ -19705,9 +19020,6 @@ function shareCultureWhatsApp(cid){
   setTimeout(function(){
     html2canvas(iDoc.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff'}).then(async function(canvas){
       try{document.body.removeChild(iframe);}catch(e){}
-      if(!canvas || !canvas.width || !canvas.height){
-        return showNotif('خطأ','تعذر التقاط التقرير — أعد المحاولة','error');
-      }
       const imgData=canvas.toDataURL('image/jpeg',0.92);
       const {jsPDF}=window.jspdf;
       const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -19715,9 +19027,6 @@ function shareCultureWhatsApp(cid){
       const pdfH=doc.internal.pageSize.getHeight();
       const ratio=canvas.height/canvas.width;
       const imgH=pdfW*ratio;
-      if(!isFinite(imgH) || imgH<=0){
-        return showNotif('خطأ','أبعاد الصورة غير صالحة','error');
-      }
       let y=0;
       while(y<imgH){
         if(y>0) doc.addPage();
@@ -19732,9 +19041,9 @@ function shareCultureWhatsApp(cid){
           showNotif('تم','تم حفظ PDF في D:\\MedLabPro ✅ افتح واتساب وأرفق الملف','success');
         },600);
       });
-    }).catch(function(err){
+    }).catch(function(){
       try{if(iframe.parentNode)document.body.removeChild(iframe);}catch(e){}
-      showNotif('خطأ','تعذر إنشاء PDF: '+(err&&err.message?err.message:''),'error');
+      showNotif('خطأ','تعذر إنشاء PDF','error');
     });
   },900);
 }
@@ -20047,11 +19356,11 @@ function _buildUAPrintHTML(r){
   const color=s.hdrText?.color||'#003366';
   let hdrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
-  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:${(typeof s.hdrImgH==='number'&&s.hdrImgH>=70&&s.hdrImgH<=230)?s.hdrImgH:170}px;display:block;object-fit:fill">`;
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:120px;display:block;object-fit:fill">`;
   else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
-  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=70&&s.ftrImgH<=230)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
+  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:50px;object-fit:fill;display:block">`;
 
   const renderSec=(sec)=>{
     const validFields=sec.fields.filter(f=>{
@@ -20567,11 +19876,11 @@ function _buildStoolPrintHTML(r){
   const color=s.hdrText?.color||'#003366';
   let hdrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
-  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:${(typeof s.hdrImgH==='number'&&s.hdrImgH>=70&&s.hdrImgH<=230)?s.hdrImgH:170}px;display:block;object-fit:fill">`;
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:120px;display:block;object-fit:fill">`;
   else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
-  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=70&&s.ftrImgH<=230)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
+  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:50px;object-fit:fill;display:block">`;
 
   const drName=r.doctorName||pt.doctorName||(doctors&&doctors.find&&doctors.find(d=>d.id===pt.doctorId)?.name)||'';
   const _sNameColor   = s.colorName||'#cc0011';
@@ -20714,9 +20023,6 @@ function shareUAWhatsApp(id){
   setTimeout(function(){
     html2canvas(iDoc.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff'}).then(async function(canvas){
       try{document.body.removeChild(iframe);}catch(e){}
-      if(!canvas || !canvas.width || !canvas.height){
-        return showNotif('خطأ','تعذر التقاط التقرير — أعد المحاولة','error');
-      }
       const imgData=canvas.toDataURL('image/jpeg',0.92);
       const {jsPDF}=window.jspdf;
       const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -20724,9 +20030,6 @@ function shareUAWhatsApp(id){
       const pdfH=doc.internal.pageSize.getHeight();
       const ratio=canvas.height/canvas.width;
       const imgH=pdfW*ratio;
-      if(!isFinite(imgH) || imgH<=0){
-        return showNotif('خطأ','أبعاد الصورة غير صالحة','error');
-      }
       let y=0;
       while(y<imgH){if(y>0)doc.addPage();doc.addImage(imgData,'JPEG',0,y>0?-(y):0,pdfW,imgH);y+=pdfH;}
       const fileName=ptName.replace(/\s+/g,'_')+'_urine.pdf';
@@ -20737,9 +20040,9 @@ function shareUAWhatsApp(id){
           showNotif('تم','تم حفظ PDF في D:\\MedLabPro ✅ افتح واتساب وأرفق الملف','success');
         },600);
       });
-    }).catch(function(err){
+    }).catch(function(){
       try{if(iframe.parentNode)document.body.removeChild(iframe);}catch(e){}
-      showNotif('خطأ','تعذر إنشاء PDF: '+(err&&err.message?err.message:''),'error');
+      showNotif('خطأ','تعذر إنشاء PDF','error');
     });
   },900);
 }
@@ -20764,9 +20067,6 @@ function shareStoolWhatsApp(id){
   setTimeout(function(){
     html2canvas(iDoc.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff'}).then(async function(canvas){
       try{document.body.removeChild(iframe);}catch(e){}
-      if(!canvas || !canvas.width || !canvas.height){
-        return showNotif('خطأ','تعذر التقاط التقرير — أعد المحاولة','error');
-      }
       const imgData=canvas.toDataURL('image/jpeg',0.92);
       const {jsPDF}=window.jspdf;
       const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -20774,9 +20074,6 @@ function shareStoolWhatsApp(id){
       const pdfH=doc.internal.pageSize.getHeight();
       const ratio=canvas.height/canvas.width;
       const imgH=pdfW*ratio;
-      if(!isFinite(imgH) || imgH<=0){
-        return showNotif('خطأ','أبعاد الصورة غير صالحة','error');
-      }
       let y=0;
       while(y<imgH){if(y>0)doc.addPage();doc.addImage(imgData,'JPEG',0,y>0?-(y):0,pdfW,imgH);y+=pdfH;}
       const fileName=ptName.replace(/\s+/g,'_')+'_stool.pdf';
@@ -20787,9 +20084,9 @@ function shareStoolWhatsApp(id){
           showNotif('تم','تم حفظ PDF في D:\\MedLabPro ✅ افتح واتساب وأرفق الملف','success');
         },600);
       });
-    }).catch(function(err){
+    }).catch(function(){
       try{if(iframe.parentNode)document.body.removeChild(iframe);}catch(e){}
-      showNotif('خطأ','تعذر إنشاء PDF: '+(err&&err.message?err.message:''),'error');
+      showNotif('خطأ','تعذر إنشاء PDF','error');
     });
   },900);
 }
@@ -20973,7 +20270,8 @@ function removeUAField(secKey, idx){
   if(!confirm('حذف هذا العنصر؟')) return;
   UA_FIELDS[secKey].fields.splice(idx,1);
   // Save custom UA_FIELDS to settings
-  setBig('uaFieldsCustom', JSON.stringify(UA_FIELDS)); delete settings._uaFieldsCustom;
+  settings._uaFieldsCustom = JSON.stringify(UA_FIELDS);
+  save('settings', settings);
   renderUAFieldsEditor();
   showNotif('تم','تم حذف العنصر ✅','success');
 }
@@ -20982,7 +20280,8 @@ function removeStoolField(secKey, idx){
   if(!STOOL_FIELDS[secKey]||!STOOL_FIELDS[secKey].fields) return;
   if(!confirm('حذف هذا العنصر؟')) return;
   STOOL_FIELDS[secKey].fields.splice(idx,1);
-  setBig('stoolFieldsCustom', JSON.stringify(STOOL_FIELDS)); delete settings._stoolFieldsCustom;
+  settings._stoolFieldsCustom = JSON.stringify(STOOL_FIELDS);
+  save('settings', settings);
   renderStoolFieldsEditor();
   showNotif('تم','تم حذف العنصر ✅','success');
 }
@@ -20996,7 +20295,8 @@ function addUAField(){
   const options=opts?opts.split('|').map(o=>o.trim()).filter(Boolean):['None','Present'];
   const id='custom_'+Date.now();
   UA_FIELDS[secKey].fields.push({id, label, type:'select', options, normal:options[0]});
-  setBig('uaFieldsCustom', JSON.stringify(UA_FIELDS)); delete settings._uaFieldsCustom;
+  settings._uaFieldsCustom = JSON.stringify(UA_FIELDS);
+  save('settings', settings);
   document.getElementById('ua-new-label').value='';
   document.getElementById('ua-new-opts').value='';
   renderUAFieldsEditor();
@@ -21012,7 +20312,8 @@ function addStoolField(){
   const options=opts?opts.split('|').map(o=>o.trim()).filter(Boolean):['None','Present'];
   const id='custom_'+Date.now();
   STOOL_FIELDS[secKey].fields.push({id, label, type:'select', options, normal:options[0]});
-  setBig('stoolFieldsCustom', JSON.stringify(STOOL_FIELDS)); delete settings._stoolFieldsCustom;
+  settings._stoolFieldsCustom = JSON.stringify(STOOL_FIELDS);
+  save('settings', settings);
   document.getElementById('stool-new-label').value='';
   document.getElementById('stool-new-opts').value='';
   renderStoolFieldsEditor();
@@ -21021,26 +20322,21 @@ function addStoolField(){
 
 // Apply saved custom fields on startup
 function applyCustomExamFields(){
-  // قراءة من كاش IDB (الذي تم تحميله مسبقاً عبر loadAllBigToCache)
-  // مع توافق رجعي مع settings._uaFieldsCustom القديمة
   try{
-    const ua = getBigCached('uaFieldsCustom') || settings._uaFieldsCustom;
-    if(ua){
-      const saved = (typeof ua==='string') ? JSON.parse(ua) : ua;
+    if(settings._uaFieldsCustom){
+      const saved=JSON.parse(settings._uaFieldsCustom);
       Object.keys(saved).forEach(k=>{ if(UA_FIELDS[k]) UA_FIELDS[k].fields=saved[k].fields; });
     }
   }catch(e){}
   try{
-    const st = getBigCached('stoolFieldsCustom') || settings._stoolFieldsCustom;
-    if(st){
-      const saved = (typeof st==='string') ? JSON.parse(st) : st;
+    if(settings._stoolFieldsCustom){
+      const saved=JSON.parse(settings._stoolFieldsCustom);
       Object.keys(saved).forEach(k=>{ if(STOOL_FIELDS[k]) STOOL_FIELDS[k].fields=saved[k].fields; });
     }
   }catch(e){}
   try{
-    const sm = getBigCached('semenFieldsCustom') || settings._semenFieldsCustom;
-    if(sm){
-      const saved = (typeof sm==='string') ? JSON.parse(sm) : sm;
+    if(settings._semenFieldsCustom){
+      const saved=JSON.parse(settings._semenFieldsCustom);
       Object.keys(saved).forEach(k=>{ if(SEMEN_FIELDS[k]) SEMEN_FIELDS[k].fields=saved[k].fields; });
     }
   }catch(e){}
@@ -21139,8 +20435,9 @@ function _efDrop(e,examType){
   var item=fields.splice(srcIdx,1)[0];
   fields.splice(dstIdx,0,item);
   // حفظ
-  var bigKey=examType==='ua'?'uaFieldsCustom':examType==='stool'?'stoolFieldsCustom':'semenFieldsCustom';
-  setBig(bigKey, JSON.stringify(FIELDS));
+  var settingsKey=examType==='ua'?'_uaFieldsCustom':examType==='stool'?'_stoolFieldsCustom':'_semenFieldsCustom';
+  settings[settingsKey]=JSON.stringify(FIELDS);
+  save('settings',settings);
   // إعادة رسم
   if(examType==='ua') renderUAFieldsEditor();
   else if(examType==='stool') renderStoolFieldsEditor();
@@ -21174,8 +20471,9 @@ function saveExamFieldEdit(examType, secKey, fieldIdx){
   f.options = options;
   f.normal  = normal || options[0];
   // حفظ
-  const bigKey = examType==='ua'?'uaFieldsCustom':examType==='stool'?'stoolFieldsCustom':'semenFieldsCustom';
-  setBig(bigKey, JSON.stringify(FIELDS));
+  const settingsKey = examType==='ua'?'_uaFieldsCustom':examType==='stool'?'_stoolFieldsCustom':'_semenFieldsCustom';
+  settings[settingsKey] = JSON.stringify(FIELDS);
+  save('settings', settings);
   // إغلاق المودال وإعادة رسم المحرر
   const ov = document.getElementById('_ef_edit_overlay'); if(ov) ov.remove();
   if(examType==='ua') renderUAFieldsEditor();
@@ -21213,7 +20511,8 @@ function removeSemenField(secKey, idx){
   if(!SEMEN_FIELDS[secKey]||!SEMEN_FIELDS[secKey].fields) return;
   if(!confirm('Delete this field?')) return;
   SEMEN_FIELDS[secKey].fields.splice(idx,1);
-  setBig('semenFieldsCustom', JSON.stringify(SEMEN_FIELDS)); delete settings._semenFieldsCustom;
+  settings._semenFieldsCustom = JSON.stringify(SEMEN_FIELDS);
+  save('settings', settings);
   renderSemenFieldsEditor();
   showNotif('Done','Field deleted ✅','success');
 }
@@ -21227,7 +20526,8 @@ function addSemenField(){
   const options=opts?opts.split('|').map(o=>o.trim()).filter(Boolean):['None','Present'];
   const id='custom_'+Date.now();
   SEMEN_FIELDS[secKey].fields.push({id, label, type:'select', options, normal:options[0]});
-  setBig('semenFieldsCustom', JSON.stringify(SEMEN_FIELDS)); delete settings._semenFieldsCustom;
+  settings._semenFieldsCustom = JSON.stringify(SEMEN_FIELDS);
+  save('settings', settings);
   document.getElementById('semen-new-label').value='';
   document.getElementById('semen-new-opts').value='';
   renderSemenFieldsEditor();
@@ -21241,7 +20541,7 @@ function printCBCBlank(){
   const id=document.getElementById('res-req-sel').value;
   if(!id){ showNotif('تنبيه','اختر طلباً أولاً','warning'); return; }
   const req=requests.find(r=>r.id===id); if(!req) return;
-  const html = buildPrintHTML(req, { blankBody: true, cbcBlank: true });
+  const html = buildPrintHTML(req, { blankBody: true });
   _printViaIframe(html);
 }
 
@@ -21249,7 +20549,7 @@ function printCBCFromPrintSection(){
   const id=document.getElementById('print-req-sel').value||currentReqId;
   if(!id){ showNotif('تنبيه','اختر طلباً أولاً','warning'); return; }
   const req=requests.find(r=>r.id===id); if(!req) return;
-  const html = buildPrintHTML(req, { blankBody: true, cbcBlank: true });
+  const html = buildPrintHTML(req, { blankBody: true });
   _printViaIframe(html);
 }
 
@@ -21729,11 +21029,11 @@ function _buildSemenPrintHTML(r){
   const color=s.hdrText?.color||'#003366';
   let hdrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
-  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:${(typeof s.hdrImgH==='number'&&s.hdrImgH>=70&&s.hdrImgH<=230)?s.hdrImgH:170}px;display:block;object-fit:fill">`;
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:120px;display:block;object-fit:fill">`;
   else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
-  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=70&&s.ftrImgH<=230)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
+  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:50px;object-fit:fill;display:block">`;
 
   const drName=r.doctorName||pt.doctorName||(doctors&&doctors.find&&doctors.find(d=>d.id===pt.doctorId)?.name)||'';
   const _smNameColor   = s.colorName||'#cc0011';
@@ -21895,9 +21195,6 @@ function shareSemenPDFWhatsApp(id){
   setTimeout(function(){
     html2canvas(iDoc.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff'}).then(async function(canvas){
       try{document.body.removeChild(iframe);}catch(e){}
-      if(!canvas || !canvas.width || !canvas.height){
-        return showNotif('خطأ','تعذر التقاط التقرير — أعد المحاولة','error');
-      }
       const imgData=canvas.toDataURL('image/jpeg',0.92);
       const {jsPDF}=window.jspdf;
       const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -21905,9 +21202,6 @@ function shareSemenPDFWhatsApp(id){
       const pdfH=doc.internal.pageSize.getHeight();
       const ratio=canvas.height/canvas.width;
       const imgH=pdfW*ratio;
-      if(!isFinite(imgH) || imgH<=0){
-        return showNotif('خطأ','أبعاد الصورة غير صالحة','error');
-      }
       let y=0;
       while(y<imgH){
         if(y>0) doc.addPage();
@@ -21922,9 +21216,9 @@ function shareSemenPDFWhatsApp(id){
           showNotif('📎 أرفق الملف','تم حفظ PDF في D:\\MedLabPro وفتح محادثة المريض ✅ اضغط 📎 وأرفق الملف ثم أرسل','success');
         },600);
       });
-    }).catch(function(err){
+    }).catch(function(){
       try{if(iframe.parentNode)document.body.removeChild(iframe);}catch(e){}
-      showNotif('خطأ','تعذر إنشاء PDF: '+(err&&err.message?err.message:''),'error');
+      showNotif('خطأ','تعذر إنشاء PDF','error');
     });
   },900);
 }
@@ -22050,34 +21344,21 @@ function _printViaIframe(html){
   document.addEventListener('DOMContentLoaded', applyAllStatic);
 
   // MutationObserver للحقول التي تُضاف ديناميكياً (مثل wp-name, wp-age-y)
-  var _obsTimer;
   const obs = new MutationObserver(function(mutations){
-    var hasInputs = false;
     mutations.forEach(function(m){
       m.addedNodes.forEach(function(node){
         if(!node.querySelectorAll) return;
-        if(node.querySelectorAll('input,textarea').length || node.tagName==='INPUT' || node.tagName==='TEXTAREA')
-          hasInputs = true;
+        node.querySelectorAll('input,textarea').forEach(function(el){
+          if(el.id && FIELD_LANG[el.id]) applyLang(el, FIELD_LANG[el.id]);
+          if(el.classList.contains('res-input')) applyLang(el, 'en');
+        });
+        // تطبيق على العنصر نفسه إن كان input
+        if((node.tagName==='INPUT'||node.tagName==='TEXTAREA')){
+          if(node.id && FIELD_LANG[node.id]) applyLang(node, FIELD_LANG[node.id]);
+          if(node.classList && node.classList.contains('res-input')) applyLang(node, 'en');
+        }
       });
     });
-    if(hasInputs){
-      clearTimeout(_obsTimer);
-      _obsTimer = setTimeout(function(){
-        mutations.forEach(function(m){
-          m.addedNodes.forEach(function(node){
-            if(!node.querySelectorAll) return;
-            node.querySelectorAll('input,textarea').forEach(function(el){
-              if(el.id && FIELD_LANG[el.id]) applyLang(el, FIELD_LANG[el.id]);
-              if(el.classList.contains('res-input')) applyLang(el, 'en');
-            });
-            if((node.tagName==='INPUT'||node.tagName==='TEXTAREA')){
-              if(node.id && FIELD_LANG[node.id]) applyLang(node, FIELD_LANG[node.id]);
-              if(node.classList && node.classList.contains('res-input')) applyLang(node, 'en');
-            }
-          });
-        });
-      }, 300);
-    }
   });
   obs.observe(document.body||document.documentElement, {childList:true, subtree:true});
 })();
@@ -22223,14 +21504,14 @@ function toggleInputLang(inputId, btnId){
   setTimeout(injectAll, 3000);
 
   if(window.MutationObserver){
-    var _injectTimer;
     var mo = new MutationObserver(function(muts){
-      var hasInputs = muts.some(function(m){
-        return Array.from(m.addedNodes).some(function(n){
-          return n.querySelectorAll && (n.querySelectorAll('input,textarea').length || n.tagName==='INPUT' || n.tagName==='TEXTAREA');
+      muts.forEach(function(m){
+        m.addedNodes.forEach(function(node){
+          if(!node.querySelectorAll) return;
+          node.querySelectorAll('input,textarea').forEach(injectBtn);
+          if(node.tagName==='INPUT'||node.tagName==='TEXTAREA') injectBtn(node);
         });
       });
-      if(hasInputs){ clearTimeout(_injectTimer); _injectTimer=setTimeout(function(){ muts.forEach(function(m){ m.addedNodes.forEach(function(node){ if(!node.querySelectorAll)return; node.querySelectorAll('input,textarea').forEach(injectBtn); if(node.tagName==='INPUT'||node.tagName==='TEXTAREA') injectBtn(node); }); }); },300); }
     });
     document.addEventListener('DOMContentLoaded', function(){
       mo.observe(document.body, {childList:true, subtree:true});
@@ -22642,24 +21923,11 @@ function openWaitScreen(){
   +'.live{display:inline-flex;align-items:center;gap:6px;color:rgba(0,232,122,0.7);font-weight:700;}'
   +'.ldot{width:7px;height:7px;background:#00e87a;border-radius:50%;animation:livepulse 2s infinite;}'
   +'@keyframes livepulse{0%,100%{opacity:1}50%{opacity:0.25}}'
-  /* ── طبقة عرض اسم المريض الجاهز عند النطق ── */
-  +'.call-toast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.85);background:linear-gradient(135deg,rgba(0,232,122,0.95),rgba(0,180,90,0.95));color:#fff;padding:34px 60px;border-radius:24px;box-shadow:0 20px 80px rgba(0,232,122,0.5),0 0 200px rgba(0,232,122,0.3);z-index:9999;text-align:center;opacity:0;pointer-events:none;transition:all 0.45s cubic-bezier(0.34,1.56,0.64,1);border:2px solid rgba(255,255,255,0.25);min-width:520px;}'
-  +'.call-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}'
-  +'.call-toast .ct-ic{font-size:64px;margin-bottom:8px;animation:bell 0.6s ease-in-out infinite alternate;}'
-  +'@keyframes bell{0%{transform:rotate(-12deg)}100%{transform:rotate(12deg)}}'
-  +'.call-toast .ct-ttl{font-size:18px;font-weight:700;opacity:0.92;margin-bottom:10px;letter-spacing:1px;}'
-  +'.call-toast .ct-name{font-size:42px;font-weight:900;line-height:1.2;margin-bottom:8px;text-shadow:0 4px 14px rgba(0,0,0,0.3);}'
-  +'.call-toast .ct-sub{font-size:15px;opacity:0.85;font-weight:600;}'
-  /* صف المريض الجاري نداؤه */
-  +'tr.calling-row td{background:rgba(0,232,122,0.18) !important;animation:rowGlow 1.2s ease-in-out infinite alternate;}'
-  +'@keyframes rowGlow{0%{box-shadow:inset 0 0 0 rgba(0,232,122,0)}100%{box-shadow:inset 0 0 30px rgba(0,232,122,0.4)}}'
   +'</style></head><body>'
   +'<div class="hdr">'
   +'<div class="logo"><div class="logo-ic">🔬</div><div><h1>شاشة قاعة الانتظار</h1><p>MedLab Pro — وضع HDMI</p></div></div>'
   +'<div><div class="clock" id="wsclock">--:--:--</div><div class="date-lbl" id="wsdate"></div></div>'
   +'<div style="display:flex;align-items:center;gap:10px">'
-  +'<div id="voice-badge" class="hdmi-badge" style="background:rgba(0,232,122,0.08);border-color:rgba(0,232,122,0.25);color:#00e87a;display:none"><div class="hdmi-dot" style="background:#00e87a"></div>🔊 الناطق نشط</div>'
-  +'<button id="voice-unlock-btn" class="fs-btn" onclick="_unlockVoice()" title="تفعيل الصوت" style="display:none;background:rgba(255,204,0,0.12);border-color:rgba(255,204,0,0.3);color:#ffcc00;width:auto;padding:0 14px;font-size:13px;font-weight:700;gap:6px">🔊 اضغط لتفعيل الصوت</button>'
   +'<div class="hdmi-badge"><div class="hdmi-dot"></div>📺 HDMI نشط</div>'
   +'<button class="fs-btn" onclick="toggleFS()" title="ملء الشاشة / F11">⛶</button>'
   +'</div>'
@@ -22675,12 +21943,6 @@ function openWaitScreen(){
   +'<span class="live"><span class="ldot"></span> البيانات حية</span>'
   +'<span>⏳ انتظار &nbsp;|&nbsp; 🔬 جاري التحليل &nbsp;|&nbsp; ✅ جاهز</span>'
   +'<span>MedLab Pro &copy; '+yr+'</span>'
-  +'</div>'
-  +'<div id="call-toast" class="call-toast" aria-live="polite">'
-  +'<div class="ct-ic">🔔</div>'
-  +'<div class="ct-ttl">📣 نداء للمريض</div>'
-  +'<div class="ct-name" id="ct-name">—</div>'
-  +'<div class="ct-sub">تحاليلك جاهزة، يرجى التوجه إلى الاستقبال</div>'
   +'</div>'
   +'<script>'
   +'function tick(){var n=new Date();'
@@ -22715,8 +21977,6 @@ function openWaitScreen(){
   +'_inner=document.getElementById("hdmi-scroll-inner");'
   +'_pos=0;'
   +'if(_inner)_inner.style.transform="translateY(0px)";'
-  /* إخفاء النسخة المكررة عندما تكون السرعة = 0 (وضع ثابت) */
-  +'_updateDupVisibility();'
   +'setTimeout(function(){'
   +'var orig=document.getElementById("hdmi-orig");'
   +'_totalH=orig?orig.offsetHeight:0;'
@@ -22731,14 +21991,6 @@ function openWaitScreen(){
   +'}'
   +'_raf=requestAnimationFrame(_scrollTick);'
   +'}'
-  /* ── إخفاء/إظهار النسخة المكررة بناءً على السرعة ── */
-  +'function _updateDupVisibility(){'
-  +'try{'
-  +'var dup = document.getElementById("hdmi-dup");'
-  +'if(!dup) return;'
-  +'dup.style.display = (_spd > 0) ? "block" : "none";'
-  +'}catch(e){}'
-  +'}'
   +'(function initScroll(){'
   +'_inner=document.getElementById("hdmi-scroll-inner");'
   +'if(_inner){'
@@ -22749,264 +22001,23 @@ function openWaitScreen(){
   +'},200);'
   +'}'
   +'})();'
-  /* ── الناطق الصوتي للمرضى الجاهزين ── */
-  +'var _announcedIds = {};'        /* المرضى الذين تم نطقهم بالفعل في هذه الجلسة */
-  +'var _firstSnapshot = true;'     /* أول استقبال للبيانات: نسجّل القائمة فقط دون نطق (لتجنب نطق كل الجاهزين السابقين عند فتح الشاشة) */
-  +'var _speakEnabled = true;'      /* الحالة الحالية للناطق */
-  +'var _speakQueue = [];'          /* طابور النطق */
-  +'var _speakBusy = false;'        /* هل النطق نشط الآن */
-  +'var _voiceUnlocked = false;'    /* هل تم فك القيد عن تشغيل الصوت تلقائياً */
-  +'var _arVoice = null;'           /* لم يعد مستخدماً — احتفظنا بالمتغير لتجنب أخطاء */
-  /* ── تطبيع الاسم العربي قبل النطق: إزالة أي شيء بين قوسين، حذف الرموز، توحيد المسافات ── */
-  +'function _normalizeName(name){'
-  +'if(!name) return "";'
-  +'var s = String(name);'
-  +'s = s.replace(/\\([^)]*\\)/g,"");'        /* إزالة ما بين الأقواس الإنجليزية */
-  +'s = s.replace(/\\[[^\\]]*\\]/g,"");'      /* إزالة ما بين القوسين المربعين */
-  +'s = s.replace(/[A-Za-z0-9_\\-\\.]/g," ");' /* إزالة الأحرف اللاتينية والأرقام */
-  +'s = s.replace(/[^\\u0600-\\u06FF\\s]/g," ");' /* الإبقاء على الحروف العربية والمسافات فقط */
-  +'s = s.replace(/\\s+/g," ").trim();'
-  +'return s;'
-  +'}'
-  /* ── إخراج العنصر التالي من طابور النطق وتشغيله ── */
-  +'function _speakNext(){'
-  +'if(_speakBusy) return;'
-  +'if(!_speakEnabled){ _speakQueue = []; return; }'
-  +'var item = _speakQueue.shift();'
-  +'if(!item) return;'
-  +'_speakBusy = true;'
-  /* عرض البطاقة على الشاشة */
-  +'var toast = document.getElementById("call-toast");'
-  +'var nameEl = document.getElementById("ct-name");'
-  +'if(nameEl) nameEl.textContent = item.displayName || item.name;'
-  +'if(toast) toast.classList.add("show");'
-  /* تمييز صف المريض في الجدول */
-  +'_highlightRow(item.id, true);'
-  /* ① صوت تنبيه (جرس) — يُسمع دائماً */
-  +'try{ _playChime(); }catch(_){}'
-  /* ② تشغيل التسجيل المخصص (إن وُجد) — بعد ثانيتين من الجرس */
-  +'setTimeout(function(){ try{ _doSpeak(item); }catch(_){ } }, 2000);'
-  /* ③ البطاقة تبقى ظاهرة 10 ثوانٍ كاملة بغض النظر عن نتيجة الصوت */
-  +'setTimeout(function(){'
-  +'if(toast) toast.classList.remove("show");'
-  +'_highlightRow(item.id, false);'
-  +'try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(_){}'
-  +'_speakBusy = false;'
-  +'setTimeout(_speakNext, 700);'    /* فجوة قبل التالي */
-  +'}, 10000);'                       /* ⏱️ 10 ثوان */
-  +'}'
-  /* ── جرس تنبيه (دينج-دونج) عبر Web Audio API — يعمل على أي نظام ── */
-  +'function _playChime(){'
-  +'try{'
-  +'if(!window._audioCtx){'
-  +'var Ctx = window.AudioContext || window.webkitAudioContext;'
-  +'if(!Ctx) return;'
-  +'window._audioCtx = new Ctx();'
-  +'}'
-  +'var ctx = window._audioCtx;'
-  +'if(ctx.state === "suspended"){ try{ ctx.resume(); }catch(_){} }'
-  +'function _tone(freq, startT, durT, vol){'
-  +'var o = ctx.createOscillator();'
-  +'var g = ctx.createGain();'
-  +'o.type = "sine";'
-  +'o.frequency.value = freq;'
-  +'var t0 = ctx.currentTime + startT;'
-  +'g.gain.setValueAtTime(0, t0);'
-  +'g.gain.linearRampToValueAtTime(vol, t0+0.04);'
-  +'g.gain.exponentialRampToValueAtTime(0.001, t0+durT);'
-  +'o.connect(g); g.connect(ctx.destination);'
-  +'o.start(t0);'
-  +'o.stop(t0 + durT + 0.05);'
-  +'}'
-  /* جرس كلاسيكي ding-dong */
-  +'_tone(880, 0, 0.40, 0.55);'
-  +'_tone(660, 0.35, 0.55, 0.55);'
-  +'}catch(e){}'
-  +'}'
-  /* ── تشغيل التسجيل الصوتي المخصص (إن وُجد) ── */
-  /* لم نعد نحاول النطق التلقائي — فقط تشغيل تسجيل المستخدم إن سجّله */
-  +'function _doSpeak(item){'
-  +'try{'
-  /* البحث عن التسجيل المخصص في localStorage */
-  +'var customAudio = null;'
-  +'try{ customAudio = localStorage.getItem("medlab_voice_recording"); }catch(_){}'
-  +'if(!customAudio) return;'                /* لا تسجيل → اكتفِ بالجرس + البطاقة */
-  +'var audio = document.getElementById("_tts_audio");'
-  +'if(!audio){'
-  +'audio = document.createElement("audio");'
-  +'audio.id = "_tts_audio";'
-  +'audio.style.display = "none";'
-  +'audio.preload = "auto";'
-  +'document.body.appendChild(audio);'
-  +'}'
-  +'audio.src = customAudio;'
-  +'audio.volume = 1.0;'
-  +'audio.play().catch(function(err){'
-  +'try{ console.warn("[MedLab] فشل تشغيل التسجيل:", err && err.message); }catch(_){}'
-  +'});'
-  +'}catch(e){}'
-  +'}'
-  /* ── تمييز صف المريض المنادى ── */
-  +'function _highlightRow(rid, on){'
-  +'try{'
-  +'var rows = document.querySelectorAll("#hdmi-orig tr, #hdmi-dup tr");'
-  +'rows.forEach(function(tr){'
-  +'var idCell = tr.children && tr.children[1];'
-  +'if(!idCell) return;'
-  +'if((idCell.textContent||"").trim() === String(rid)){'
-  +'if(on) tr.classList.add("calling-row"); else tr.classList.remove("calling-row");'
-  +'}'
-  +'});'
-  +'}catch(e){}'
-  +'}'
-  /* ── إضافة مريض إلى طابور النطق ── */
-  +'function _enqueueSpeak(req){'
-  +'if(!_speakEnabled) return;'
-  +'var displayName = (req.name||"").trim();'
-  +'var nName = _normalizeName(displayName);'
-  +'if(!nName) nName = displayName;'  /* إذا فشل التطبيع نستخدم الأصلي */
-  +'if(!nName) return;'
-  +'_speakQueue.push({ id: req.id, name: nName, displayName: displayName });'
-  +'_speakNext();'
-  +'}'
-  /* ── تحديث شارة حالة الصوت في الهيدر ── */
-  +'function _updateVoiceBadges(){'
-  +'var badge = document.getElementById("voice-badge");'
-  +'var unlock = document.getElementById("voice-unlock-btn");'
-  +'if(!_speakEnabled){'
-  +'if(badge) badge.style.display = "none";'
-  +'if(unlock) unlock.style.display = "none";'
-  +'return;'
-  +'}'
-  /* الناطق مفعّل */
-  +'if(_voiceUnlocked){'
-  +'if(badge) badge.style.display = "flex";'
-  +'if(unlock) unlock.style.display = "none";'
-  +'}else{'
-  +'if(badge) badge.style.display = "none";'
-  +'if(unlock) unlock.style.display = "inline-flex";'
-  +'}'
-  +'}'
-  /* ── فك قيد الصوت بنقرة المستخدم (لتجاوز سياسات autoplay) ── */
-  +'function _unlockVoice(){'
-  +'try{'
-  /* ① فك قيد Web Audio API (للجرس) */
-  +'try{'
-  +'var Ctx = window.AudioContext || window.webkitAudioContext;'
-  +'if(Ctx && !window._audioCtx) window._audioCtx = new Ctx();'
-  +'if(window._audioCtx && window._audioCtx.state === "suspended"){ window._audioCtx.resume(); }'
-  +'}catch(_){}'
-  /* ② تشغيل الجرس الترحيبي */
-  +'try{ _playChime(); }catch(_){}'
-  /* ③ تشغيل التسجيل المخصص إن وُجد */
-  +'try{'
-  +'var customAudio = localStorage.getItem("medlab_voice_recording");'
-  +'if(customAudio){'
-  +'var audio = document.getElementById("_tts_audio");'
-  +'if(!audio){'
-  +'audio = document.createElement("audio");'
-  +'audio.id = "_tts_audio";'
-  +'audio.style.display = "none";'
-  +'document.body.appendChild(audio);'
-  +'}'
-  +'audio.src = customAudio;'
-  +'audio.volume = 1.0;'
-  +'setTimeout(function(){ try{ audio.play(); }catch(_){} }, 2000);'
-  +'}'
-  +'}catch(_){}'
-  +'_voiceUnlocked = true;'
-  +'_updateVoiceBadges();'
-  +'_showVoiceStatusMsg();'
-  +'}catch(e){}'
-  +'}'
-  /* ── عرض رسالة بسيطة "تم تفعيل الصوت" ── */
-  +'function _showVoiceStatusMsg(){'
-  +'try{'
-  +'var d = document.getElementById("voice-status");'
-  +'if(!d){'
-  +'d = document.createElement("div");'
-  +'d.id = "voice-status";'
-  +'d.style.cssText = "position:fixed;bottom:14px;right:14px;background:rgba(4,8,20,0.95);border:1px solid rgba(0,232,122,0.4);color:#fff;padding:10px 14px;border-radius:10px;font-size:12px;font-weight:700;z-index:9998;max-width:340px;line-height:1.6;box-shadow:0 8px 30px rgba(0,0,0,0.5)";'
-  +'document.body.appendChild(d);'
-  +'}'
-  +'var hasRecording = false;'
-  +'try{ hasRecording = !!localStorage.getItem("medlab_voice_recording"); }catch(_){}'
-  +'if(hasRecording){'
-  +'d.innerHTML = "✅ <span style=\\"color:#00e87a\\">تم تفعيل الصوت</span><br><span style=\\"opacity:0.7;font-weight:400\\">الجرس + التسجيل المخصص جاهزان</span>";'
-  +'}else{'
-  +'d.innerHTML = "✅ <span style=\\"color:#00e87a\\">تم تفعيل الجرس</span><br><span style=\\"opacity:0.7;font-weight:400\\">يمكنك إضافة تسجيل صوتي من الإعدادات (اختياري)</span>";'
-  +'}'
-  +'setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); }, 6000);'
-  +'}catch(e){}'
-  +'}'
-  /* استدعاء أول لتحديث الشارات */
-  +'setTimeout(_updateVoiceBadges, 300);'
-  /* ── معالج الرسائل من النافذة الأم ── */
   +'window.addEventListener("message",function(e){'
-  +'if(!e.data) return;'
-  /* رسالة تحديث التسجيل الصوتي */
-  +'if(e.data.type === "WQ_VOICE_UPDATE"){'
-  +'try{'
-  +'if(e.data.voice){ localStorage.setItem("medlab_voice_recording", e.data.voice); }'
-  +'else{ localStorage.removeItem("medlab_voice_recording"); }'
-  +'}catch(_){}'
-  +'return;'
-  +'}'
-  +'if(e.data.type!=="WQ_UPDATE")return;'
+  +'if(!e.data||e.data.type!=="WQ_UPDATE")return;'
   +'var c=e.data.cnt;'
   +'document.getElementById("wsp").textContent=c.pending;'
   +'document.getElementById("wsi").textContent=c.inprogress;'
   +'document.getElementById("wsd").textContent=c.done;'
   +'document.getElementById("wst").textContent=c.total;'
-  +'if(typeof e.data.scrollSpeed==="number"){_spd=e.data.scrollSpeed; _updateDupVisibility();}'
+  +'if(typeof e.data.scrollSpeed==="number"){_spd=e.data.scrollSpeed;}'
   +'var newRows=e.data.rows||"";'
   +'if(newRows!==_lastRows){'
   +'_lastRows=newRows;'
   +'_buildMarquee(newRows||null);'
   +'}'
-  /* ── منطق الناطق الصوتي ── */
-  +'if(typeof e.data.speakEnabled === "boolean"){'
-  +'var prev = _speakEnabled;'
-  +'_speakEnabled = e.data.speakEnabled;'
-  +'if(!_speakEnabled){'
-  /* أُوقف الصوت → امسح الطابور وأوقف النطق فوراً */
-  +'_speakQueue = [];'
-  +'try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(_){}'
-  +'_speakBusy = false;'
-  +'var toast=document.getElementById("call-toast"); if(toast) toast.classList.remove("show");'
-  +'}'
-  +'_updateVoiceBadges();'
-  +'}'
-  +'var doneList = e.data.doneList || [];'
-  +'if(_firstSnapshot){'
-  /* أول استقبال: سجّل كل الجاهزين الحاليين دون نطقهم */
-  +'doneList.forEach(function(p){ _announcedIds[p.id] = true; });'
-  +'_firstSnapshot = false;'
-  +'}else if(_speakEnabled){'
-  /* اكتشف الجاهزين الجدد فقط ونطقهم */
-  +'doneList.forEach(function(p){'
-  +'if(!_announcedIds[p.id]){'
-  +'_announcedIds[p.id] = true;'
-  +'_enqueueSpeak(p);'
-  +'}'
-  +'});'
-  +'}else{'
-  /* الصوت مغلق: سجّل الجاهزين دون نطق لتجنب نطقهم لاحقاً عند تفعيل الصوت */
-  +'doneList.forEach(function(p){ _announcedIds[p.id] = true; });'
-  +'}'
   +'});'
   +'<\/script></body></html>');
   win.document.close();
-  setTimeout(function(){
-    _pushWaitScreenData();
-    // إرسال التسجيل المخصص (إن وُجد) إلى نافذة شاشة الانتظار
-    try{
-      var voice = localStorage.getItem('medlab_voice_recording');
-      if(voice && win && !win.closed){
-        win.postMessage({ type:'WQ_VOICE_UPDATE', voice: voice }, '*');
-      }
-    }catch(_){}
-  }, 1000);
+  setTimeout(function(){ _pushWaitScreenData(); }, 1000);
   if(window._wsInterval) clearInterval(window._wsInterval);
   window._wsInterval = setInterval(function(){
     if(!window._waitScreenWin||window._waitScreenWin.closed){ clearInterval(window._wsInterval); return; }
@@ -23068,22 +22079,7 @@ function _pushWaitScreenData(){
           +'<td><span class="pill '+sC+'">'+sL+'</span></td></tr>';
       }).join('');
   }
-  // قائمة المرضى الجاهزين (للناطق الصوتي)
-  var doneList = filteredReqs
-    .filter(function(r){ return r.status==='done'; })
-    .map(function(r){ return { id: r.id, name: (r.patientName||'').toString() }; });
-  var ws = (settings&&settings.waitScreen)||{};
-  var speakEnabled = ws.speakEnabled !== false;
-  try{
-    win.postMessage({
-      type:'WQ_UPDATE',
-      rows: rows,
-      cnt: cnt,
-      scrollSpeed: _wsGetScrollSpeed(),
-      doneList: doneList,
-      speakEnabled: speakEnabled
-    }, '*');
-  }catch(e){}
+  try{ win.postMessage({type:'WQ_UPDATE', rows, cnt, scrollSpeed:_wsGetScrollSpeed()}, '*'); }catch(e){}
 }
 
 function updateWaitScreen(){ _pushWaitScreenData(); }
@@ -26703,7 +25699,6 @@ function sendWelcomeMsg(){
 
 // عرض رسالة الترحيب عند دخول المستخدم
 let _wmListener = null;
-let _wmPollTimer = null;
 function checkWelcomeMsg(uname){
   if(!uname) return;
   if(fbReady && fbDb){
@@ -26724,7 +25719,7 @@ function checkWelcomeMsg(uname){
         localStorage.removeItem('wm_'+uname);
       }catch(e){}
     }
-    if(!_wmPollTimer) _wmPollTimer = setInterval(()=>{
+    setInterval(()=>{
       const s = localStorage.getItem('wm_'+uname);
       if(s){ try{ _showWelcomePopup(JSON.parse(s)); localStorage.removeItem('wm_'+uname); }catch(e){} }
     }, 30000);
@@ -26815,7 +25810,6 @@ function triggerForcedBackup(){
 
 // التحقق من النسخ الاحتياطية الإجبارية عند دخول المستخدم
 let _fbBackupListener = null;
-let _fbPollTimer = null;
 function checkForcedBackup(uname){
   if(!uname) return;
   if(fbReady && fbDb){
@@ -26837,7 +25831,7 @@ function checkForcedBackup(uname){
         localStorage.removeItem(FORCED_BACKUP_KEY+'_'+uname);
       }catch(e){}
     }
-    if(!_fbPollTimer) _fbPollTimer = setInterval(()=>{
+    setInterval(()=>{
       const s = localStorage.getItem(FORCED_BACKUP_KEY+'_'+uname);
       if(s){ try{ const d=JSON.parse(s); _showForcedBackupPopup(d,uname); localStorage.removeItem(FORCED_BACKUP_KEY+'_'+uname); }catch(e){} }
     }, 30000);
@@ -27509,10 +26503,9 @@ if (typeof pages !== 'undefined' && !pages['esr']) {
   });
 
   if(window.MutationObserver){
-    var _restoreTimer;
     var _mo=new MutationObserver(function(){
       var map=loadLangs();
-      if(Object.keys(map).length){ clearTimeout(_restoreTimer); _restoreTimer=setTimeout(restoreAll,300); }
+      if(Object.keys(map).length) setTimeout(restoreAll,80);
     });
     document.addEventListener('DOMContentLoaded',function(){
       _mo.observe(document.body,{childList:true,subtree:true});
@@ -28084,12 +27077,10 @@ async function dlPDF(i){
           await new Promise(r=>setTimeout(r,120));
           const cv=await html2canvas(container,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,allowTaint:true,letterRendering:true});
           document.body.removeChild(container);
-          if(!cv || !cv.width || !cv.height){ throw new Error('تعذر التقاط التقرير'); }
           const{jsPDF:J}=window.jspdf;
           const doc=new J({orientation:'p',unit:'mm',format:'a4'});
           const iw=210,pageH=297;
           const ih=(cv.height*iw)/cv.width;
-          if(!isFinite(ih) || ih<=0){ throw new Error('أبعاد غير صالحة'); }
           if(ih<=pageH){
             doc.addImage(cv.toDataURL('image/jpeg',.95),'JPEG',0,0,iw,ih);
           } else {
@@ -28206,18 +27197,10 @@ function _wnbMakeParticles(containerId) {
   return;
 }
 
-/* ── cancel tokens لإيقاف سلاسل الأنيميشن القديمة ── */
-const _wnbTokens = {};
-
 /* ── تحويل النص إلى spans + تشغيل النيون ── */
 function _wnbAnimate(textElId) {
   const el = document.getElementById(textElId);
   if (!el) return;
-
-  // إلغاء أي سلسلة setTimeout سابقة لنفس العنصر
-  if (_wnbTokens[textElId]) _wnbTokens[textElId].cancelled = true;
-  const token = { cancelled: false };
-  _wnbTokens[textElId] = token;
 
   const text = el.textContent || el.innerText;
   el.textContent = '';
@@ -28233,7 +27216,6 @@ function _wnbAnimate(textElId) {
   let idx = 0;
   function clearAll() { chars.forEach(c => c.classList.remove('neon-active','neon-trail')); }
   function step() {
-    if (token.cancelled) return;
     clearAll();
     if (idx < chars.length) {
       chars[idx].classList.add('neon-active');
@@ -28243,11 +27225,11 @@ function _wnbAnimate(textElId) {
       idx++;
       setTimeout(step, NEON_SPEED);
     } else {
-      setTimeout(() => { if (token.cancelled) return; clearAll(); idx = 0; setTimeout(step, 300); }, NEON_PAUSE);
+      setTimeout(() => { clearAll(); idx = 0; setTimeout(step, 300); }, NEON_PAUSE);
     }
   }
   setTimeout(step, 800);
-  return chars;
+  return chars; // keep ref for live updates
 }
 
 /* ── تحديث نص البانر حياً (بدون إعادة تهيئة كاملة) ── */
@@ -28963,29 +27945,7 @@ setTimeout(function(){
     { icon:'🧬', test:'بروتين CRP الالتهابي', fact:'يرتفع خلال ساعات من بدء أي التهاب في الجسم. القيمة الطبيعية أقل من 10 ملغ/لتر. يُستخدم لمتابعة فعالية العلاج، كلما انخفض كلما تحسنت الاستجابة.' },
     { icon:'💜', test:'حمض اليوريك', fact:'ارتفاعه قد يسبب النقرس — ألم مفاجئ شديد في المفاصل. الطبيعي للرجال 3.4–7.0 وللنساء 2.4–6.0 ملغ/ديسيلتر. اللحوم والمأكولات البحرية ترفعه.' },
     { icon:'🟠', test:'إنزيم الكبد ALT', fact:'موجود داخل خلايا الكبد. ارتفاعه في الدم يعني أن خلايا الكبد تتضرر. القيمة الطبيعية أقل من 56 وحدة/لتر. الإفراط في الدهون أو بعض الأدوية قد يرفعه.' },
-    { icon:'🩵', test:'الصوديوم (Na)', fact:'يتحكم في توازن السوائل وضغط الدم. القيمة الطبيعية 136–145 mEq/L. انخفاضه يسبب الصداع والتعب، وارتفاعه يدل عادةً على الجفاف.' },
-
-    /* ── حقائق إضافية ── */
-    { icon:'🧫', test:'صورة الدم الكاملة (CBC)', fact:'تحليل واحد يقيس أكثر من 20 مؤشراً دموياً دفعة واحدة! يشمل خلايا الدم الحمراء والبيضاء والصفائح الدموية. يعتبر من أكثر التحاليل طلباً في العالم لاكتشاف فقر الدم والتهابات الجسم المختلفة.' },
-    { icon:'🫁', test:'نسبة الأكسجين (SpO2)', fact:'الجسم الطبيعي يشبع بالأكسجين بنسبة 95–100٪. انخفاض النسبة تحت 90٪ يُعد حالة طوارئ تستوجب التدخل الفوري. يقاس بجهاز بسيط يُلصق على الإصبع يُسمى مقياس النبض.' },
-    { icon:'🫘', test:'الكالسيوم (Ca)', fact:'أكثر من 99٪ من الكالسيوم في الجسم محفوظ في العظام والأسنان. القيمة الطبيعية في الدم 8.5–10.5 ملغ/ديسيلتر. نقصه يسبب تشنجات العضلات، وارتفاعه قد يشير إلى فرط نشاط الغدة جارة الدرقية.' },
-    { icon:'🟣', test:'الفيريتين (Ferritin)', fact:'يمثل مخزون الحديد في الجسم لا الحديد الحر. يمكن أن يكون مستوى الحديد طبيعياً بينما الفيريتين منخفض، مما يعني نضوب المخزون قبل ظهور فقر الدم. الطبيعي للرجال 30–300 وللنساء 15–200 نانوغرام/مل.' },
-    { icon:'💉', test:'الأنسولين الصائم', fact:'يُقاس مع سكر الصائم لتقييم مقاومة الأنسولين. القيمة الطبيعية 3–25 mIU/L. ارتفاعه مع سكر طبيعي يُعدّ إنذاراً مبكراً لمقدمات السكري قبل سنوات من ظهوره.' },
-    { icon:'🧠', test:'هرمون كورتيزول', fact:'يُسمّى "هرمون التوتر" ويبلغ ذروته في الصباح الباكر بين 6–8 صباحاً. يؤثر على مناعتك وضغط دمك وحتى ذاكرتك. قياسه الصحيح يكون دائماً في الصباح الباكر صائماً.' },
-    { icon:'🫶', test:'الصفائح الدموية (Platelets)', fact:'تُوقف النزيف بالتجمع فوق الجرح وتكوين جلطة مؤقتة. الطبيعي 150,000–450,000/ميكرولتر. انخفاضها الشديد تحت 20,000 خطير جداً، وارتفاعها فوق المليون قد يزيد خطر الجلطات.' },
-    { icon:'🔵', test:'الدهون الثلاثية (Triglycerides)', fact:'ترتفع بعد الوجبات مباشرةً لذا يجب الصيام 12 ساعة قبل القياس. الطبيعي أقل من 150 ملغ/ديسيلتر. السكريات والكحول ترفعها أكثر من الدهون المباشرة! وارتفاعها يزيد خطر التهاب البنكرياس.' },
-    { icon:'🟡', test:'هرمون TSH الدرقي + T4 الحر', fact:'قياس TSH وحده يكفي للفحص الأولي لأنه أحساس المؤشرات. لكن عند اكتشاف خلل يضاف T4 الحر لتحديد نوع الاضطراب ودرجته بدقة أكبر. الغدة الدرقية تؤثر على كل خلية في الجسم.' },
-    { icon:'🩶', test:'بروتين الكلى (Albumin)', fact:'أكثر بروتينات الدم وفرةً ويصنعه الكبد. الطبيعي 3.5–5.0 غ/ديسيلتر. انخفاضه مؤشر خطير يدل على ضعف التغذية أو مرض كبدي متقدم. يتأخر انخفاضه عن المرض لأن نصف عمره 20 يوماً.' },
-    { icon:'🟢', test:'فيتامين B12', fact:'يُخزّن في الكبد لسنوات لذا تأخذ أعراض النقص وقتاً طويلاً للظهور. الطبيعي 200–900 بيكوغرام/مل. النباتيون معرضون لنقصه أكثر لأنه موجود في المنتجات الحيوانية فقط. نقصه يضر الأعصاب.' },
-    { icon:'🔶', test:'إنزيم GGT الكبدي', fact:'أكثر حساسية من ALT لأمراض الكبد المزمنة. يرتفع مع تناول الكحول والأدوية حتى دون ضرر خلوي. الطبيعي أقل من 60 وحدة/لتر. يُستخدم مع إنزيمات أخرى للحصول على صورة كاملة عن صحة الكبد.' },
-    { icon:'🌊', test:'اليوريا في الدم (BUN)', fact:'نفاية بروتينية تُنقّيها الكلى. ارتفاعها يحدث في الفشل الكلوي أو الجفاف أو الإفراط بالبروتين. النطاق الطبيعي 7–20 ملغ/ديسيلتر. نسبة BUN/Creatinine تُساعد في التمييز بين أسباب القصور الكلوي.' },
-    { icon:'⚗️', test:'نسبة ESR (ترسيب الدم)', fact:'تقيس مدى سرعة ترسّب خلايا الدم الحمراء. ارتفاعها يدل على وجود التهاب في مكان ما بالجسم لكنها لا تحدد مكانه. الطبيعي للرجال أقل من 15 وللنساء أقل من 20 مم/ساعة. ترتفع في كثير من الأمراض.' },
-    { icon:'🌡️', test:'بروكالسيتونين (PCT)', fact:'مؤشر ممتاز للتمييز بين العدوى البكتيرية والفيروسية. يرتفع بشكل كبير جداً في البكتيريا الشديدة مثل الإنتان. يُستخدم لتوجيه قرار استخدام المضادات الحيوية وتجنب إعطائها بلا داعٍ.' },
-    { icon:'🧲', test:'المغنيسيوم (Mg)', fact:'يشارك في أكثر من 300 تفاعل إنزيمي في الجسم! الطبيعي 1.7–2.4 ملغ/ديسيلتر. نقصه شائع ويسبب تشنجات عضلية وأرق وصداع نصفي. الشوكولاتة الداكرة والمكسرات مصادر غنية به.' },
-    { icon:'💊', test:'اختبار وظائف البنكرياس (Amylase/Lipase)', fact:'الليباز أكثر تخصصاً من الأميلاز للبنكرياس. ارتفاع الليباز 3 أضعاف يكاد يؤكد التهاب البنكرياس. الأميلاز يرتفع أيضاً في أمراض الغدة النكفية. الطبيعي للأميلاز 23–85 وللليباز 0–160 وحدة/لتر.' },
-    { icon:'🫠', test:'تحليل البول الكامل (Urinalysis)', fact:'عشرون معلومة من عينة واحدة! يكشف السكري والتهابات المسالك والحصوات والأمراض الكلوية. وجود بروتين في البول يعني احتمال مشكلة كلوية. أول عينة بول صباحية هي الأكثر دقةً للتحليل.' },
-    { icon:'🦠', test:'مزرعة البكتيريا وحساسية (C&S)', fact:'التحليل الوحيد الذي يحدد المضاد الحيوي الأنسب! يحتاج 24–72 ساعة لنمو البكتيريا. أخذها قبل بدء المضاد الحيوي ضروري جداً وإلا قد تظهر سلبية رغم وجود عدوى حقيقية.' },
-    { icon:'⚖️', test:'نسبة HDL / LDL الكوليسترول', fact:'HDL هو الكوليسترول "الجيد" الذي يُرجع الدهون للكبد، وLDL هو "السيئ" الذي يتراكم في الشرايين. الهدف: HDL فوق 60 وLDL تحت 100 ملغ/ديسيلتر. التمارين ترفع HDL والتوقف عن التدخين يحسن النسبتين معاً.' }
+    { icon:'🩵', test:'الصوديوم (Na)', fact:'يتحكم في توازن السوائل وضغط الدم. القيمة الطبيعية 136–145 mEq/L. انخفاضه يسبب الصداع والتعب، وارتفاعه يدل عادةً على الجفاف.' }
   ];
 
   var IDLE_MS = 2 * 60 * 1000;
