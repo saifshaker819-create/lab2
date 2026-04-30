@@ -12411,64 +12411,99 @@ function generatePDFBlob(callback){
   }
 
   function _renderPage(htmlStr, isFirstPage, onDone, onErr){
-    const container=document.createElement('div');
-    container.style.cssText='position:fixed;top:0;left:-9999px;width:794px;background:#fff;z-index:99991;font-family:Cairo,sans-serif;direction:ltr;';
-    container.innerHTML='<style>'+printCSS+'</style>'+htmlStr;
-    document.body.appendChild(container);
+    // استخدام iframe بدل container — أسلم مع HTML الكامل (يحتوي <html> و <body>)
+    const iframe=document.createElement('iframe');
+    iframe.style.cssText='position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:none;background:#fff;';
+    document.body.appendChild(iframe);
+    const iDoc=iframe.contentDocument||iframe.contentWindow.document;
 
-    document.fonts.ready.then(function(){
-      setTimeout(function(){
-        html2canvas(container,{
-          scale:2,useCORS:true,backgroundColor:'#ffffff',
-          logging:false,allowTaint:true,letterRendering:true,
-          width:794,windowWidth:794
-        }).then(function(canvas){
-          try{document.body.removeChild(container);}catch(e){}
-          // ── فحص أبعاد الـ canvas قبل تمريرها لـ jsPDF ──
-          if(!canvas || !canvas.width || !canvas.height || !isFinite(canvas.width) || !isFinite(canvas.height)){
-            return onErr(new Error('فشل التقاط الصفحة (أبعاد غير صالحة). أعد المحاولة أو أعد فتح التقرير.'));
-          }
-          const imgData=canvas.toDataURL('image/jpeg',0.95);
-          const imgW=pageW;
-          const imgH=(canvas.height*imgW)/canvas.width;
-          if(!isFinite(imgH) || imgH<=0){
-            return onErr(new Error('أبعاد الصورة غير صالحة'));
-          }
+    // ── إذا htmlStr يحتوي <html> أو <body>، استخدمه كما هو، وإلا غلّفه ──
+    const hasFullDoc=/<\s*html[\s>]|<\s*body[\s>]/i.test(htmlStr);
+    const fullHTML=hasFullDoc
+      ? htmlStr.replace(/<\/head>/i,'<style>'+printCSS+'</style></head>')
+      : '<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:#fff;width:794px}'+printCSS+'</style></head><body>'+htmlStr+'</body></html>';
 
-          if(!isFirstPage) doc.addPage();
+    iDoc.open(); iDoc.write(fullHTML); iDoc.close();
 
-          if(imgH<=pageH){
-            // صفحة واحدة — ضع الصورة مع توسيط عمودي إذا كانت أصغر
-            doc.addImage(imgData,'JPEG',0,0,imgW,imgH);
-          } else {
-            // الصورة أطول من A4 — قطّعها بحيث كل شريحة = صفحة A4 كاملة
-            const pageCanvas=document.createElement('canvas');
-            const ctx=pageCanvas.getContext('2d');
-            const scaleFactor=canvas.width/pageW;
-            const pageHeightPx=Math.round(pageH*scaleFactor);
-            let srcY=0;
-            let isFirst=true;
-            while(srcY<canvas.height){
-              if(!isFirst) doc.addPage();
-              const sliceH=Math.min(pageHeightPx, canvas.height-srcY);
-              pageCanvas.width=canvas.width;
-              pageCanvas.height=pageHeightPx; // دائماً A4 كاملة
-              ctx.fillStyle='#ffffff';
-              ctx.fillRect(0,0,pageCanvas.width,pageCanvas.height);
-              ctx.drawImage(canvas,0,srcY,canvas.width,sliceH,0,0,canvas.width,sliceH);
-              const sliceData=pageCanvas.toDataURL('image/jpeg',0.95);
-              doc.addImage(sliceData,'JPEG',0,0,imgW,pageH);
-              srcY+=pageHeightPx;
-              isFirst=false;
-            }
+    // ── انتظار حقيقي: حتى يحسب المتصفح أبعاد body ──
+    let attempts=0;
+    function _waitReady(){
+      attempts++;
+      const body=iDoc.body;
+      const ready = body && body.offsetWidth>0 && body.offsetHeight>0;
+      if(ready || attempts>40){ // أقصى انتظار ~4 ثوانٍ
+        // انتظار إضافي قصير للخطوط
+        const fontsReady = (iDoc.fonts && iDoc.fonts.ready) || Promise.resolve();
+        fontsReady.then(function(){
+          setTimeout(_capture, 150);
+        }).catch(function(){ setTimeout(_capture, 150); });
+      } else {
+        setTimeout(_waitReady, 100);
+      }
+    }
+
+    function _capture(){
+      const body=iDoc.body;
+      // إذا الأبعاد ما زالت صفر، أبلغ بخطأ واضح
+      if(!body || !body.offsetWidth || !body.offsetHeight){
+        try{document.body.removeChild(iframe);}catch(e){}
+        return onErr(new Error('تعذّر حساب أبعاد التقرير. تحقق من اكتمال البيانات وأعد المحاولة.'));
+      }
+      html2canvas(body,{
+        scale:2,useCORS:true,backgroundColor:'#ffffff',
+        logging:false,allowTaint:true,letterRendering:true,
+        width:body.scrollWidth,
+        height:body.scrollHeight,
+        windowWidth:body.scrollWidth,
+        windowHeight:body.scrollHeight
+      }).then(function(canvas){
+        try{document.body.removeChild(iframe);}catch(e){}
+        if(!canvas || !canvas.width || !canvas.height || !isFinite(canvas.width) || !isFinite(canvas.height)){
+          return onErr(new Error('فشل التقاط الصفحة (canvas فارغ). أعد المحاولة.'));
+        }
+        const imgData=canvas.toDataURL('image/jpeg',0.95);
+        const imgW=pageW;
+        const imgH=(canvas.height*imgW)/canvas.width;
+        if(!isFinite(imgH) || imgH<=0){
+          return onErr(new Error('أبعاد الصورة غير صالحة'));
+        }
+
+        if(!isFirstPage) doc.addPage();
+
+        if(imgH<=pageH){
+          doc.addImage(imgData,'JPEG',0,0,imgW,imgH);
+        } else {
+          const pageCanvas=document.createElement('canvas');
+          const ctx=pageCanvas.getContext('2d');
+          const scaleFactor=canvas.width/pageW;
+          const pageHeightPx=Math.round(pageH*scaleFactor);
+          let srcY=0;
+          let isFirst=true;
+          while(srcY<canvas.height){
+            if(!isFirst) doc.addPage();
+            const sliceH=Math.min(pageHeightPx, canvas.height-srcY);
+            pageCanvas.width=canvas.width;
+            pageCanvas.height=pageHeightPx;
+            ctx.fillStyle='#ffffff';
+            ctx.fillRect(0,0,pageCanvas.width,pageCanvas.height);
+            ctx.drawImage(canvas,0,srcY,canvas.width,sliceH,0,0,canvas.width,sliceH);
+            const sliceData=pageCanvas.toDataURL('image/jpeg',0.95);
+            doc.addImage(sliceData,'JPEG',0,0,imgW,pageH);
+            srcY+=pageHeightPx;
+            isFirst=false;
           }
-          onDone();
-        }).catch(function(err){
-          try{document.body.removeChild(container);}catch(e){}
-          onErr(err);
-        });
-      },120);
-    });
+        }
+        onDone();
+      }).catch(function(err){
+        try{document.body.removeChild(iframe);}catch(e){}
+        onErr(err);
+      });
+    }
+
+    // ── حقن html2canvas في iframe إن لم يكن موجوداً (لأن html2canvas يستخدم window) ──
+    // نُلتقط من خارج iframe، لذا نستخدم html2canvas الرئيسي مع تمرير body الـ iframe.
+    // هذا يعمل لأن html2canvas يستطيع التقاط أي عنصر DOM بما فيه عناصر iframe (نفس الأصل).
+    setTimeout(_waitReady, 100);
   }
 
   // ── معالجة الصفحات بالتسلسل ──
