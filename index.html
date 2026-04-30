@@ -12411,57 +12411,111 @@ function generatePDFBlob(callback){
   }
 
   function _renderPage(htmlStr, isFirstPage, onDone, onErr){
-    const container=document.createElement('div');
-    container.style.cssText='position:fixed;top:0;left:-9999px;width:794px;background:#fff;z-index:99991;font-family:Cairo,sans-serif;direction:ltr;';
-    container.innerHTML='<style>'+printCSS+'</style>'+htmlStr;
-    document.body.appendChild(container);
+    // ── الـ HTML المُولَّد من buildPrintHTML يحتوي على <script> لتقسيم الصفحات ──
+    // ── الحل: استخدام iframe بدل container لكي يُنفَّذ الـ script الداخلي ──
+    const iframe=document.createElement('iframe');
+    iframe.style.cssText='position:fixed;top:0;left:-9999px;width:794px;height:1123px;border:none;background:#fff;';
+    document.body.appendChild(iframe);
+    const iDoc=iframe.contentDocument||iframe.contentWindow.document;
 
-    document.fonts.ready.then(function(){
-      setTimeout(function(){
-        html2canvas(container,{
-          scale:2,useCORS:true,backgroundColor:'#ffffff',
-          logging:false,allowTaint:true,letterRendering:true,
-          width:794,windowWidth:794
-        }).then(function(canvas){
-          document.body.removeChild(container);
-          const imgData=canvas.toDataURL('image/jpeg',0.95);
-          const imgW=pageW;
-          const imgH=(canvas.height*imgW)/canvas.width;
+    // ── حقن الخطوط (Cairo) إذا كان HTML لا يحتوي على head ──
+    const fontLink='<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">';
+    let fullHTML;
+    if(/<\s*html[\s>]/i.test(htmlStr)){
+      // HTML كامل (من buildPrintHTML) — احقن الخطوط داخل <head> + printCSS
+      fullHTML=htmlStr
+        .replace(/<head([^>]*)>/i,'<head$1>'+fontLink)
+        .replace(/<\/head>/i,'<style>'+printCSS+'</style></head>');
+    } else {
+      // HTML بسيط — غلّفه
+      fullHTML='<!DOCTYPE html><html><head><meta charset="utf-8">'+fontLink+
+        '<style>html,body{margin:0;padding:0;background:#fff;font-family:Cairo,sans-serif;direction:ltr;}'+printCSS+'</style></head><body>'+htmlStr+'</body></html>';
+    }
 
-          if(!isFirstPage) doc.addPage();
+    iDoc.open(); iDoc.write(fullHTML); iDoc.close();
 
-          if(imgH<=pageH){
-            // صفحة واحدة — ضع الصورة مع توسيط عمودي إذا كانت أصغر
-            doc.addImage(imgData,'JPEG',0,0,imgW,imgH);
-          } else {
-            // الصورة أطول من A4 — قطّعها بحيث كل شريحة = صفحة A4 كاملة
-            const pageCanvas=document.createElement('canvas');
-            const ctx=pageCanvas.getContext('2d');
-            const scaleFactor=canvas.width/pageW;
-            const pageHeightPx=Math.round(pageH*scaleFactor);
-            let srcY=0;
-            let isFirst=true;
-            while(srcY<canvas.height){
-              if(!isFirst) doc.addPage();
-              const sliceH=Math.min(pageHeightPx, canvas.height-srcY);
-              pageCanvas.width=canvas.width;
-              pageCanvas.height=pageHeightPx; // دائماً A4 كاملة
-              ctx.fillStyle='#ffffff';
-              ctx.fillRect(0,0,pageCanvas.width,pageCanvas.height);
-              ctx.drawImage(canvas,0,srcY,canvas.width,sliceH,0,0,canvas.width,sliceH);
-              const sliceData=pageCanvas.toDataURL('image/jpeg',0.95);
-              doc.addImage(sliceData,'JPEG',0,0,imgW,pageH);
-              srcY+=pageHeightPx;
-              isFirst=false;
-            }
+    // ── انتظار: تحميل الـ iframe + تنفيذ scripts + جاهزية الخطوط + pagination ──
+    function _waitAndCapture(){
+      const waitFonts = (iDoc.fonts && iDoc.fonts.ready) ? iDoc.fonts.ready : Promise.resolve();
+      waitFonts.then(function(){
+        // انتظار إضافي للسماح لـ runPagination() بالعمل
+        setTimeout(_capture, 600);
+      }).catch(function(){
+        setTimeout(_capture, 600);
+      });
+    }
+
+    function _capture(){
+      const body=iDoc.body;
+      if(!body || !body.scrollWidth || !body.scrollHeight){
+        try{document.body.removeChild(iframe);}catch(e){}
+        return onErr(new Error('تعذّر حساب أبعاد التقرير'));
+      }
+
+      // اضبط ارتفاع iframe ليطابق المحتوى الفعلي قبل الالتقاط
+      const realH=Math.max(body.scrollHeight, body.offsetHeight, 100);
+      iframe.style.height=realH+'px';
+
+      html2canvas(body,{
+        scale:2,useCORS:true,backgroundColor:'#ffffff',
+        logging:false,allowTaint:true,letterRendering:true,
+        width:794,
+        height:realH,
+        windowWidth:794,
+        windowHeight:realH
+      }).then(function(canvas){
+        try{document.body.removeChild(iframe);}catch(e){}
+        if(!canvas || !canvas.width || !canvas.height || !isFinite(canvas.width) || !isFinite(canvas.height)){
+          return onErr(new Error('فشل التقاط الصفحة (canvas فارغ)'));
+        }
+        const imgData=canvas.toDataURL('image/jpeg',0.95);
+        const imgW=pageW;
+        const imgH=(canvas.height*imgW)/canvas.width;
+        if(!isFinite(imgH) || imgH<=0){
+          return onErr(new Error('أبعاد الصورة غير صالحة'));
+        }
+
+        if(!isFirstPage) doc.addPage();
+
+        if(imgH<=pageH){
+          doc.addImage(imgData,'JPEG',0,0,imgW,imgH);
+        } else {
+          // الصورة أطول من A4 — قطّعها بحيث كل شريحة = صفحة A4 كاملة
+          const pageCanvas=document.createElement('canvas');
+          const ctx=pageCanvas.getContext('2d');
+          const scaleFactor=canvas.width/pageW;
+          const pageHeightPx=Math.round(pageH*scaleFactor);
+          let srcY=0;
+          let isFirst=true;
+          while(srcY<canvas.height){
+            if(!isFirst) doc.addPage();
+            const sliceH=Math.min(pageHeightPx, canvas.height-srcY);
+            pageCanvas.width=canvas.width;
+            pageCanvas.height=pageHeightPx;
+            ctx.fillStyle='#ffffff';
+            ctx.fillRect(0,0,pageCanvas.width,pageCanvas.height);
+            ctx.drawImage(canvas,0,srcY,canvas.width,sliceH,0,0,canvas.width,sliceH);
+            const sliceData=pageCanvas.toDataURL('image/jpeg',0.95);
+            doc.addImage(sliceData,'JPEG',0,0,imgW,pageH);
+            srcY+=pageHeightPx;
+            isFirst=false;
           }
-          onDone();
-        }).catch(function(err){
-          try{document.body.removeChild(container);}catch(e){}
-          onErr(err);
-        });
-      },120);
-    });
+        }
+        onDone();
+      }).catch(function(err){
+        try{document.body.removeChild(iframe);}catch(e){}
+        onErr(err);
+      });
+    }
+
+    // انتظر load event بدلاً من timeout ثابت
+    if(iframe.contentDocument && iframe.contentDocument.readyState==='complete'){
+      _waitAndCapture();
+    } else {
+      iframe.onload=_waitAndCapture;
+      // حماية إضافية: إذا لم يُطلق onload خلال 3 ثوانٍ، اعتبره جاهز
+      setTimeout(function(){ if(iframe.parentNode) _waitAndCapture(); }, 3000);
+    }
   }
 
   // ── معالجة الصفحات بالتسلسل ──
