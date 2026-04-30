@@ -3584,6 +3584,17 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
                 </div>
               </div>
 
+              <!-- 📏 ارتفاع رأس التقرير -->
+              <div class="fg" style="background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:10px">
+                <label class="fl" style="font-size:12px;font-weight:800;color:var(--primary)">📏 ارتفاع رأس ورقة التقرير</label>
+                <div style="font-size:10px;color:var(--text2);margin-bottom:8px">القيمة بالبكسل (px) — الحد الأدنى 70 والأقصى 230 — يُطبَّق على: التحاليل العامة، الإدرار، البراز، السائل المنوي، الزرع. (طباعة CBC الفارغة تحتفظ بحجمها الثابت 120px)</div>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <input type="number" id="st-hdr-img-h" class="fc" min="70" max="230" step="1" placeholder="170" style="flex:1">
+                  <span style="font-size:12px;color:var(--text2);font-weight:700">px</span>
+                  <button class="btn btn-p btn-sm" onclick="saveHdrImgHeight()" style="white-space:nowrap;padding:8px 14px">💾 حفظ</button>
+                </div>
+              </div>
+
               <!-- ذيل الورقة: اختيار بين صورة أو نص -->
               <div style="background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:10px">
                 <div style="font-size:12px;font-weight:800;color:var(--primary);margin-bottom:12px">📍 ذيل الورقة</div>
@@ -3602,6 +3613,17 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
                   <div id="footer-img-preview" style="margin-top:8px;display:none">
                     <img id="footer-img-show" style="max-height:60px;border-radius:8px;border:1px solid var(--border);width:100%;object-fit:fill;background:#fff;">
                     <button class="btn btn-d btn-sm" style="margin-top:6px" onclick="clearFooterImg()">🗑️ إزالة الصورة</button>
+                  </div>
+
+                  <!-- 📏 ارتفاع تذييل التقرير -->
+                  <div class="fg" style="background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:12px;margin-bottom:0">
+                    <label class="fl" style="font-size:12px;font-weight:800;color:var(--primary)">📏 ارتفاع تذييل ورقة التقرير</label>
+                    <div style="font-size:10px;color:var(--text2);margin-bottom:8px">القيمة بالبكسل (px) — الحد الأدنى 70 والأقصى 230 — يُطبَّق على جميع التقارير</div>
+                    <div style="display:flex;gap:8px;align-items:center">
+                      <input type="number" id="st-ftr-img-h" class="fc" min="70" max="230" step="1" placeholder="50" style="flex:1">
+                      <span style="font-size:12px;color:var(--text2);font-weight:700">px</span>
+                      <button class="btn btn-p btn-sm" onclick="saveFtrImgHeight()" style="white-space:nowrap;padding:8px 14px">💾 حفظ</button>
+                    </div>
                   </div>
                 </div>
 
@@ -6456,6 +6478,17 @@ const DB={
         // بيانات كبيرة: IDB فقط — امسح من localStorage فوراً
         localStorage.removeItem(pk);
         IDB.set(pk,v).catch(e=>console.warn('[DB] IDB set error',k,e));
+      } else if(k==='settings' && v && typeof v==='object'){
+        // الإعدادات: استبعد الحقول الكبيرة من localStorage (تذهب لـ IDB عبر setBig)
+        const slim={};
+        for(const key in v){
+          if(key==='headerImg'||key==='footerImg'||
+             key==='_uaFieldsCustom'||key==='_stoolFieldsCustom'||key==='_semenFieldsCustom'||
+             key==='hdrImgH'||key==='ftrImgH') continue;
+          slim[key]=v[key];
+        }
+        const compressed=LZS.compress(JSON.stringify(slim));
+        localStorage.setItem(pk,compressed);
       } else {
         // إعدادات خفيفة: localStorage
         const compressed=LZS.compress(JSON.stringify(v));
@@ -6490,6 +6523,85 @@ const DB={
 // load/save — نفس الواجهة القديمة بالضبط (لا يتغير باقي الكود)
 function load(k,def){return DB.get(k)||def;}
 function save(k,v){DB.set(k,v);}
+
+// ══════════════════════════════════════════════════════════════
+// BIG settings on IDB (صور الرأس/التذييل + الحقول المخصصة لتحاليل الإدرار/البراز/المنوي)
+// تذهب مباشرة لـ IDB بمفاتيح مستقلة، ولا تُخزَّن في كائن settings (لتفادي امتلاء localStorage)
+// ══════════════════════════════════════════════════════════════
+const _BIG_KEYS=new Set(['headerImg','footerImg','uaFieldsCustom','stoolFieldsCustom','semenFieldsCustom','hdrImgH','ftrImgH']);
+const _BIG_MC={};   // كاش ذاكرة فوري لقيم BIG (بدون تأخير)
+
+async function getBig(k){
+  try{
+    const pk=DB._pfx()+'big_'+k;
+    if(_BIG_MC[pk]!==undefined) return _BIG_MC[pk];
+    const v=await IDB.get(pk);
+    _BIG_MC[pk]=(v===null?'':v);
+    return _BIG_MC[pk];
+  }catch{return '';}
+}
+
+async function setBig(k,v){
+  try{
+    const pk=DB._pfx()+'big_'+k;
+    _BIG_MC[pk]=v;     // كاش فوري
+    await IDB.set(pk,v);
+    return true;
+  }catch(e){
+    console.warn('[MedLab] setBig error',k,e);
+    return false;
+  }
+}
+
+async function delBig(k){
+  try{
+    const pk=DB._pfx()+'big_'+k;
+    delete _BIG_MC[pk];
+    await IDB.del(pk);
+    return true;
+  }catch{return false;}
+}
+
+// قراءة متزامنة من الكاش (تُستدعى من شفرة الطباعة بعد تحميل القيم)
+function getBigCached(k){
+  const pk=DB._pfx()+'big_'+k;
+  return _BIG_MC[pk]||'';
+}
+
+// تحميل كل قيم BIG من IDB إلى الكاش، مع هجرة من settings القديمة
+async function loadAllBigToCache(){
+  try{
+    // هجرة: انقل القيم القديمة من settings إلى IDB إن وُجدت
+    const migrations=[
+      {settingsKey:'headerImg',         bigKey:'headerImg'},
+      {settingsKey:'footerImg',         bigKey:'footerImg'},
+      {settingsKey:'_uaFieldsCustom',   bigKey:'uaFieldsCustom'},
+      {settingsKey:'_stoolFieldsCustom',bigKey:'stoolFieldsCustom'},
+      {settingsKey:'_semenFieldsCustom',bigKey:'semenFieldsCustom'},
+    ];
+    let settingsChanged=false;
+    for(const {settingsKey,bigKey} of migrations){
+      const old=settings[settingsKey];
+      if(old){
+        // إذا لم يكن في IDB بعد، انقله
+        const existing=await IDB.get(DB._pfx()+'big_'+bigKey);
+        if(existing===null||existing===undefined||existing===''){
+          await IDB.set(DB._pfx()+'big_'+bigKey, old);
+        }
+        delete settings[settingsKey];
+        settingsChanged=true;
+      }
+    }
+    if(settingsChanged){ try{ save('settings',settings); }catch{} }
+
+    // حمّل كل القيم لتكون متاحة بشكل متزامن من الكاش
+    for(const k of _BIG_KEYS){
+      const pk=DB._pfx()+'big_'+k;
+      const v=await IDB.get(pk);
+      _BIG_MC[pk]=(v===null||v===undefined?'':v);
+    }
+  }catch(e){console.warn('[MedLab] loadAllBigToCache error',e);}
+}
 
 // مفاتيح البيانات الرئيسية (للتوافق مع الكود القديم)
 const _ARCHIVE_KEYS=[..._IDB_KEYS];
@@ -7346,6 +7458,45 @@ function startApp(){
   loadInvPtDropdown();
   updateDashboard();
   updateBadges();
+
+  // ── تحميل القيم الكبيرة (الصور + الحقول المخصصة) من IDB، ثم إعادة تطبيقها ──
+  loadAllBigToCache().then(()=>{
+    // 1) الصور: ضعها في settings (للطباعة) واعرضها في الإعدادات
+    const hImg = getBigCached('headerImg');
+    if(hImg){
+      settings.headerImg = hImg;
+      const showH = document.getElementById('header-img-show');
+      const prvH  = document.getElementById('header-img-preview');
+      if(showH) showH.src = hImg;
+      if(prvH)  prvH.style.display = 'block';
+    }
+    const fImg = getBigCached('footerImg');
+    if(fImg){
+      settings.footerImg = fImg;
+      const showF = document.getElementById('footer-img-show');
+      const prvF  = document.getElementById('footer-img-preview');
+      if(showF) showF.src = fImg;
+      if(prvF)  prvF.style.display = 'block';
+    }
+    // 1.5) ارتفاع رأس/تذييل التقرير (في الذاكرة فقط — تُقرأ من IDB)
+    const hH = getBigCached('hdrImgH');
+    settings.hdrImgH = (typeof hH==='number' && hH>=HDR_FTR_H_MIN && hH<=HDR_FTR_H_MAX) ? hH : HDR_IMG_H_DEFAULT;
+    const inpHH = document.getElementById('st-hdr-img-h');
+    if(inpHH) inpHH.value = settings.hdrImgH;
+
+    const fH = getBigCached('ftrImgH');
+    settings.ftrImgH = (typeof fH==='number' && fH>=HDR_FTR_H_MIN && fH<=HDR_FTR_H_MAX) ? fH : FTR_IMG_H_DEFAULT;
+    const inpFH = document.getElementById('st-ftr-img-h');
+    if(inpFH) inpFH.value = settings.ftrImgH;
+
+    // 2) الحقول المخصصة لتحاليل الإدرار/البراز/المنوي
+    applyCustomExamFields();
+    // إعادة رسم محرّرات الحقول إن كانت مفتوحة حالياً
+    try{ if(document.getElementById('ua-fields-editor'))    renderUAFieldsEditor();    }catch{}
+    try{ if(document.getElementById('stool-fields-editor')) renderStoolFieldsEditor(); }catch{}
+    try{ if(document.getElementById('semen-fields-editor')) renderSemenFieldsEditor(); }catch{}
+  }).catch(e=>console.warn('[MedLab] loadAllBigToCache failed',e));
+
   setTimeout(()=>showNotif('مرحباً','النظام جاهز للعمل 🔬','success'),500);
   // تهيئة عداد ESR بعد تعيين المستخدم (لضمان صحة prefix التخزين)
   setTimeout(function(){
@@ -10920,6 +11071,7 @@ function loadPrintPreviewSide(){
 function buildPrintHTML(req, opts){
   opts = opts || {};
   const blankBody = opts.blankBody === true;
+  const cbcBlank  = opts.cbcBlank  === true;  // طباعة CBC الفارغة → رأس بارتفاع 120
   const pt       = patients.find(p=>p.id===req.patientId)||{};
   // Only exclude special exams (UA/Stool) from regular report — they print separately
   // التحاليل المحسوبة (isCalc) تطبع أيضاً في صفحة منفردة
@@ -10999,7 +11151,9 @@ function buildPrintHTML(req, opts){
   // ويُسمح للتحاليل بالانطباع في يساره ضمن نفس المساحة
   const sigH = 0;
   // زيادة الارتفاعات لتعويض unprintable area في الطابعات
-  const footerH = hasFtrImg ? 62 : hasFtrTxt ? 46 : (settings.hdrMode==='text' ? 48 : 0);
+  // قراءة ارتفاع التذييل من الإعدادات (افتراضي 50px لتطابق التقارير الأخرى)
+  const _ftrUserH = (typeof settings.ftrImgH==='number' && settings.ftrImgH>=70 && settings.ftrImgH<=230) ? settings.ftrImgH : 50;
+  const footerH = hasFtrImg ? _ftrUserH : hasFtrTxt ? 46 : (settings.hdrMode==='text' ? 48 : 0);
   const totalFooterH = footerH + sigH;
   // هامش سفلي للصفحة = إجمالي ارتفاع الذيل + 6mm احتياطي
   const pageBottomMm = totalFooterH>0 ? Math.ceil(totalFooterH*0.265+6) : 4;
@@ -11042,6 +11196,11 @@ function buildPrintHTML(req, opts){
   `;
 
   // ─── Header ───────────────────────────────────────────
+  // ارتفاع صورة الرأس:
+  //   • طباعة CBC الفارغة → 120px ثابت (لا يتأثر بإعدادات المستخدم)
+  //   • باقي التقارير → القيمة المحفوظة من إعدادات المستخدم (افتراضي 170)
+  const _hdrUserH = (typeof settings.hdrImgH==='number' && settings.hdrImgH>=70 && settings.hdrImgH<=230) ? settings.hdrImgH : 170;
+  const _hdrImgH = cbcBlank ? 120 : _hdrUserH;
   let hdr='';
   if(settings.hdrMode==='text'&&showHdr){
     // Fix 5: نص مخصص للرأس
@@ -11049,7 +11208,7 @@ function buildPrintHTML(req, opts){
   } else if(settings.headerImg&&showHdr){
     // Fix 4: image fills full width AND height (no whitespace)
     hdr=`<div style="width:100%;line-height:0">
-           <img src="${settings.headerImg}" style="width:100%;height:160px;display:block;object-fit:fill">
+           <img src="${settings.headerImg}" style="width:100%;height:${_hdrImgH}px;display:block;object-fit:fill">
          </div>`;
   } else if(showHdr){
     hdr=`<div style="padding:8px 16px 6px;border-bottom:2px solid #002255;display:flex;justify-content:space-between;align-items:center">
@@ -12264,10 +12423,17 @@ function generatePDFBlob(callback){
           logging:false,allowTaint:true,letterRendering:true,
           width:794,windowWidth:794
         }).then(function(canvas){
-          document.body.removeChild(container);
+          try{document.body.removeChild(container);}catch(e){}
+          // ── فحص أبعاد الـ canvas قبل تمريرها لـ jsPDF ──
+          if(!canvas || !canvas.width || !canvas.height || !isFinite(canvas.width) || !isFinite(canvas.height)){
+            return onErr(new Error('فشل التقاط الصفحة (أبعاد غير صالحة). أعد المحاولة أو أعد فتح التقرير.'));
+          }
           const imgData=canvas.toDataURL('image/jpeg',0.95);
           const imgW=pageW;
           const imgH=(canvas.height*imgW)/canvas.width;
+          if(!isFinite(imgH) || imgH<=0){
+            return onErr(new Error('أبعاد الصورة غير صالحة'));
+          }
 
           if(!isFirstPage) doc.addPage();
 
@@ -14664,17 +14830,79 @@ function _confirmDbPin(){
 function loadHeaderImg(input){
   const f=input.files[0];if(!f)return;
   const reader=new FileReader();
-  reader.onload=e=>{settings.headerImg=e.target.result;save('settings',settings);document.getElementById('header-img-show').src=e.target.result;document.getElementById('header-img-preview').style.display='block';showNotif('تم','تم رفع صورة الرأس ✅','success');};
+  reader.onload=async e=>{
+    const dataUrl=e.target.result;
+    settings.headerImg=dataUrl;                // متاح فوراً في الذاكرة لشفرة الطباعة
+    document.getElementById('header-img-show').src=dataUrl;
+    document.getElementById('header-img-preview').style.display='block';
+    const ok=await setBig('headerImg',dataUrl);  // الحفظ الفعلي على IDB
+    showNotif('تم', ok?'تم رفع صورة الرأس وحفظها في قاعدة البيانات ✅':'تم رفع الصورة لكن فشل الحفظ ⚠️', ok?'success':'error');
+  };
   reader.readAsDataURL(f);
 }
 function loadFooterImg(input){
   const f=input.files[0];if(!f)return;
   const reader=new FileReader();
-  reader.onload=e=>{settings.footerImg=e.target.result;save('settings',settings);document.getElementById('footer-img-show').src=e.target.result;document.getElementById('footer-img-preview').style.display='block';showNotif('تم','تم رفع صورة التذييل ✅','success');};
+  reader.onload=async e=>{
+    const dataUrl=e.target.result;
+    settings.footerImg=dataUrl;
+    document.getElementById('footer-img-show').src=dataUrl;
+    document.getElementById('footer-img-preview').style.display='block';
+    const ok=await setBig('footerImg',dataUrl);
+    showNotif('تم', ok?'تم رفع صورة التذييل وحفظها في قاعدة البيانات ✅':'تم رفع الصورة لكن فشل الحفظ ⚠️', ok?'success':'error');
+  };
   reader.readAsDataURL(f);
 }
-function clearHeaderImg(){settings.headerImg='';save('settings',settings);document.getElementById('header-img-preview').style.display='none';document.getElementById('st-header-img').value='';}
-function clearFooterImg(){settings.footerImg='';save('settings',settings);document.getElementById('footer-img-preview').style.display='none';document.getElementById('st-footer-img').value='';}
+function clearHeaderImg(){
+  settings.headerImg='';
+  delBig('headerImg').catch(()=>{});
+  document.getElementById('header-img-preview').style.display='none';
+  document.getElementById('st-header-img').value='';
+}
+function clearFooterImg(){
+  settings.footerImg='';
+  delBig('footerImg').catch(()=>{});
+  document.getElementById('footer-img-preview').style.display='none';
+  document.getElementById('st-footer-img').value='';
+}
+
+// ── حفظ ارتفاع رأس/تذييل التقرير في IndexedDB ──────────────
+const HDR_IMG_H_DEFAULT = 170;
+const FTR_IMG_H_DEFAULT = 50;
+const HDR_FTR_H_MIN = 70;
+const HDR_FTR_H_MAX = 230;
+
+async function saveHdrImgHeight(){
+  const inp=document.getElementById('st-hdr-img-h');
+  if(!inp) return;
+  const raw=parseInt(inp.value,10);
+  if(isNaN(raw)){
+    showNotif('تنبيه','أدخل قيمة رقمية صحيحة','warning'); return;
+  }
+  if(raw<HDR_FTR_H_MIN||raw>HDR_FTR_H_MAX){
+    showNotif('تنبيه',`القيمة يجب أن تكون بين ${HDR_FTR_H_MIN} و ${HDR_FTR_H_MAX} px`,'warning'); return;
+  }
+  settings.hdrImgH=raw;
+  inp.value=raw;
+  const ok=await setBig('hdrImgH',raw);
+  showNotif('تم', ok?`✅ تم حفظ ارتفاع الرأس (${raw}px) — سيُطبَّق في كل التقارير`:'فشل الحفظ ⚠️', ok?'success':'error');
+}
+
+async function saveFtrImgHeight(){
+  const inp=document.getElementById('st-ftr-img-h');
+  if(!inp) return;
+  const raw=parseInt(inp.value,10);
+  if(isNaN(raw)){
+    showNotif('تنبيه','أدخل قيمة رقمية صحيحة','warning'); return;
+  }
+  if(raw<HDR_FTR_H_MIN||raw>HDR_FTR_H_MAX){
+    showNotif('تنبيه',`القيمة يجب أن تكون بين ${HDR_FTR_H_MIN} و ${HDR_FTR_H_MAX} px`,'warning'); return;
+  }
+  settings.ftrImgH=raw;
+  inp.value=raw;
+  const ok=await setBig('ftrImgH',raw);
+  showNotif('تم', ok?`✅ تم حفظ ارتفاع التذييل (${raw}px) — سيُطبَّق في كل التقارير`:'فشل الحفظ ⚠️', ok?'success':'error');
+}
 
 // ── دوال التوقيع والتذييل ──────────────────────────────────
 function toggleSignOption(type){
@@ -19280,12 +19508,12 @@ function _buildCultureHTML(cid){
 
   let hdrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
-  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:160px;display:block;object-fit:fill">`;
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:${(typeof s.hdrImgH==='number'&&s.hdrImgH>=70&&s.hdrImgH<=230)?s.hdrImgH:170}px;display:block;object-fit:fill">`;
   else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-family:Arial,sans-serif;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
 
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
-  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:50px;object-fit:fill;display:block">`;
+  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=70&&s.ftrImgH<=230)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
   else if(s.footer) ftrHTML=`<div style="padding:4px 16px;font-size:12px;color:#555;border-top:1px solid ${color};text-align:center">${s.footer}</div>`;
 
   // ─── Patient info — same style as regular test print ───────────
@@ -19457,6 +19685,9 @@ function shareCultureWhatsApp(cid){
   setTimeout(function(){
     html2canvas(iDoc.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff'}).then(async function(canvas){
       try{document.body.removeChild(iframe);}catch(e){}
+      if(!canvas || !canvas.width || !canvas.height){
+        return showNotif('خطأ','تعذر التقاط التقرير — أعد المحاولة','error');
+      }
       const imgData=canvas.toDataURL('image/jpeg',0.92);
       const {jsPDF}=window.jspdf;
       const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -19464,6 +19695,9 @@ function shareCultureWhatsApp(cid){
       const pdfH=doc.internal.pageSize.getHeight();
       const ratio=canvas.height/canvas.width;
       const imgH=pdfW*ratio;
+      if(!isFinite(imgH) || imgH<=0){
+        return showNotif('خطأ','أبعاد الصورة غير صالحة','error');
+      }
       let y=0;
       while(y<imgH){
         if(y>0) doc.addPage();
@@ -19478,9 +19712,9 @@ function shareCultureWhatsApp(cid){
           showNotif('تم','تم حفظ PDF في D:\\MedLabPro ✅ افتح واتساب وأرفق الملف','success');
         },600);
       });
-    }).catch(function(){
+    }).catch(function(err){
       try{if(iframe.parentNode)document.body.removeChild(iframe);}catch(e){}
-      showNotif('خطأ','تعذر إنشاء PDF','error');
+      showNotif('خطأ','تعذر إنشاء PDF: '+(err&&err.message?err.message:''),'error');
     });
   },900);
 }
@@ -19793,11 +20027,11 @@ function _buildUAPrintHTML(r){
   const color=s.hdrText?.color||'#003366';
   let hdrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
-  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:160px;display:block;object-fit:fill">`;
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:${(typeof s.hdrImgH==='number'&&s.hdrImgH>=70&&s.hdrImgH<=230)?s.hdrImgH:170}px;display:block;object-fit:fill">`;
   else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
-  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:50px;object-fit:fill;display:block">`;
+  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=70&&s.ftrImgH<=230)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
 
   const renderSec=(sec)=>{
     const validFields=sec.fields.filter(f=>{
@@ -20313,11 +20547,11 @@ function _buildStoolPrintHTML(r){
   const color=s.hdrText?.color||'#003366';
   let hdrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
-  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:160px;display:block;object-fit:fill">`;
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:${(typeof s.hdrImgH==='number'&&s.hdrImgH>=70&&s.hdrImgH<=230)?s.hdrImgH:170}px;display:block;object-fit:fill">`;
   else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
-  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:50px;object-fit:fill;display:block">`;
+  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=70&&s.ftrImgH<=230)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
 
   const drName=r.doctorName||pt.doctorName||(doctors&&doctors.find&&doctors.find(d=>d.id===pt.doctorId)?.name)||'';
   const _sNameColor   = s.colorName||'#cc0011';
@@ -20460,6 +20694,9 @@ function shareUAWhatsApp(id){
   setTimeout(function(){
     html2canvas(iDoc.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff'}).then(async function(canvas){
       try{document.body.removeChild(iframe);}catch(e){}
+      if(!canvas || !canvas.width || !canvas.height){
+        return showNotif('خطأ','تعذر التقاط التقرير — أعد المحاولة','error');
+      }
       const imgData=canvas.toDataURL('image/jpeg',0.92);
       const {jsPDF}=window.jspdf;
       const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -20467,6 +20704,9 @@ function shareUAWhatsApp(id){
       const pdfH=doc.internal.pageSize.getHeight();
       const ratio=canvas.height/canvas.width;
       const imgH=pdfW*ratio;
+      if(!isFinite(imgH) || imgH<=0){
+        return showNotif('خطأ','أبعاد الصورة غير صالحة','error');
+      }
       let y=0;
       while(y<imgH){if(y>0)doc.addPage();doc.addImage(imgData,'JPEG',0,y>0?-(y):0,pdfW,imgH);y+=pdfH;}
       const fileName=ptName.replace(/\s+/g,'_')+'_urine.pdf';
@@ -20477,9 +20717,9 @@ function shareUAWhatsApp(id){
           showNotif('تم','تم حفظ PDF في D:\\MedLabPro ✅ افتح واتساب وأرفق الملف','success');
         },600);
       });
-    }).catch(function(){
+    }).catch(function(err){
       try{if(iframe.parentNode)document.body.removeChild(iframe);}catch(e){}
-      showNotif('خطأ','تعذر إنشاء PDF','error');
+      showNotif('خطأ','تعذر إنشاء PDF: '+(err&&err.message?err.message:''),'error');
     });
   },900);
 }
@@ -20504,6 +20744,9 @@ function shareStoolWhatsApp(id){
   setTimeout(function(){
     html2canvas(iDoc.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff'}).then(async function(canvas){
       try{document.body.removeChild(iframe);}catch(e){}
+      if(!canvas || !canvas.width || !canvas.height){
+        return showNotif('خطأ','تعذر التقاط التقرير — أعد المحاولة','error');
+      }
       const imgData=canvas.toDataURL('image/jpeg',0.92);
       const {jsPDF}=window.jspdf;
       const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -20511,6 +20754,9 @@ function shareStoolWhatsApp(id){
       const pdfH=doc.internal.pageSize.getHeight();
       const ratio=canvas.height/canvas.width;
       const imgH=pdfW*ratio;
+      if(!isFinite(imgH) || imgH<=0){
+        return showNotif('خطأ','أبعاد الصورة غير صالحة','error');
+      }
       let y=0;
       while(y<imgH){if(y>0)doc.addPage();doc.addImage(imgData,'JPEG',0,y>0?-(y):0,pdfW,imgH);y+=pdfH;}
       const fileName=ptName.replace(/\s+/g,'_')+'_stool.pdf';
@@ -20521,9 +20767,9 @@ function shareStoolWhatsApp(id){
           showNotif('تم','تم حفظ PDF في D:\\MedLabPro ✅ افتح واتساب وأرفق الملف','success');
         },600);
       });
-    }).catch(function(){
+    }).catch(function(err){
       try{if(iframe.parentNode)document.body.removeChild(iframe);}catch(e){}
-      showNotif('خطأ','تعذر إنشاء PDF','error');
+      showNotif('خطأ','تعذر إنشاء PDF: '+(err&&err.message?err.message:''),'error');
     });
   },900);
 }
@@ -20707,8 +20953,7 @@ function removeUAField(secKey, idx){
   if(!confirm('حذف هذا العنصر؟')) return;
   UA_FIELDS[secKey].fields.splice(idx,1);
   // Save custom UA_FIELDS to settings
-  settings._uaFieldsCustom = JSON.stringify(UA_FIELDS);
-  save('settings', settings);
+  setBig('uaFieldsCustom', JSON.stringify(UA_FIELDS)); delete settings._uaFieldsCustom;
   renderUAFieldsEditor();
   showNotif('تم','تم حذف العنصر ✅','success');
 }
@@ -20717,8 +20962,7 @@ function removeStoolField(secKey, idx){
   if(!STOOL_FIELDS[secKey]||!STOOL_FIELDS[secKey].fields) return;
   if(!confirm('حذف هذا العنصر؟')) return;
   STOOL_FIELDS[secKey].fields.splice(idx,1);
-  settings._stoolFieldsCustom = JSON.stringify(STOOL_FIELDS);
-  save('settings', settings);
+  setBig('stoolFieldsCustom', JSON.stringify(STOOL_FIELDS)); delete settings._stoolFieldsCustom;
   renderStoolFieldsEditor();
   showNotif('تم','تم حذف العنصر ✅','success');
 }
@@ -20732,8 +20976,7 @@ function addUAField(){
   const options=opts?opts.split('|').map(o=>o.trim()).filter(Boolean):['None','Present'];
   const id='custom_'+Date.now();
   UA_FIELDS[secKey].fields.push({id, label, type:'select', options, normal:options[0]});
-  settings._uaFieldsCustom = JSON.stringify(UA_FIELDS);
-  save('settings', settings);
+  setBig('uaFieldsCustom', JSON.stringify(UA_FIELDS)); delete settings._uaFieldsCustom;
   document.getElementById('ua-new-label').value='';
   document.getElementById('ua-new-opts').value='';
   renderUAFieldsEditor();
@@ -20749,8 +20992,7 @@ function addStoolField(){
   const options=opts?opts.split('|').map(o=>o.trim()).filter(Boolean):['None','Present'];
   const id='custom_'+Date.now();
   STOOL_FIELDS[secKey].fields.push({id, label, type:'select', options, normal:options[0]});
-  settings._stoolFieldsCustom = JSON.stringify(STOOL_FIELDS);
-  save('settings', settings);
+  setBig('stoolFieldsCustom', JSON.stringify(STOOL_FIELDS)); delete settings._stoolFieldsCustom;
   document.getElementById('stool-new-label').value='';
   document.getElementById('stool-new-opts').value='';
   renderStoolFieldsEditor();
@@ -20759,21 +21001,26 @@ function addStoolField(){
 
 // Apply saved custom fields on startup
 function applyCustomExamFields(){
+  // قراءة من كاش IDB (الذي تم تحميله مسبقاً عبر loadAllBigToCache)
+  // مع توافق رجعي مع settings._uaFieldsCustom القديمة
   try{
-    if(settings._uaFieldsCustom){
-      const saved=JSON.parse(settings._uaFieldsCustom);
+    const ua = getBigCached('uaFieldsCustom') || settings._uaFieldsCustom;
+    if(ua){
+      const saved = (typeof ua==='string') ? JSON.parse(ua) : ua;
       Object.keys(saved).forEach(k=>{ if(UA_FIELDS[k]) UA_FIELDS[k].fields=saved[k].fields; });
     }
   }catch(e){}
   try{
-    if(settings._stoolFieldsCustom){
-      const saved=JSON.parse(settings._stoolFieldsCustom);
+    const st = getBigCached('stoolFieldsCustom') || settings._stoolFieldsCustom;
+    if(st){
+      const saved = (typeof st==='string') ? JSON.parse(st) : st;
       Object.keys(saved).forEach(k=>{ if(STOOL_FIELDS[k]) STOOL_FIELDS[k].fields=saved[k].fields; });
     }
   }catch(e){}
   try{
-    if(settings._semenFieldsCustom){
-      const saved=JSON.parse(settings._semenFieldsCustom);
+    const sm = getBigCached('semenFieldsCustom') || settings._semenFieldsCustom;
+    if(sm){
+      const saved = (typeof sm==='string') ? JSON.parse(sm) : sm;
       Object.keys(saved).forEach(k=>{ if(SEMEN_FIELDS[k]) SEMEN_FIELDS[k].fields=saved[k].fields; });
     }
   }catch(e){}
@@ -20872,9 +21119,8 @@ function _efDrop(e,examType){
   var item=fields.splice(srcIdx,1)[0];
   fields.splice(dstIdx,0,item);
   // حفظ
-  var settingsKey=examType==='ua'?'_uaFieldsCustom':examType==='stool'?'_stoolFieldsCustom':'_semenFieldsCustom';
-  settings[settingsKey]=JSON.stringify(FIELDS);
-  save('settings',settings);
+  var bigKey=examType==='ua'?'uaFieldsCustom':examType==='stool'?'stoolFieldsCustom':'semenFieldsCustom';
+  setBig(bigKey, JSON.stringify(FIELDS));
   // إعادة رسم
   if(examType==='ua') renderUAFieldsEditor();
   else if(examType==='stool') renderStoolFieldsEditor();
@@ -20908,9 +21154,8 @@ function saveExamFieldEdit(examType, secKey, fieldIdx){
   f.options = options;
   f.normal  = normal || options[0];
   // حفظ
-  const settingsKey = examType==='ua'?'_uaFieldsCustom':examType==='stool'?'_stoolFieldsCustom':'_semenFieldsCustom';
-  settings[settingsKey] = JSON.stringify(FIELDS);
-  save('settings', settings);
+  const bigKey = examType==='ua'?'uaFieldsCustom':examType==='stool'?'stoolFieldsCustom':'semenFieldsCustom';
+  setBig(bigKey, JSON.stringify(FIELDS));
   // إغلاق المودال وإعادة رسم المحرر
   const ov = document.getElementById('_ef_edit_overlay'); if(ov) ov.remove();
   if(examType==='ua') renderUAFieldsEditor();
@@ -20948,8 +21193,7 @@ function removeSemenField(secKey, idx){
   if(!SEMEN_FIELDS[secKey]||!SEMEN_FIELDS[secKey].fields) return;
   if(!confirm('Delete this field?')) return;
   SEMEN_FIELDS[secKey].fields.splice(idx,1);
-  settings._semenFieldsCustom = JSON.stringify(SEMEN_FIELDS);
-  save('settings', settings);
+  setBig('semenFieldsCustom', JSON.stringify(SEMEN_FIELDS)); delete settings._semenFieldsCustom;
   renderSemenFieldsEditor();
   showNotif('Done','Field deleted ✅','success');
 }
@@ -20963,8 +21207,7 @@ function addSemenField(){
   const options=opts?opts.split('|').map(o=>o.trim()).filter(Boolean):['None','Present'];
   const id='custom_'+Date.now();
   SEMEN_FIELDS[secKey].fields.push({id, label, type:'select', options, normal:options[0]});
-  settings._semenFieldsCustom = JSON.stringify(SEMEN_FIELDS);
-  save('settings', settings);
+  setBig('semenFieldsCustom', JSON.stringify(SEMEN_FIELDS)); delete settings._semenFieldsCustom;
   document.getElementById('semen-new-label').value='';
   document.getElementById('semen-new-opts').value='';
   renderSemenFieldsEditor();
@@ -20978,7 +21221,7 @@ function printCBCBlank(){
   const id=document.getElementById('res-req-sel').value;
   if(!id){ showNotif('تنبيه','اختر طلباً أولاً','warning'); return; }
   const req=requests.find(r=>r.id===id); if(!req) return;
-  const html = buildPrintHTML(req, { blankBody: true });
+  const html = buildPrintHTML(req, { blankBody: true, cbcBlank: true });
   _printViaIframe(html);
 }
 
@@ -20986,7 +21229,7 @@ function printCBCFromPrintSection(){
   const id=document.getElementById('print-req-sel').value||currentReqId;
   if(!id){ showNotif('تنبيه','اختر طلباً أولاً','warning'); return; }
   const req=requests.find(r=>r.id===id); if(!req) return;
-  const html = buildPrintHTML(req, { blankBody: true });
+  const html = buildPrintHTML(req, { blankBody: true, cbcBlank: true });
   _printViaIframe(html);
 }
 
@@ -21466,11 +21709,11 @@ function _buildSemenPrintHTML(r){
   const color=s.hdrText?.color||'#003366';
   let hdrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
-  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:160px;display:block;object-fit:fill">`;
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:${(typeof s.hdrImgH==='number'&&s.hdrImgH>=70&&s.hdrImgH<=230)?s.hdrImgH:170}px;display:block;object-fit:fill">`;
   else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
-  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:50px;object-fit:fill;display:block">`;
+  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=70&&s.ftrImgH<=230)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
 
   const drName=r.doctorName||pt.doctorName||(doctors&&doctors.find&&doctors.find(d=>d.id===pt.doctorId)?.name)||'';
   const _smNameColor   = s.colorName||'#cc0011';
@@ -21632,6 +21875,9 @@ function shareSemenPDFWhatsApp(id){
   setTimeout(function(){
     html2canvas(iDoc.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff'}).then(async function(canvas){
       try{document.body.removeChild(iframe);}catch(e){}
+      if(!canvas || !canvas.width || !canvas.height){
+        return showNotif('خطأ','تعذر التقاط التقرير — أعد المحاولة','error');
+      }
       const imgData=canvas.toDataURL('image/jpeg',0.92);
       const {jsPDF}=window.jspdf;
       const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -21639,6 +21885,9 @@ function shareSemenPDFWhatsApp(id){
       const pdfH=doc.internal.pageSize.getHeight();
       const ratio=canvas.height/canvas.width;
       const imgH=pdfW*ratio;
+      if(!isFinite(imgH) || imgH<=0){
+        return showNotif('خطأ','أبعاد الصورة غير صالحة','error');
+      }
       let y=0;
       while(y<imgH){
         if(y>0) doc.addPage();
@@ -21653,9 +21902,9 @@ function shareSemenPDFWhatsApp(id){
           showNotif('📎 أرفق الملف','تم حفظ PDF في D:\\MedLabPro وفتح محادثة المريض ✅ اضغط 📎 وأرفق الملف ثم أرسل','success');
         },600);
       });
-    }).catch(function(){
+    }).catch(function(err){
       try{if(iframe.parentNode)document.body.removeChild(iframe);}catch(e){}
-      showNotif('خطأ','تعذر إنشاء PDF','error');
+      showNotif('خطأ','تعذر إنشاء PDF: '+(err&&err.message?err.message:''),'error');
     });
   },900);
 }
@@ -27815,10 +28064,12 @@ async function dlPDF(i){
           await new Promise(r=>setTimeout(r,120));
           const cv=await html2canvas(container,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,allowTaint:true,letterRendering:true});
           document.body.removeChild(container);
+          if(!cv || !cv.width || !cv.height){ throw new Error('تعذر التقاط التقرير'); }
           const{jsPDF:J}=window.jspdf;
           const doc=new J({orientation:'p',unit:'mm',format:'a4'});
           const iw=210,pageH=297;
           const ih=(cv.height*iw)/cv.width;
+          if(!isFinite(ih) || ih<=0){ throw new Error('أبعاد غير صالحة'); }
           if(ih<=pageH){
             doc.addImage(cv.toDataURL('image/jpeg',.95),'JPEG',0,0,iw,ih);
           } else {
