@@ -2725,6 +2725,7 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
             <div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;align-items:center">
               <button class="btn btn-s" onclick="editPatientFromResults()">✏️ تعديل بيانات المريض</button>
               <button class="btn btn-ok btn-lg" onclick="finalizeResult()">✅ تأكيد النتائج</button>
+              <button class="btn btn-p btn-lg" onclick="openGroupingModalFromInput()">📑 تجميع</button>
               <button class="btn btn-p btn-lg" onclick="finalizeAndPrint()">🖨️ حفظ وطباعة</button>
               <button class="btn btn-ok btn-lg" onclick="downloadPDF()">📄 تحميل PDF</button>
               <button class="btn btn-w btn-lg" onclick="shareWhatsApp()">📱 مشاركة PDF واتساب</button>
@@ -2825,6 +2826,7 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
               <div id="print-side-info" style="background:rgba(0,212,255,0.05);border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:14px;font-size:12px;"></div>
               <div style="display:flex;flex-direction:column;gap:10px">
                 <button class="btn btn-p btn-lg" style="width:100%" onclick="doPrint()">🖨️ طباعة مباشرة</button>
+                <button class="btn btn-p btn-lg" style="width:100%" onclick="openGroupingModalFromPrint()">📑 تجميع</button>
                 <button class="btn btn-s" style="width:100%;background:rgba(0,180,100,0.15);border-color:rgba(0,180,100,0.4);color:var(--success)" onclick="printCBCFromPrintSection()">🖨️ طباعة CBC فارغة</button>
                 <button class="btn btn-s" style="width:100%" onclick="openPrintModal()">👁️ معاينة التقرير</button>
                 <button class="btn btn-ok" style="width:100%" onclick="downloadPDF()">📄 تحميل PDF</button>
@@ -10444,6 +10446,511 @@ function finalizeResult(){
   req.status='done';
   save('requests',requests);renderRequests();updateDashboard();updateBadges();loadResultsDropdown();loadPrintDropdown();
 }
+// ============================================================
+// 📑 GROUPING FEATURE — توزيع التحاليل يدوياً على صفحات الطباعة
+// ============================================================
+// pageGroups: مصفوفة من مصفوفات أسماء المجموعات الفرعية لكل صفحة
+// مثلاً: [["Liver Function", "Lipid Profile"], ["Thyroid"]]
+// تُحفظ في req.pageGroups وتُؤثر على ترتيب الطباعة.
+// ============================================================
+
+// المتغير العام لحالة الـ modal الحالية
+window._groupingState = null;
+
+/**
+ * فتح modal التجميع من صفحة إدخال النتائج
+ */
+function openGroupingModalFromInput(){
+  const id = (document.getElementById('res-req-sel')||{}).value;
+  if(!id){ showNotif('تنبيه','اختر طلباً أولاً','warning'); return; }
+  // اجمع النتائج أولاً (حتى تُظهر فقط التحاليل التي لها قيم)
+  if(typeof collectResults === 'function') collectResults();
+  openGroupingModal(id);
+}
+
+/**
+ * فتح modal التجميع من صفحة الطباعة
+ */
+function openGroupingModalFromPrint(){
+  const id = (document.getElementById('print-req-sel')||{}).value;
+  if(!id){ showNotif('تنبيه','اختر مريضاً أولاً','warning'); return; }
+  openGroupingModal(id);
+}
+
+/**
+ * بناء وفتح modal التجميع
+ */
+function openGroupingModal(reqId){
+  const req = requests.find(r => r.id === reqId);
+  if(!req){ showNotif('خطأ','الطلب غير موجود','error'); return; }
+
+  // اجمع المجموعات الفرعية الموجودة فعلاً (التي لها تحاليل بنتائج)
+  const reqTests = (req.tests||[]).map(tid => tests.find(t => t.id === tid)).filter(Boolean);
+  const regularTests = reqTests.filter(t => !t.isSpecialExam);
+
+  // تجميع التحاليل حسب المجموعة الفرعية (cat) — فقط ما له نتيجة
+  const grouped = {};
+  const catOrder = []; // الترتيب الأصلي للمجموعات
+  regularTests.forEach(t => {
+    const v = (req.results && req.results[t.id]) || '';
+    if(!v || !v.toString().trim()) return; // تخطى التحاليل الفارغة
+    const cat = t.cat || 'Other';
+    if(!grouped[cat]){
+      grouped[cat] = [];
+      catOrder.push(cat);
+    }
+    grouped[cat].push(t);
+  });
+
+  if(catOrder.length === 0){
+    showNotif('تنبيه','لا توجد تحاليل بنتائج لتجميعها','warning');
+    return;
+  }
+
+  // قراءة pageGroups المحفوظ مسبقاً (إن وُجد)
+  let savedGroups = Array.isArray(req.pageGroups) ? req.pageGroups.map(g => Array.isArray(g) ? g.slice() : []) : null;
+
+  // إذا لم يُحفظ توزيع → جميع المجموعات في الصفحة الأولى، صفحة ثانية فارغة
+  if(!savedGroups || savedGroups.length === 0){
+    savedGroups = [catOrder.slice(), []];
+  } else {
+    // التحقق من أن الـ savedGroups يحتوي على المجموعات الموجودة فقط
+    // أي cats جديدة (مضافة بعد آخر حفظ) → تذهب للصفحة الأولى
+    const allAssigned = new Set();
+    savedGroups.forEach(g => g.forEach(c => allAssigned.add(c)));
+    const newCats = catOrder.filter(c => !allAssigned.has(c));
+    if(newCats.length > 0){
+      savedGroups[0] = (savedGroups[0]||[]).concat(newCats);
+    }
+    // وإزالة أي cat لم تعد موجودة
+    savedGroups = savedGroups.map(g => g.filter(c => grouped[c]));
+    // ضمان وجود صفحتين على الأقل
+    while(savedGroups.length < 2) savedGroups.push([]);
+  }
+
+  // حفظ الحالة الحالية
+  window._groupingState = {
+    reqId: reqId,
+    grouped: grouped,
+    catOrder: catOrder,
+    pages: savedGroups,
+    originContext: null // 'input' أو 'print' — للعودة بعد الحفظ
+  };
+
+  // بناء الـ modal
+  _buildGroupingModalDom();
+  _renderGroupingPages();
+}
+
+/**
+ * بناء بنية الـ modal في DOM
+ */
+function _buildGroupingModalDom(){
+  // أزل modal سابق إن وجد
+  const old = document.getElementById('m-grouping');
+  if(old) old.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'm-grouping';
+  modal.className = 'moverlay open';
+  modal.innerHTML = `
+    <div class="modal wide" style="max-width:1400px;width:96%;max-height:94vh;display:flex;flex-direction:column">
+      <div class="mhdr">
+        <div class="mtitle">📑 تجميع التحاليل على الصفحات</div>
+        <button class="mclose" onclick="_closeGroupingModal()">×</button>
+      </div>
+      <div style="padding:10px 16px 6px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);background:rgba(0,212,255,0.04);flex:0 0 auto">
+        💡 المجموعة الفرعية هي وحدة الطباعة. انقر على تحليل أو على زر «نقل المجموعة» لنقل المجموعة بكاملها بين الصفحات.
+      </div>
+      <div class="mbody" style="padding:0;flex:1;overflow:hidden;display:flex;flex-direction:column">
+        <div id="grouping-pages-container" style="flex:1;overflow-y:auto;padding:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:14px;align-items:flex-start;background:rgba(0,0,0,0.02)"></div>
+      </div>
+      <div class="mftr" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-s" onclick="_addGroupingPage()">➕ صفحة جديدة</button>
+          <button class="btn btn-s" onclick="_resetGrouping()" style="color:var(--warning)">↺ إعادة تعيين</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-s" onclick="_closeGroupingModal()">إلغاء</button>
+          <button class="btn btn-p btn-lg" onclick="_saveGrouping()">💾 حفظ التجميع</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+/**
+ * عرض الصفحات والتحاليل داخل الـ modal
+ */
+function _renderGroupingPages(){
+  const state = window._groupingState;
+  if(!state) return;
+  const container = document.getElementById('grouping-pages-container');
+  if(!container) return;
+  container.innerHTML = '';
+
+  state.pages.forEach((pageCats, pageIdx) => {
+    const pageEl = document.createElement('div');
+    pageEl.className = 'grouping-page';
+    pageEl.style.cssText = `
+      background:#ffffff;
+      border:2px solid var(--primary);
+      border-radius:12px;
+      box-shadow:0 4px 14px rgba(0,0,0,0.08);
+      overflow:hidden;
+      display:flex;flex-direction:column;
+      min-height:480px;
+    `;
+
+    // رأس الصفحة
+    const pageNum = pageIdx + 1;
+    const isLastPage = pageIdx === state.pages.length - 1;
+    const canRemove = state.pages.length > 2 && pageCats.length === 0;
+
+    let headerHtml = `
+      <div style="background:linear-gradient(135deg,var(--primary),#0099cc);color:#fff;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div style="font-size:14px;font-weight:900;letter-spacing:0.3px">📄 الورقة ${_arabicNum(pageNum)}</div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-size:11px;background:rgba(255,255,255,0.25);padding:3px 9px;border-radius:10px;font-weight:700">${_arabicNum(pageCats.length)} مجموعة</span>
+          ${canRemove ? `<button onclick="_removeGroupingPage(${pageIdx})" title="حذف هذه الصفحة الفارغة" style="background:rgba(255,80,80,0.9);color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;font-weight:700">🗑️</button>` : ''}
+        </div>
+      </div>
+    `;
+
+    // محتوى الصفحة — قائمة المجموعات
+    let bodyHtml = `<div style="padding:12px;flex:1;overflow-y:auto;background:#fafbfc">`;
+
+    if(pageCats.length === 0){
+      bodyHtml += `
+        <div style="text-align:center;color:#aaa;padding:40px 20px;border:2px dashed #d0d8e0;border-radius:10px;font-size:13px;font-weight:600">
+          📭 لا توجد تحاليل في هذه الصفحة<br>
+          <span style="font-size:11px;font-weight:500;color:#bbb;margin-top:6px;display:inline-block">انقل تحاليل من الصفحات الأخرى إلى هنا</span>
+        </div>
+      `;
+    } else {
+      pageCats.forEach((catName) => {
+        const cTests = state.grouped[catName] || [];
+        bodyHtml += _renderGroupingCatBlock(catName, cTests, pageIdx);
+      });
+    }
+
+    bodyHtml += `</div>`;
+
+    // أزرار النقل بين الصفحات (في تذييل الصفحة)
+    let footerHtml = '';
+    if(state.pages.length > 1){
+      const moveTargets = [];
+      state.pages.forEach((_, otherIdx) => {
+        if(otherIdx !== pageIdx) moveTargets.push(otherIdx);
+      });
+      // (تركتها فارغة هنا لأن النقل يتم عبر الأزرار داخل كل مجموعة)
+    }
+
+    pageEl.innerHTML = headerHtml + bodyHtml + footerHtml;
+    container.appendChild(pageEl);
+  });
+}
+
+/**
+ * تحويل أرقام إلى عربية
+ */
+function _arabicNum(n){
+  const ar = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+  return String(n).replace(/[0-9]/g, d => ar[+d]);
+}
+
+/**
+ * بناء HTML لمجموعة فرعية واحدة داخل صفحة
+ */
+function _renderGroupingCatBlock(catName, cTests, pageIdx){
+  const state = window._groupingState;
+  const totalPages = state.pages.length;
+
+  // قائمة الصفحات الأخرى (عدا الحالية) للنقل
+  const otherPages = [];
+  for(let i = 0; i < totalPages; i++){
+    if(i !== pageIdx) otherPages.push(i);
+  }
+
+  // أزرار "نقل المجموعة كاملة"
+  let moveCatBtns = '';
+  if(otherPages.length === 1){
+    const tgt = otherPages[0];
+    moveCatBtns = `<button onclick="_moveCatBetweenPages('${_esc(catName)}',${pageIdx},${tgt})"
+      style="background:linear-gradient(135deg,#0077aa,#005580);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap"
+      title="نقل المجموعة كاملة إلى الورقة ${_arabicNum(tgt+1)}">
+      ⇄ نقل المجموعة → ورقة ${_arabicNum(tgt+1)}
+    </button>`;
+  } else {
+    // أكثر من خيار → نعرض dropdown صغير
+    let opts = otherPages.map(t => `<option value="${t}">الورقة ${_arabicNum(t+1)}</option>`).join('');
+    moveCatBtns = `
+      <div style="display:flex;gap:4px;align-items:center">
+        <button onclick="_moveCatPrompt('${_esc(catName)}',${pageIdx})"
+          style="background:linear-gradient(135deg,#0077aa,#005580);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+          ⇄ نقل المجموعة...
+        </button>
+      </div>
+    `;
+  }
+
+  let html = `
+    <div class="grouping-cat-block" style="background:#fff;border:1.5px solid #d8e1ec;border-radius:9px;margin-bottom:10px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,rgba(0,119,170,0.08),rgba(0,85,128,0.04));padding:8px 11px;border-bottom:1.5px solid #d8e1ec;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <div style="font-size:13px;font-weight:900;color:#003366;letter-spacing:0.2px">📁 ${_esc(catName)}</div>
+        ${moveCatBtns}
+      </div>
+      <div style="padding:6px 8px">
+  `;
+
+  cTests.forEach(t => {
+    const tName = t.nameEn || t.nameShort || t.code || t.id;
+    let testMoveBtns = '';
+    if(otherPages.length === 1){
+      const tgt = otherPages[0];
+      testMoveBtns = `<button onclick="_moveTestBetweenPages('${_esc(t.id)}',${pageIdx},${tgt})"
+        title="نقل المجموعة كاملاً إلى الورقة ${_arabicNum(tgt+1)}"
+        style="background:#e8f4fb;color:#0066aa;border:1px solid #b8d8ec;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+        → ورقة ${_arabicNum(tgt+1)}
+      </button>`;
+    } else {
+      testMoveBtns = `<button onclick="_moveTestPrompt('${_esc(t.id)}',${pageIdx})"
+        title="نقل المجموعة كاملاً لورقة أخرى"
+        style="background:#e8f4fb;color:#0066aa;border:1px solid #b8d8ec;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+        → نقل...
+      </button>`;
+    }
+    html += `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 6px;border-radius:5px;margin:2px 0;background:#f7f9fc;border:1px solid #e8eef5">
+        <div style="font-size:12px;color:#222;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_esc(tName)}</div>
+        ${testMoveBtns}
+      </div>
+    `;
+  });
+
+  html += `</div></div>`;
+  return html;
+}
+
+/**
+ * Escape سلسلة لاستخدامها داخل onclick
+ */
+function _esc(s){
+  return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/**
+ * نقل تحليل بين صفحتين — ينقل المجموعة الفرعية كاملاً
+ * (المجموعة الفرعية هي وحدة الطباعة الأساسية في النظام)
+ */
+function _moveTestBetweenPages(testId, fromPage, toPage){
+  const state = window._groupingState;
+  if(!state) return;
+  // اعثر على cat للتحليل
+  let testCat = null;
+  Object.keys(state.grouped).forEach(c => {
+    if(state.grouped[c].some(t => t.id === testId)) testCat = c;
+  });
+  if(!testCat) return;
+  // ننقل المجموعة كاملاً (وحدة الطباعة هي المجموعة الفرعية)
+  _moveCatBetweenPages(testCat, fromPage, toPage);
+}
+
+/**
+ * نقل مجموعة فرعية كاملة بين صفحتين
+ */
+function _moveCatBetweenPages(catName, fromPage, toPage){
+  const state = window._groupingState;
+  if(!state) return;
+  const fromList = state.pages[fromPage];
+  const toList = state.pages[toPage];
+
+  // إزالة جميع entries المتعلقة بـ catName من الصفحة المصدر
+  const removeIdxs = [];
+  for(let i = fromList.length - 1; i >= 0; i--){
+    const e = fromList[i];
+    if(e === catName) removeIdxs.push(i);
+    else if(typeof e === 'string' && e.indexOf(catName + '::') === 0) removeIdxs.push(i);
+  }
+  removeIdxs.forEach(i => fromList.splice(i, 1));
+
+  // إزالة أيضاً من الصفحة الهدف ثم إضافة catName كاملة
+  const removeIdxsT = [];
+  for(let i = toList.length - 1; i >= 0; i--){
+    const e = toList[i];
+    if(e === catName) removeIdxsT.push(i);
+    else if(typeof e === 'string' && e.indexOf(catName + '::') === 0) removeIdxsT.push(i);
+  }
+  removeIdxsT.forEach(i => toList.splice(i, 1));
+
+  toList.push(catName);
+  _renderGroupingPages();
+}
+
+/**
+ * عرض اختيار صفحة هدف عند وجود أكثر من خيار
+ */
+function _moveCatPrompt(catName, fromPage){
+  const state = window._groupingState;
+  if(!state) return;
+  const opts = [];
+  for(let i = 0; i < state.pages.length; i++){
+    if(i !== fromPage) opts.push((i+1));
+  }
+  // نعرض نافذة بسيطة بأزرار
+  _showSimpleChoice('انقل المجموعة "' + catName + '" إلى:', opts.map(n => ({
+    label: 'الورقة ' + _arabicNum(n),
+    action: () => _moveCatBetweenPages(catName, fromPage, n-1)
+  })));
+}
+
+function _moveTestPrompt(testId, fromPage){
+  const state = window._groupingState;
+  if(!state) return;
+  const opts = [];
+  for(let i = 0; i < state.pages.length; i++){
+    if(i !== fromPage) opts.push((i+1));
+  }
+  // اعثر على اسم التحليل
+  let tName = testId;
+  Object.keys(state.grouped).forEach(c => {
+    state.grouped[c].forEach(t => { if(t.id === testId) tName = t.nameEn || t.nameShort || t.id; });
+  });
+  _showSimpleChoice('انقل التحليل "' + tName + '" إلى:', opts.map(n => ({
+    label: 'الورقة ' + _arabicNum(n),
+    action: () => _moveTestBetweenPages(testId, fromPage, n-1)
+  })));
+}
+
+/**
+ * نافذة اختيار بسيطة (zIndex فوق modal التجميع)
+ */
+function _showSimpleChoice(title, choices){
+  const old = document.getElementById('m-grouping-choice');
+  if(old) old.remove();
+  const m = document.createElement('div');
+  m.id = 'm-grouping-choice';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:14px';
+  let btns = choices.map((c, i) => `<button class="btn btn-p" data-i="${i}" style="margin:4px;min-width:140px">${_esc(c.label)}</button>`).join('');
+  m.innerHTML = `
+    <div style="background:var(--card,#fff);border:1px solid var(--border);border-radius:12px;max-width:420px;width:100%;padding:16px;box-shadow:0 10px 35px rgba(0,0,0,0.4)">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px;color:var(--text)">${_esc(title)}</div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;margin-bottom:10px">${btns}</div>
+      <div style="text-align:center"><button class="btn btn-s" id="grouping-choice-cancel">إلغاء</button></div>
+    </div>
+  `;
+  document.body.appendChild(m);
+  m.querySelector('#grouping-choice-cancel').onclick = () => m.remove();
+  m.querySelectorAll('button[data-i]').forEach(b => {
+    b.onclick = () => {
+      const idx = +b.getAttribute('data-i');
+      m.remove();
+      try{ choices[idx].action(); }catch(e){ console.error(e); }
+    };
+  });
+}
+
+/**
+ * إضافة صفحة جديدة فارغة في النهاية
+ */
+function _addGroupingPage(){
+  const state = window._groupingState;
+  if(!state) return;
+  if(state.pages.length >= 10){
+    showNotif('تنبيه','لا يمكن إضافة أكثر من 10 صفحات','warning');
+    return;
+  }
+  state.pages.push([]);
+  _renderGroupingPages();
+}
+
+/**
+ * إزالة صفحة فارغة (لا يمكن إزالة صفحات فيها محتوى)
+ */
+function _removeGroupingPage(idx){
+  const state = window._groupingState;
+  if(!state) return;
+  if(state.pages.length <= 2){
+    showNotif('تنبيه','يجب وجود صفحتين على الأقل','warning');
+    return;
+  }
+  if((state.pages[idx]||[]).length > 0){
+    showNotif('تنبيه','لا يمكن حذف صفحة تحتوي على تحاليل','warning');
+    return;
+  }
+  state.pages.splice(idx, 1);
+  _renderGroupingPages();
+}
+
+/**
+ * إعادة تعيين التوزيع للوضع الافتراضي (كل شيء في الصفحة الأولى)
+ */
+function _resetGrouping(){
+  const state = window._groupingState;
+  if(!state) return;
+  if(!confirm('هل أنت متأكد من إعادة تعيين التوزيع؟ سيتم إرجاع جميع التحاليل للصفحة الأولى.')) return;
+  state.pages = [state.catOrder.slice(), []];
+  _renderGroupingPages();
+}
+
+/**
+ * حفظ التوزيع في req.pageGroups والإغلاق
+ * يخزن البنية بشكل: مصفوفة من مصفوفات أسماء catNames فقط
+ * (entries بشكل "catName::id,id" تُفك في buildPrintHTML)
+ *
+ * ⚠️ ملاحظة مهمة: نظام pagination الحالي يبني chunks لكل cat كاملة،
+ * فالتقسيم الجزئي (catName::ids) يحتاج معالجة في buildPrintHTML.
+ * للتبسيط: في هذه المرحلة نحفظ فقط catNames كاملة.
+ * إذا أراد المستخدم تقسيم cat → كل التحاليل في تلك المجموعة تنتقل معاً.
+ *
+ * تحويل: أي "catName::ids" في الصفحات → يصبح catName كاملة في صفحته الأولى ظهوراً
+ */
+function _saveGrouping(){
+  const state = window._groupingState;
+  if(!state) return;
+  const req = requests.find(r => r.id === state.reqId);
+  if(!req){ showNotif('خطأ','الطلب غير موجود','error'); return; }
+
+  // حوّل الـ pages إلى مصفوفة من مصفوفات catNames نظيفة
+  // (في هذه المرحلة نتعامل فقط مع المجموعات الكاملة)
+  const cleanPages = state.pages.map(pageList => {
+    const cats = [];
+    pageList.forEach(e => {
+      let cName = e;
+      if(typeof e === 'string' && e.indexOf('::') > 0){
+        cName = e.split('::')[0];
+      }
+      if(cName && cats.indexOf(cName) < 0) cats.push(cName);
+    });
+    return cats;
+  });
+
+  // إزالة الصفحات الفارغة من النهاية فقط (للحفاظ على التوزيع)
+  while(cleanPages.length > 0 && cleanPages[cleanPages.length-1].length === 0){
+    cleanPages.pop();
+  }
+  // ضمان وجود صفحة واحدة على الأقل
+  if(cleanPages.length === 0) cleanPages.push(state.catOrder.slice());
+
+  req.pageGroups = cleanPages;
+  save('requests', requests);
+
+  showNotif('تم','✅ تم حفظ توزيع التجميع','success');
+  _closeGroupingModal();
+}
+
+/**
+ * إغلاق modal التجميع
+ */
+function _closeGroupingModal(){
+  const m = document.getElementById('m-grouping');
+  if(m) m.remove();
+  const c = document.getElementById('m-grouping-choice');
+  if(c) c.remove();
+  window._groupingState = null;
+}
+
 function finalizeAndPrint(){
   // ── فحص صلاحية الطباعة ──────────────────────────────
   if(typeof hasPermission === 'function' && !hasPermission('print')){
@@ -11593,7 +12100,8 @@ function buildPrintHTML(req, opts){
       }
     });
     // أضف الـ chunk إلى المصفوفة وإلى body
-    catChunks.push(_chunkHtml);
+    // ⭐ كل chunk الآن يحمل اسم المجموعة الفرعية (cat) لدعم خاصية "تجميع" (pageGroups)
+    catChunks.push({cat: cat, html: _chunkHtml});
     body += _chunkHtml;
   });
   } // end if(!blankBody)
@@ -11670,6 +12178,9 @@ function buildPrintHTML(req, opts){
   // ─── بناء الصفحات مع pagination ذكي ─────────────────────
   // catChunksJson: بيانات الـ chunks لنقلها إلى script الطباعة داخل HTML
   const catChunksJson = JSON.stringify(catChunks);
+  // ⭐ pageGroupsJson: التوزيع اليدوي للمجموعات الفرعية على الصفحات
+  // مصدره req.pageGroups (إن وُجد)، وإلا فمصفوفة فارغة
+  const pageGroupsJson = JSON.stringify(Array.isArray(req.pageGroups) ? req.pageGroups : []);
   const hdrHtml = hdr + ptBox;
   const colHdrHtml = separator + colHdr;
   const notesHtml = req.resultNotes
@@ -11703,9 +12214,14 @@ function buildPrintHTML(req, opts){
       // ── بيانات الصفحة ──
       var HDR_HTML = ${JSON.stringify(hdrHtml)};
       var COL_HDR_HTML = ${JSON.stringify(colHdrHtml)};
+      // CAT_CHUNKS الآن مصفوفة من {cat, html} لدعم خاصية "تجميع"
       var CAT_CHUNKS = ${catChunksJson};
       var NOTES_HTML = ${JSON.stringify(notesHtml)};
       var TOTAL_FOOTER_H = ${totalFooterHVal};
+      // ⭐ pageGroups: مصفوفة من مصفوفات أسماء المجموعات الفرعية لكل صفحة يدوية
+      // مثلاً: [["Liver Function", "Lipid Profile"], ["Thyroid"]]
+      // إذا فارغة/غير موجودة → سلوك pagination التلقائي القديم
+      var PAGE_GROUPS = ${pageGroupsJson};
 
       // ── ارتفاع A4 بـ px عند 96dpi ──
       // 297mm * (96/25.4) = ~1122.5px
@@ -11726,7 +12242,11 @@ function buildPrintHTML(req, opts){
         div.className = 'report-page';
         div.style.padding = '1mm 4mm 0 4mm';
         var html = HDR_HTML + COL_HDR_HTML;
-        for(var i=0;i<chunksForPage.length;i++) html += chunksForPage[i];
+        for(var i=0;i<chunksForPage.length;i++){
+          // chunksForPage[i] قد يكون object {cat,html} أو string (للتوافق الرجعي)
+          var ch = chunksForPage[i];
+          html += (typeof ch === 'string') ? ch : (ch && ch.html ? ch.html : '');
+        }
         // الملاحظات تظهر في آخر صفحة فقط
         if(isLast && NOTES_HTML) html += NOTES_HTML;
         // spacer يمنع المحتوى من الاختباء خلف الـ footer الثابت
@@ -11768,7 +12288,9 @@ function buildPrintHTML(req, opts){
         // ── قياس ارتفاع كل chunk مرة واحدة فقط ──
         var chunkHeights = [];
         for(var i=0;i<CAT_CHUNKS.length;i++){
-          var h = measureHtml(CAT_CHUNKS[i]);
+          var ch_i = CAT_CHUNKS[i];
+          var ch_html = (typeof ch_i === 'string') ? ch_i : (ch_i && ch_i.html ? ch_i.html : '');
+          var h = measureHtml(ch_html);
           chunkHeights.push(h || 60);
         }
 
@@ -11777,32 +12299,102 @@ function buildPrintHTML(req, opts){
 
         // ── توزيع الـ chunks على صفحات ──
         var pages = []; // كل صفحة = مصفوفة chunks
-        var currentPageChunks = [];
-        var currentH = hdrMeasured;
 
-        for(var j = 0; j < CAT_CHUNKS.length; j++){
-          var chunk = CAT_CHUNKS[j];
-          var chunkH = chunkHeights[j];
-          var isLastChunk = (j === CAT_CHUNKS.length - 1);
-          // إذا هذا آخر chunk، أضف ارتفاع الملاحظات إلى الحساب
-          var extraH = isLastChunk ? notesH : 0;
+        // ⭐ نظام التجميع اليدوي (PAGE_GROUPS):
+        // إذا حدد المستخدم توزيعاً يدوياً، نُقسِّم الـ chunks حسب أسماء المجموعات الفرعية
+        // ثم لكل صفحة منطقية يدوية، نسمح لـ pagination التلقائي بتقسيمها لو امتلأت أكثر من حجم A4
+        var useManualGroups = Array.isArray(PAGE_GROUPS) && PAGE_GROUPS.length > 0;
 
-          if(currentPageChunks.length === 0){
-            // أول chunk في هذه الصفحة — يدخل دائماً (حتى لو كبير، لتجنب صفحة فارغة)
-            currentPageChunks.push(chunk);
-            currentH += chunkH + extraH;
-          } else if(currentH + chunkH + extraH <= USABLE_H){
-            // يتسع في الصفحة الحالية مع مراعاة الذيل والتوقيع
-            currentPageChunks.push(chunk);
-            currentH += chunkH + extraH;
-          } else {
-            // لا يتسع — أنهِ الصفحة الحالية وانقل المجموعة بكاملها للصفحة التالية
-            pages.push(currentPageChunks);
-            currentPageChunks = [chunk];
-            currentH = hdrMeasured + chunkH + extraH;
+        if(useManualGroups){
+          // 1) جمع كل الـ cats الموجودة فعلاً (بترتيبها الأصلي في CAT_CHUNKS)
+          var existingCats = [];
+          var catToIndices = {};
+          for(var ci=0; ci<CAT_CHUNKS.length; ci++){
+            var ch_obj = CAT_CHUNKS[ci];
+            if(ch_obj && typeof ch_obj === 'object' && ch_obj.cat){
+              if(!catToIndices[ch_obj.cat]){
+                catToIndices[ch_obj.cat] = [];
+                existingCats.push(ch_obj.cat);
+              }
+              catToIndices[ch_obj.cat].push(ci);
+            }
           }
+          // 2) بناء مصفوفة "logicalPages" — كل عنصر = مصفوفة من فهارس chunks لهذه الصفحة المنطقية
+          var logicalPages = []; // [[idx,idx,...], [idx,...], ...]
+          var assignedSet = {};
+          for(var pgI=0; pgI<PAGE_GROUPS.length; pgI++){
+            var groupCats = PAGE_GROUPS[pgI] || [];
+            var pageIdxs = [];
+            for(var gci=0; gci<groupCats.length; gci++){
+              var cName = groupCats[gci];
+              if(catToIndices[cName]){
+                for(var ii=0; ii<catToIndices[cName].length; ii++){
+                  pageIdxs.push(catToIndices[cName][ii]);
+                  assignedSet[catToIndices[cName][ii]] = true;
+                }
+              }
+            }
+            if(pageIdxs.length > 0) logicalPages.push(pageIdxs);
+          }
+          // 3) أي chunks غير مخصصة في PAGE_GROUPS — تذهب لصفحة منطقية إضافية في النهاية
+          var unassigned = [];
+          for(var ui=0; ui<CAT_CHUNKS.length; ui++){
+            if(!assignedSet[ui]) unassigned.push(ui);
+          }
+          if(unassigned.length > 0) logicalPages.push(unassigned);
+
+          // 4) لكل صفحة منطقية: نطبق pagination التلقائي عليها (لو امتلأت تنقسم لأكثر من ورقة)
+          for(var lp=0; lp<logicalPages.length; lp++){
+            var idxs = logicalPages[lp];
+            var isLastLogicalPage = (lp === logicalPages.length - 1);
+            var currentPageChunks = [];
+            var currentH = hdrMeasured;
+            for(var ji=0; ji<idxs.length; ji++){
+              var jIdx = idxs[ji];
+              var chunkObj = CAT_CHUNKS[jIdx];
+              var chunkH = chunkHeights[jIdx];
+              var isLastInLogical = (ji === idxs.length - 1);
+              // الملاحظات تُضاف فقط في آخر chunk في آخر صفحة منطقية
+              var extraH = (isLastLogicalPage && isLastInLogical) ? notesH : 0;
+              if(currentPageChunks.length === 0){
+                currentPageChunks.push(chunkObj);
+                currentH += chunkH + extraH;
+              } else if(currentH + chunkH + extraH <= USABLE_H){
+                currentPageChunks.push(chunkObj);
+                currentH += chunkH + extraH;
+              } else {
+                pages.push(currentPageChunks);
+                currentPageChunks = [chunkObj];
+                currentH = hdrMeasured + chunkH + extraH;
+              }
+            }
+            if(currentPageChunks.length > 0) pages.push(currentPageChunks);
+          }
+        } else {
+          // ── النظام الأصلي: pagination تلقائي بالكامل ──
+          var currentPageChunksA = [];
+          var currentHA = hdrMeasured;
+
+          for(var jA = 0; jA < CAT_CHUNKS.length; jA++){
+            var chunkA = CAT_CHUNKS[jA];
+            var chunkHA = chunkHeights[jA];
+            var isLastChunkA = (jA === CAT_CHUNKS.length - 1);
+            var extraHA = isLastChunkA ? notesH : 0;
+
+            if(currentPageChunksA.length === 0){
+              currentPageChunksA.push(chunkA);
+              currentHA += chunkHA + extraHA;
+            } else if(currentHA + chunkHA + extraHA <= USABLE_H){
+              currentPageChunksA.push(chunkA);
+              currentHA += chunkHA + extraHA;
+            } else {
+              pages.push(currentPageChunksA);
+              currentPageChunksA = [chunkA];
+              currentHA = hdrMeasured + chunkHA + extraHA;
+            }
+          }
+          if(currentPageChunksA.length > 0) pages.push(currentPageChunksA);
         }
-        if(currentPageChunks.length > 0) pages.push(currentPageChunks);
 
         // ── إنشاء صفحات DOM ──
         for(var k=0; k<pages.length; k++){
@@ -11830,7 +12422,10 @@ function buildPrintHTML(req, opts){
             fp.className = 'report-page';
             fp.style.padding = '1mm 4mm 0 4mm';
             var fhtml = HDR_HTML + COL_HDR_HTML;
-            for(var ii=0;ii<CAT_CHUNKS.length;ii++) fhtml += CAT_CHUNKS[ii];
+            for(var ii=0;ii<CAT_CHUNKS.length;ii++){
+              var fb_ch = CAT_CHUNKS[ii];
+              fhtml += (typeof fb_ch === 'string') ? fb_ch : (fb_ch && fb_ch.html ? fb_ch.html : '');
+            }
             if(NOTES_HTML) fhtml += NOTES_HTML;
             fhtml += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+22)+'px"></div>';
             fp.innerHTML = fhtml;
