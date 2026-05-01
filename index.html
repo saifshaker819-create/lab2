@@ -12346,18 +12346,40 @@ function buildPrintHTML(req, opts){
           }
           if(unassigned.length > 0) logicalPages.push(unassigned);
 
-          // 4) ⭐ كل صفحة منطقية = ورقة طباعة واحدة بالضبط (نحترم رغبة المستخدم تماماً)
-          // لا نُقسِّم صفحة منطقية إلى أكثر من ورقة طباعة، حتى لو بدت ممتلئة
-          // المستخدم هو من يقرر إضافة صفحات إضافية إذا احتاج
+          // 4) ⭐ السلوك المطلوب:
+          // - كل صفحة منطقية تأخذ ورقة طباعة (مع رأس كامل)
+          // - إذا امتلأت الصفحة المنطقية بأكثر من حجم A4، تنقسم على عدة أوراق طباعة
+          //   وكل ورقة جديدة تأخذ رأساً كاملاً عبر buildPage
+          // - المجموعات الفرعية تبقى متماسكة: إذا مجموعة لا تستوعب في الباقي،
+          //   تنتقل بكاملها للورقة التالية (لا تنقسم في المنتصف)
           for(var lp=0; lp<logicalPages.length; lp++){
             var idxs = logicalPages[lp];
-            var pageChunks = [];
+            var isLastLogicalPage = (lp === logicalPages.length - 1);
+            var currentPageChunks = [];
+            var currentH = hdrMeasured;
             for(var ji=0; ji<idxs.length; ji++){
               var jIdx = idxs[ji];
               var chunkObj = CAT_CHUNKS[jIdx];
-              pageChunks.push(chunkObj);
+              var chunkH = chunkHeights[jIdx];
+              var isLastInLogical = (ji === idxs.length - 1);
+              // الملاحظات تُضاف فقط في آخر chunk في آخر صفحة منطقية
+              var extraH = (isLastLogicalPage && isLastInLogical) ? notesH : 0;
+              if(currentPageChunks.length === 0){
+                // أول chunk في الورقة — يدخل دائماً (حتى لو كبير، لتجنب ورقة فارغة)
+                currentPageChunks.push(chunkObj);
+                currentH += chunkH + extraH;
+              } else if(currentH + chunkH + extraH <= USABLE_H){
+                // يتسع — أضفه للورقة الحالية
+                currentPageChunks.push(chunkObj);
+                currentH += chunkH + extraH;
+              } else {
+                // لا يتسع — أنهِ الورقة الحالية وانقل المجموعة بكاملها للورقة التالية
+                pages.push(currentPageChunks);
+                currentPageChunks = [chunkObj];
+                currentH = hdrMeasured + chunkH + extraH;
+              }
             }
-            if(pageChunks.length > 0) pages.push(pageChunks);
+            if(currentPageChunks.length > 0) pages.push(currentPageChunks);
           }
         } else {
           // ── النظام الأصلي: pagination تلقائي بالكامل ──
