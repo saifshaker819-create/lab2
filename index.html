@@ -10488,13 +10488,16 @@ function openGroupingModal(reqId){
   const reqTests = (req.tests||[]).map(tid => tests.find(t => t.id === tid)).filter(Boolean);
   const regularTests = reqTests.filter(t => !t.isSpecialExam);
 
-  // تجميع التحاليل حسب المجموعة الفرعية (cat) — فقط ما له نتيجة
+  // ⭐ تجميع التحاليل حسب المجموعة الفرعية (subCat) — مطابق لما يفعله buildPrintHTML
+  // المجموعة الفرعية مثل: "Liver Functions", "Lipid Profile", "Thyroid Hormones"
+  // وليس القسم الرئيسي مثل: "Hematology", "Chemistry"
   const grouped = {};
   const catOrder = []; // الترتيب الأصلي للمجموعات
   regularTests.forEach(t => {
     const v = (req.results && req.results[t.id]) || '';
     if(!v || !v.toString().trim()) return; // تخطى التحاليل الفارغة
-    const cat = t.cat || 'Other';
+    // استخدم subCat (المجموعة الفرعية) كمفتاح — وإلا cat كاحتياطي
+    const cat = t.subCat || t.cat || 'Other';
     if(!grouped[cat]){
       grouped[cat] = [];
       catOrder.push(cat);
@@ -12343,32 +12346,18 @@ function buildPrintHTML(req, opts){
           }
           if(unassigned.length > 0) logicalPages.push(unassigned);
 
-          // 4) لكل صفحة منطقية: نطبق pagination التلقائي عليها (لو امتلأت تنقسم لأكثر من ورقة)
+          // 4) ⭐ كل صفحة منطقية = ورقة طباعة واحدة بالضبط (نحترم رغبة المستخدم تماماً)
+          // لا نُقسِّم صفحة منطقية إلى أكثر من ورقة طباعة، حتى لو بدت ممتلئة
+          // المستخدم هو من يقرر إضافة صفحات إضافية إذا احتاج
           for(var lp=0; lp<logicalPages.length; lp++){
             var idxs = logicalPages[lp];
-            var isLastLogicalPage = (lp === logicalPages.length - 1);
-            var currentPageChunks = [];
-            var currentH = hdrMeasured;
+            var pageChunks = [];
             for(var ji=0; ji<idxs.length; ji++){
               var jIdx = idxs[ji];
               var chunkObj = CAT_CHUNKS[jIdx];
-              var chunkH = chunkHeights[jIdx];
-              var isLastInLogical = (ji === idxs.length - 1);
-              // الملاحظات تُضاف فقط في آخر chunk في آخر صفحة منطقية
-              var extraH = (isLastLogicalPage && isLastInLogical) ? notesH : 0;
-              if(currentPageChunks.length === 0){
-                currentPageChunks.push(chunkObj);
-                currentH += chunkH + extraH;
-              } else if(currentH + chunkH + extraH <= USABLE_H){
-                currentPageChunks.push(chunkObj);
-                currentH += chunkH + extraH;
-              } else {
-                pages.push(currentPageChunks);
-                currentPageChunks = [chunkObj];
-                currentH = hdrMeasured + chunkH + extraH;
-              }
+              pageChunks.push(chunkObj);
             }
-            if(currentPageChunks.length > 0) pages.push(currentPageChunks);
+            if(pageChunks.length > 0) pages.push(pageChunks);
           }
         } else {
           // ── النظام الأصلي: pagination تلقائي بالكامل ──
