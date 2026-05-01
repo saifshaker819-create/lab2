@@ -11156,7 +11156,7 @@ function buildPrintHTML(req, opts){
   const footerH = hasFtrImg ? _ftrUserH : hasFtrTxt ? 46 : (settings.hdrMode==='text' ? 48 : 0);
   const totalFooterH = footerH + sigH;
   // هامش سفلي للصفحة = إجمالي ارتفاع الذيل + 6mm احتياطي
-  const pageBottomMm = totalFooterH>0 ? Math.ceil(totalFooterH*0.265+6) : 4;
+  const pageBottomMm = totalFooterH>0 ? Math.ceil(totalFooterH*0.265+1) : 1;
   const css=`
     /* Google Fonts removed for faster print — using system fonts */
     *{margin:0;padding:0;box-sizing:border-box;}
@@ -11164,11 +11164,11 @@ function buildPrintHTML(req, opts){
     @page{margin:0 !important;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     body{font-family:${reportFontFamily};color:#000;font-weight:${reportFontWeight};
          -webkit-print-color-adjust:exact;print-color-adjust:exact;
-         padding:4mm 4mm 0 4mm;}
+         padding:1mm 4mm 0 4mm;}
     /* الذيل ثابت في الحافة السفلية للورقة — مرفوع 6mm لتجنب المنطقة غير المطبوعة */
     #print-footer{
       position:fixed;
-      bottom:6mm;
+      bottom:1mm;
       left:0;
       right:0;
       background:#ffffff;
@@ -11185,13 +11185,13 @@ function buildPrintHTML(req, opts){
       margin:0;
       padding:0;
     }
-    #print-spacer{height:${totalFooterH+37}px;display:block;}
+    #print-spacer{height:${totalFooterH+22}px;display:block;}
     @media print{
       @page{margin:0 !important;size:A4 portrait;}
-      body{padding:4mm 4mm 0 4mm;}
-      #print-footer{position:fixed;bottom:6mm;left:0;right:0;background:#ffffff;z-index:9999;}
+      body{padding:1mm 4mm 0 4mm;}
+      #print-footer{position:fixed;bottom:1mm;left:0;right:0;background:#ffffff;z-index:9999;}
       #print-footer img{display:block;width:100%;height:${footerH}px;object-fit:fill;margin:0;padding:0;}
-      #print-spacer{display:block;height:${totalFooterH+37}px;}
+      #print-spacer{display:block;height:${totalFooterH+22}px;}
     }
   `;
 
@@ -11643,9 +11643,9 @@ function buildPrintHTML(req, opts){
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
     <style>${css}</style></head>
     <body>
-    <div id="print-content" style="background:#ffffff;font-family:'Inter',Arial,sans-serif;direction:ltr;width:100%;padding:4mm 4mm 0 4mm">
+    <div id="print-content" style="background:#ffffff;font-family:'Inter',Arial,sans-serif;direction:ltr;width:100%;padding:1mm 4mm 0 4mm">
       ${hdr}${ptBox}<!--BLANK_BODY_PLACEHOLDER-->
-      <div id="print-spacer" style="height:${totalFooterH+37}px"></div>
+      <div id="print-spacer" style="height:${totalFooterH+22}px"></div>
     </div>
     <div id="print-footer" style="line-height:normal">
       ${ftrInner}
@@ -11686,7 +11686,7 @@ function buildPrintHTML(req, opts){
     @media print{
       .report-page{page-break-inside:auto;}
       .report-page+.report-page{page-break-before:always;break-before:page;}
-      #print-footer{position:fixed;bottom:6mm;left:0;right:0;background:#ffffff;z-index:9999;}
+      #print-footer{position:fixed;bottom:1mm;left:0;right:0;background:#ffffff;z-index:9999;}
     }
   `;
 
@@ -11712,10 +11712,10 @@ function buildPrintHTML(req, opts){
       var A4_H_MM = 297;
       var DPI_RATIO = 96 / 25.4; // px per mm
       var PAGE_H_PX = Math.round(A4_H_MM * DPI_RATIO); // ~1122px
-      var TOP_MARGIN_PX = Math.round(4 * DPI_RATIO);   // 4mm هامش body
-      var BOT_MARGIN_PX = Math.round(4 * DPI_RATIO);
-      // الذيل + التوقيع + هامش أمان كافٍ بحيث آخر تحليل يبقى قبل الذيل بسطر واحد على الأقل
-      var FOOTER_RESERVED = TOTAL_FOOTER_H + 40;
+      var TOP_MARGIN_PX = Math.round(1 * DPI_RATIO);   // 1mm هامش body (مُقلَّص ليبدأ التقرير من بداية الورقة)
+      var BOT_MARGIN_PX = Math.round(1 * DPI_RATIO);   // 1mm هامش سفلي مُقلَّص
+      // الذيل + هامش أمان مُصغَّر — لأن الذيل نزل للأسفل أكثر، يمكن الآن استيعاب تحاليل إضافية
+      var FOOTER_RESERVED = TOTAL_FOOTER_H + 25;
       var USABLE_H = PAGE_H_PX - TOP_MARGIN_PX - BOT_MARGIN_PX - FOOTER_RESERVED;
 
       // مقاس probe ثابت بـ px يعادل 210mm A4 = ~793.7px (نطرح هامش 4mm من كل جانب = 30.2px)
@@ -11724,13 +11724,13 @@ function buildPrintHTML(req, opts){
       function buildPage(chunksForPage, isFirst, isLast){
         var div = document.createElement('div');
         div.className = 'report-page';
-        div.style.padding = '4mm 4mm 0 4mm';
+        div.style.padding = '1mm 4mm 0 4mm';
         var html = HDR_HTML + COL_HDR_HTML;
         for(var i=0;i<chunksForPage.length;i++) html += chunksForPage[i];
         // الملاحظات تظهر في آخر صفحة فقط
         if(isLast && NOTES_HTML) html += NOTES_HTML;
         // spacer يمنع المحتوى من الاختباء خلف الـ footer الثابت
-        html += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+37)+'px"></div>';
+        html += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+22)+'px"></div>';
         div.innerHTML = html;
         return div;
       }
@@ -11754,9 +11754,9 @@ function buildPrintHTML(req, opts){
           // لا توجد تحاليل — صفحة واحدة بالـ header فقط
           var p = document.createElement('div');
           p.className = 'report-page';
-          p.style.padding = '4mm 4mm 0 4mm';
+          p.style.padding = '1mm 4mm 0 4mm';
           p.innerHTML = HDR_HTML + COL_HDR_HTML +
-            '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+37)+'px"></div>';
+            '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+22)+'px"></div>';
           container.appendChild(p);
           return;
         }
@@ -11828,11 +11828,11 @@ function buildPrintHTML(req, opts){
           if(container){
             var fp = document.createElement('div');
             fp.className = 'report-page';
-            fp.style.padding = '4mm 4mm 0 4mm';
+            fp.style.padding = '1mm 4mm 0 4mm';
             var fhtml = HDR_HTML + COL_HDR_HTML;
             for(var ii=0;ii<CAT_CHUNKS.length;ii++) fhtml += CAT_CHUNKS[ii];
             if(NOTES_HTML) fhtml += NOTES_HTML;
-            fhtml += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+37)+'px"></div>';
+            fhtml += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+22)+'px"></div>';
             fp.innerHTML = fhtml;
             container.appendChild(fp);
           }
@@ -12463,7 +12463,7 @@ function generatePDFBlob(callback){
               const ftrEl=ftrDiv.firstElementChild;
               if(ftrEl){
                 ftrEl.style.position='absolute';
-                ftrEl.style.bottom='6mm';
+                ftrEl.style.bottom='1mm';
                 ftrEl.style.left='0';
                 ftrEl.style.right='0';
                 ftrEl.style.zIndex='auto';
@@ -12479,7 +12479,7 @@ function generatePDFBlob(callback){
               pg.style.boxSizing='border-box';
               pg.style.overflow='hidden';
               pg.style.margin='0';
-              pg.style.padding=pg.style.padding||'4mm 4mm 0 4mm';
+              pg.style.padding=pg.style.padding||'1mm 4mm 0 4mm';
             });
             // body بدون padding/margin إضافي
             body.style.margin='0';
@@ -20261,7 +20261,7 @@ function _buildUAPrintHTML(r){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:Arial,sans-serif;color:#000;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    @page{margin:5mm 6mm 5mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{body{font-size:13px;} .ua-sec div[style*="font-size:15px"]{font-size:13px !important;} th,td{font-size:13px !important;padding:3px 8px !important;} .ua-title{font-size:13px !important;} .ua-sec-hdr{font-size:14px !important;} }
   </style></head><body>
     ${hdrHTML}
@@ -20796,7 +20796,7 @@ function _buildStoolPrintHTML(r){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:Arial,sans-serif;color:#000;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    @page{margin:4mm 5mm 4mm 5mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @page{margin:1mm 5mm 1mm 5mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   </style></head><body>
     ${hdrHTML}
     <div style="border:1.5px solid #b8b8b8;margin:3px 0 4px;padding:4px 10px;background:#fafafa">
@@ -21961,7 +21961,7 @@ function _buildSemenPrintHTML(r){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:Arial,sans-serif;color:#000;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    @page{margin:5mm 6mm 5mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   </style></head><body>
     ${hdrHTML}
     <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:14px;letter-spacing:1px">
