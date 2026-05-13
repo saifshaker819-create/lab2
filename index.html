@@ -2538,6 +2538,7 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
     <div class="ni" data-perm="culture"  onclick="nav('culture')"><span class="ni-ic">🦠</span>نتائج الزرع</div>
     <div class="ni" data-perm="results"  onclick="nav('semen')"><span class="ni-ic">🔬</span>Semen Analysis</div>
     <div class="ni" data-perm="results"  onclick="nav('dnafrag')"><span class="ni-ic">🧬</span>DNA Fragmentation</div>
+    <div class="ni" data-perm="results"  onclick="nav('iui')"><span class="ni-ic">💉</span>IUI Activation</div>
     <div class="ni" data-perm="print"    onclick="nav('print')"><span class="ni-ic">🖨️</span>طباعة النتائج</div>
     <div class="ni" data-perm="results"  onclick="nav('esr')"><span class="ni-ic">⏱️</span>عداد ESR<span class="ni-badge warn" id="nb-esr" style="display:none">0</span></div>
   </div>
@@ -2853,6 +2854,22 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
             <div class="srch-box" style="flex:1;min-width:200px"><span class="srch-ic">🔍</span><input class="srch-inp" id="dnafrag-srch" lang="ar" dir="rtl" placeholder="ابحث باسم المريض أو رقمه..." oninput="renderDNAFragList()"></div>
           </div>
           <div id="dnafrag-list-body"><div class="empty"><div class="empty-ic">🧬</div><p>لا توجد نتائج بعد</p></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IUI ACTIVATION -->
+    <div class="sec" id="sec-iui">
+      <div class="gc" style="max-width:1000px;margin:0 auto">
+        <div class="gc-hdr">
+          <div class="gc-title">💉 IUI — In Vitro Sperm Activation</div>
+          <button class="btn btn-p btn-sm" onclick="openNewIUIModal()">➕ إدخال نتيجة جديدة</button>
+        </div>
+        <div class="gc-body">
+          <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+            <div class="srch-box" style="flex:1;min-width:200px"><span class="srch-ic">🔍</span><input class="srch-inp" id="iui-srch" lang="ar" dir="rtl" placeholder="ابحث باسم المريض أو رقمه..." oninput="renderIUIList()"></div>
+          </div>
+          <div id="iui-list-body"><div class="empty"><div class="empty-ic">💉</div><p>لا توجد نتائج بعد</p></div></div>
         </div>
       </div>
     </div>
@@ -5090,6 +5107,19 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
       <button class="btn btn-s" onclick="closeModal('m-dnafrag-exam')">إلغاء</button>
       <button class="btn btn-ok btn-lg" onclick="printDNAFragReport(window._dnafragEditId||'_current')">🖨️ طباعة</button>
       <button class="btn btn-p btn-lg" onclick="saveDNAFragEntry()">💾 حفظ النتيجة</button>
+    </div>
+  </div>
+</div>
+
+<!-- IUI Activation Modal -->
+<div class="moverlay" id="m-iui-exam">
+  <div class="modal" style="max-width:920px;max-height:92vh;overflow-y:auto">
+    <div class="mhdr"><div class="mtitle" id="iui-modal-title">💉 IUI — In Vitro Sperm Activation Report</div><button class="mclose" onclick="closeModal('m-iui-exam')">✕</button></div>
+    <div class="mbody" id="iui-modal-body"></div>
+    <div class="mftr">
+      <button class="btn btn-s" onclick="closeModal('m-iui-exam')">إلغاء</button>
+      <button class="btn btn-ok btn-lg" onclick="printIUIReport(window._iuiEditId||'_current')">🖨️ طباعة</button>
+      <button class="btn btn-p btn-lg" onclick="saveIUIEntry()">💾 حفظ النتيجة</button>
     </div>
   </div>
 </div>
@@ -7971,7 +8001,7 @@ function applyPermissionsToSidebar(){
 // ============================================================
 // NAVIGATION
 // ============================================================
-const pages={dashboard:['لوحة التحكم','الرئيسية / لوحة التحكم'],patients:['إدارة المرضى','الرئيسية / المرضى'],requests:['طلبات التحاليل','الرئيسية / الطلبات'],results:['إدخال النتائج','الرئيسية / النتائج'],print:['طباعة النتائج','الرئيسية / الطباعة'],invoices:['الفواتير','الرئيسية / المالية'],billing:['الحسابات','الرئيسية / الحسابات'],'tests-db':['قاعدة التحاليل','الرئيسية / التحاليل'],packages:['الباقات الطبية','الرئيسية / الباقات'],doctors:['الأطباء','الرئيسية / الأطباء'],inventory:['المخزون','الرئيسية / المخزون'],reports:['التقارير','الرئيسية / التقارير'],quality:['ضبط الجودة','الرئيسية / الجودة'],settings:['الإعدادات','الرئيسية / الإعدادات'],database:['قاعدة البيانات','الرئيسية / قاعدة البيانات'],culture:['🦠 نتائج الزرع','الرئيسية / الزرع'],ua:['💧 Urine Examination','Home / Urine'],stool:['🧫 Stool Examination','Home / Stool'],semen:['🔬 Semen Analysis','Home / Semen'],dnafrag:['🧬 DNA Fragmentation','Home / DNA Fragmentation'],waitqueue:['⏳ طابور الانتظار','الرئيسية / طابور الانتظار'],lis:['🔬 ربط الأجهزة — LIS Bridge','الرئيسية / ربط الأجهزة'],esr:['⏱️ عداد ESR','الرئيسية / عداد ESR']};
+const pages={dashboard:['لوحة التحكم','الرئيسية / لوحة التحكم'],patients:['إدارة المرضى','الرئيسية / المرضى'],requests:['طلبات التحاليل','الرئيسية / الطلبات'],results:['إدخال النتائج','الرئيسية / النتائج'],print:['طباعة النتائج','الرئيسية / الطباعة'],invoices:['الفواتير','الرئيسية / المالية'],billing:['الحسابات','الرئيسية / الحسابات'],'tests-db':['قاعدة التحاليل','الرئيسية / التحاليل'],packages:['الباقات الطبية','الرئيسية / الباقات'],doctors:['الأطباء','الرئيسية / الأطباء'],inventory:['المخزون','الرئيسية / المخزون'],reports:['التقارير','الرئيسية / التقارير'],quality:['ضبط الجودة','الرئيسية / الجودة'],settings:['الإعدادات','الرئيسية / الإعدادات'],database:['قاعدة البيانات','الرئيسية / قاعدة البيانات'],culture:['🦠 نتائج الزرع','الرئيسية / الزرع'],ua:['💧 Urine Examination','Home / Urine'],stool:['🧫 Stool Examination','Home / Stool'],semen:['🔬 Semen Analysis','Home / Semen'],dnafrag:['🧬 DNA Fragmentation','Home / DNA Fragmentation'],iui:['💉 IUI Activation','Home / IUI Activation'],waitqueue:['⏳ طابور الانتظار','الرئيسية / طابور الانتظار'],lis:['🔬 ربط الأجهزة — LIS Bridge','الرئيسية / ربط الأجهزة'],esr:['⏱️ عداد ESR','الرئيسية / عداد ESR']};
 
 function nav(p){
   // إغلاق الشريط الجانبي على الجوال بعد الضغط
@@ -7990,6 +8020,7 @@ function nav(p){
     stool:'results',
     semen:'results',
     dnafrag:'results',
+    iui:'results',
     print:'print',
     invoices:'billing',
     billing:'billing',
@@ -8022,6 +8053,8 @@ function nav(p){
     const s3=document.getElementById('sec-semen-exam'); if(s3) s3.classList.add('active');
   } else if(p==='dnafrag'){
     const s4=document.getElementById('sec-dnafrag'); if(s4) s4.classList.add('active');
+  } else if(p==='iui'){
+    const s5=document.getElementById('sec-iui'); if(s5) s5.classList.add('active');
   } else {
     const s=document.getElementById('sec-'+p); if(s) s.classList.add('active');
   }
@@ -8054,6 +8087,7 @@ function nav(p){
   if(p==='stool') renderStoolList();
   if(p==='semen') renderSemenList();
   if(p==='dnafrag') renderDNAFragList();
+  if(p==='iui') renderIUIList();
   if(p==='requests'){
     // إعادة تعيين الـ pill
     document.querySelectorAll('#sec-requests .req-pill[data-filter]').forEach(t=>t.classList.remove('active'));
@@ -22819,6 +22853,618 @@ const SEMEN_FIELDS = {
 };
 
 let semenRecords_loaded=false;
+// ════════════════════════════════════════════════════════════
+//  IUI — IN VITRO SPERM ACTIVATION — كامل الدوال
+// ════════════════════════════════════════════════════════════
+let iuiRecords = [];
+function loadIUIRecords(){ iuiRecords = load('iuiRecords',[]); }
+function saveIUIRecords(){ save('iuiRecords', iuiRecords); }
+
+function openNewIUIModal(){
+  window._iuiEditId = null;
+  document.getElementById('iui-modal-title').textContent = '💉 IUI — New Entry';
+  _buildIUIModalBody(null);
+  openModal('m-iui-exam');
+}
+function openEditIUIModal(id){
+  loadIUIRecords();
+  const r = iuiRecords.find(x=>x.id===id); if(!r) return;
+  window._iuiEditId = id;
+  document.getElementById('iui-modal-title').textContent = '✏️ تعديل نتيجة IUI';
+  _buildIUIModalBody(r);
+  openModal('m-iui-exam');
+}
+
+function _buildIUIModalBody(r){
+  const today = new Date().toISOString().split('T')[0];
+  const body = document.getElementById('iui-modal-body'); if(!body) return;
+  const v = (k,def='') => r ? (r[k]!==undefined ? r[k] : def) : def;
+  const ptName = v('patientName'); const ptId = v('patientId');
+
+  const numIn = (id, label, placeholder, ref='') => `
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl" style="font-size:11px">${label}${ref?`<span style="color:var(--text2);font-size:10px"> — مرجع: ${ref}</span>`:''}</label>
+      <input class="fc" type="number" id="iui-${id}" min="0" max="9999" step="0.1" value="${v(id)}" placeholder="${placeholder}" oninput="calcIUI()">
+    </div>`;
+
+  const selIn = (id, label, opts, ref='') => `
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl" style="font-size:11px">${label}${ref?`<span style="color:var(--text2);font-size:10px"> (${ref})</span>`:''}</label>
+      <select class="fc" id="iui-${id}">
+        ${opts.map(o=>`<option value="${o}" ${v(id)===o?'selected':''}>${o}</option>`).join('')}
+      </select>
+    </div>`;
+
+  body.innerHTML = `
+  <!-- بيانات المريض -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:10px;padding:14px">
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">المريض (الزوج)</label>
+      <div style="position:relative">
+        <input class="fc" id="iui-pt-search" lang="ar" placeholder="ابحث باسم أو رقم..." oninput="iuiSearchPatient(this.value)" autocomplete="off" value="${ptName}">
+        <div id="iui-pt-suggest" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:9999;background:var(--bg-modal,#080f20);border:1px solid var(--border);border-radius:9px;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.8)"></div>
+      </div>
+      <input type="hidden" id="iui-pt-id" value="${ptId}">
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">التاريخ</label>
+      <input class="fc" type="date" id="iui-date" value="${v('date',today)}">
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">الطبيبة / الطبيب المحول</label>
+      <select class="fc" id="iui-doctor-sel" onchange="iuiDoctorSelChanged()">
+        <option value="">-- بدون طبيب --</option>
+        ${doctors.map(d=>`<option value="${d.id}" data-name="${d.name}" ${r&&r.doctorId===d.id?'selected':''}>${d.name}${d.spec?' — '+d.spec:''}</option>`).join('')}
+        <option value="__manual__">✏️ كتابة يدوية</option>
+      </select>
+      <input class="fc" id="iui-doctor-manual" placeholder="اسم الطبيب..." style="display:${r&&r.doctorName&&!doctors.find(d=>d.id===r.doctorId)?'block':'none'};margin-top:6px" value="${r&&r.doctorName&&!doctors.find(d=>d.id===r.doctorId)?r.doctorName:''}">
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">رقم الهاتف</label>
+      <input class="fc" id="iui-pt-phone" type="tel" placeholder="07xxxxxxxxx" value="${v('patientPhone')}">
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">وقت أخذ العينة</label>
+      <input class="fc" type="time" id="iui-time-produced" value="${v('timeProduced')}">
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">وقت الفحص</label>
+      <input class="fc" type="time" id="iui-time-exam" value="${v('timeExam')}">
+    </div>
+  </div>
+
+  <!-- الفحص الكلي -->
+  <div style="border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="font-size:13px;font-weight:900;color:#0077cc;border-bottom:2px solid #0077cc;padding-bottom:4px;margin-bottom:12px">🔬 Macroscopic Examination — الفحص الكلي</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
+      ${selIn('collection','طريقة الجمع',['Masturbation','Condom','Coitus Interruptus'])}
+      ${selIn('abstinence','فترة الامتناع',['3 days','1-2 days','4-5 days','> 5 days','< 1 day'],'3-5 أيام')}
+      ${numIn('volume','الحجم (mL)','≥ 1.4 mL','≥ 1.4')}
+      ${selIn('liquefaction','وقت التميع',['< 15 min','15-30 min','30-60 min','60 min','> 60 min (Abnormal)'],'< 60 دقيقة')}
+      ${selIn('color','اللون',['Grayish white','Yellowish','Transparent','Reddish','Brown'])}
+      ${selIn('viscosity','اللزوجة',['Normal','Viscous, grade (1)','Viscous, grade (2)','Viscous, grade (3)'])}
+      ${selIn('reaction','التفاعل (pH)',['Alkaline (pH 7)','Alkaline (pH 7.2)','Alkaline (pH 7.5)','Alkaline (pH 8)','Alkaline (pH 8.5)','Neutral (pH 7)','Acidic'])}
+      ${selIn('fructose','اختبار الفركتوز',['Positive','Negative','Reduced'])}
+    </div>
+  </div>
+
+  <!-- الفحص المجهري -->
+  <div style="border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="font-size:13px;font-weight:900;color:#0077cc;border-bottom:2px solid #0077cc;padding-bottom:4px;margin-bottom:12px">🔬 Microscopic Examination — الفحص المجهري</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
+      ${numIn('total-conc','التركيز الكلي (مليون/mL)','≥ 16 M/mL','≥ 16')}
+      ${selIn('pus','Pus Cells /HPF',['< 1','1-2','2-4','4-6','6-8','8-10','10-15','> 15'],'< 1')}
+      ${selIn('rbc','RBC /HPF',['0-1','1-2','2-4','4-6','6-8','> 8','Nil'])}
+      ${selIn('agglutination-micro','التكتل (Microscopic)',['Nil','+','++','+++','Nil (post-wash)'])}
+      ${selIn('epithelial','Epithelial Cells',['Nil','Rare','Present'])}
+      ${selIn('spermatogenic','Spermatogenic Cells /HPF',['Nil','1-2','2-3','3-5','5-10','> 10'])}
+    </div>
+  </div>
+
+  <!-- قبل التنشيط -->
+  <div style="border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:rgba(255,100,0,0.03)">
+    <div style="font-size:13px;font-weight:900;color:#c45000;border-bottom:2px solid #c45000;padding-bottom:4px;margin-bottom:12px">📊 Pre-Activation — قبل التنشيط</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
+      ${numIn('pre-conc','التركيز (مليون/mL)','مليون/mL','≥ 16')}
+      ${numIn('pre-gradeA','Grade A — حركة سريعة مستقيمة (%)','%','≥ 25%')}
+      ${numIn('pre-gradeB','Grade B — حركة جانبية (%)','%')}
+      ${numIn('pre-gradeC','Grade C — بلا تقدم (%)','%')}
+      ${numIn('pre-gradeD','Grade D — بلا حركة (%)','%')}
+      ${numIn('pre-morphology','الأشكال الطبيعية (%)','%','>14%')}
+      ${selIn('pre-agglutination','التكتل',['Nil','+','++','+++'])}
+      ${selIn('pre-roundcells','Round Cells /HPF',['Nil','< 1','1-2','2-4','4-6','6-8','8-10','> 10'])}
+    </div>
+    <!-- النتائج المحسوبة Pre -->
+    <div id="iui-pre-calc" style="margin-top:10px;padding:8px 12px;background:rgba(196,80,0,0.07);border-radius:8px;font-size:12px;color:var(--text2)">أدخل بيانات قبل التنشيط لحساب النتائج</div>
+  </div>
+
+  <!-- بعد التنشيط -->
+  <div style="border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:rgba(0,150,0,0.03)">
+    <div style="font-size:13px;font-weight:900;color:#006600;border-bottom:2px solid #006600;padding-bottom:4px;margin-bottom:12px">✅ Post-Activation — بعد التنشيط</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
+      ${numIn('post-conc','التركيز (مليون/mL)','مليون/mL','≥ 16')}
+      ${numIn('post-gradeA','Grade A — حركة سريعة مستقيمة (%)','%','≥ 32%')}
+      ${numIn('post-gradeB','Grade B — حركة جانبية (%)','%')}
+      ${numIn('post-gradeC','Grade C — بلا تقدم (%)','%')}
+      ${numIn('post-gradeD','Grade D — بلا حركة (%)','%')}
+      ${numIn('post-morphology','الأشكال الطبيعية (%)','%','>14%')}
+      ${selIn('post-agglutination','التكتل بعد التنشيط',['Nil','+','++','+++'])}
+      ${selIn('post-roundcells','Round Cells /HPF',['Nil','< 1','1-2','2-4','4-6','6-8','8-10','> 10'])}
+    </div>
+    <!-- النتائج المحسوبة Post -->
+    <div id="iui-post-calc" style="margin-top:10px;padding:8px 12px;background:rgba(0,120,0,0.07);border-radius:8px;font-size:12px;color:var(--text2)">أدخل بيانات بعد التنشيط لحساب النتائج</div>
+  </div>
+
+  <!-- ملاحظات -->
+  <div style="border:1px solid var(--border);border-radius:10px;padding:14px">
+    <div style="font-size:13px;font-weight:900;color:#0077cc;border-bottom:2px solid #0077cc;padding-bottom:4px;margin-bottom:10px">📋 ملاحظات</div>
+    <textarea class="fc" id="iui-note" rows="2" placeholder="أي ملاحظات...">${v('note')}</textarea>
+  </div>`;
+
+  calcIUI();
+}
+
+// ── حساب النتائج تلقائياً ──
+function calcIUI(){
+  function calcSection(prefix, boxId){
+    const conc  = parseFloat(document.getElementById('iui-'+prefix+'-conc')?.value)||0;
+    const gA    = parseFloat(document.getElementById('iui-'+prefix+'-gradeA')?.value)||0;
+    const gB    = parseFloat(document.getElementById('iui-'+prefix+'-gradeB')?.value)||0;
+    const gC    = parseFloat(document.getElementById('iui-'+prefix+'-gradeC')?.value)||0;
+    const gD    = parseFloat(document.getElementById('iui-'+prefix+'-gradeD')?.value)||0;
+    const box   = document.getElementById(boxId); if(!box) return;
+    if(!conc && !gA && !gB){ box.innerHTML='<span style="color:var(--text2)">أدخل البيانات أعلاه لحساب النتائج</span>'; return; }
+
+    // المعادلات: عدد مليون/mL = التركيز × النسبة%/100
+    const mA = conc * gA / 100;
+    const mB = conc * gB / 100;
+    const mC = conc * gC / 100;
+    const mD = conc * gD / 100;
+    const totalMotile    = gA + gB;
+    const totalMotileM   = mA + mB;
+    const totalEjaculate = conc * 2; // افتراض حجم 2mL — يُحدَّث من volume إن أُدخل
+
+    const volEl = document.getElementById('iui-volume');
+    const vol   = volEl ? (parseFloat(volEl.value)||2) : 2;
+    const totalEjac = conc * vol;
+
+    const color = prefix==='pre' ? '#c45000' : '#006600';
+    box.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <span style="background:rgba(0,0,0,0.05);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;color:${color}">
+          إجمالي المتحركة: <b>${totalMotile.toFixed(1)}%</b> — ${totalMotileM.toFixed(1)} M/mL
+        </span>
+        <span style="background:rgba(0,0,0,0.05);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;color:#000">
+          Grade A: ${mA.toFixed(1)} M/mL &nbsp;|&nbsp; Grade B: ${mB.toFixed(1)} M/mL
+        </span>
+        ${gC>0?`<span style="background:rgba(200,0,0,0.07);border-radius:6px;padding:3px 10px;font-size:12px;color:#cc0000">Grade C: ${mC.toFixed(1)} M/mL</span>`:''}
+        <span style="background:rgba(0,0,0,0.05);border-radius:6px;padding:3px 10px;font-size:12px;color:#555">
+          Grade D: ${mD.toFixed(1)} M/mL &nbsp;|&nbsp; إجمالي القذفة: ${totalEjac.toFixed(1)} M
+        </span>
+      </div>`;
+  }
+  calcSection('pre',  'iui-pre-calc');
+  calcSection('post', 'iui-post-calc');
+}
+
+function iuiSearchPatient(q){
+  const box = document.getElementById('iui-pt-suggest'); if(!box) return;
+  if(!q||q.length<1){ box.style.display='none'; return; }
+  const found = patients.filter(p=>(p.name||'').includes(q)||(p.id||'').includes(q)).slice(0,8);
+  if(!found.length){ box.style.display='none'; return; }
+  box.style.display='block';
+  box.innerHTML = found.map(p=>`<div onclick="iuiSelectPatient('${p.id}')" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12px;color:var(--text)" onmouseover="this.style.background='rgba(0,212,255,0.08)'" onmouseout="this.style.background=''">
+    <b style="color:var(--text)">${p.name}</b> <span style="color:var(--text2);font-size:10px">${p.id} · ${p.ageDisplay||''}</span>
+  </div>`).join('');
+}
+function iuiSelectPatient(pid){
+  const pt = patients.find(p=>p.id===pid); if(!pt) return;
+  document.getElementById('iui-pt-search').value = pt.name;
+  document.getElementById('iui-pt-id').value = pt.id;
+  const ph = document.getElementById('iui-pt-phone'); if(ph&&pt.phone) ph.value=pt.phone;
+  document.getElementById('iui-pt-suggest').style.display='none';
+}
+function iuiDoctorSelChanged(){
+  const sel = document.getElementById('iui-doctor-sel');
+  const man = document.getElementById('iui-doctor-manual');
+  if(!sel||!man) return;
+  man.style.display = sel.value==='__manual__'?'block':'none';
+}
+function _getIUIDoctor(){
+  const sel = document.getElementById('iui-doctor-sel'); if(!sel) return {id:'',name:''};
+  const man = document.getElementById('iui-doctor-manual');
+  const mv  = (man&&man.value||'').trim();
+  if(sel.value==='__manual__'||(man&&man.style.display!=='none'&&mv&&!sel.value)) return {id:'',name:mv};
+  const opt = sel.options[sel.selectedIndex];
+  return {id:sel.value, name:opt?opt.dataset.name||opt.text:''};
+}
+
+function _getIUIField(id){ const el=document.getElementById('iui-'+id); return el?el.value||'':''; }
+
+function saveIUIEntry(){
+  const ptName = (document.getElementById('iui-pt-search')||{}).value.trim();
+  let   ptId   = (document.getElementById('iui-pt-id')||{}).value;
+  if(!ptName){ showNotif('تنبيه','اختر المريض','error'); return; }
+  if(!ptId){
+    ptId = 'MR-'+(Date.now().toString().slice(-6));
+    const ep = patients.find(p=>p.name===ptName);
+    if(ep){ ptId=ep.id; }
+    else{
+      const np={id:ptId,name:ptName,phone:_getIUIField('pt-phone'),gender:'male',ageDisplay:'',ageVal:0,registered:new Date().toISOString().split('T')[0],visits:1,status:'active',barcode:ptId};
+      patients.push(np); save('patients',patients);
+      if(np.phone) addToPhoneBook(np.name,np.phone);
+    }
+    const idEl=document.getElementById('iui-pt-id'); if(idEl) idEl.value=ptId;
+  }
+  const ptObj = patients.find(p=>p.id===ptId)||{};
+
+  // حساب قيم مشتقة
+  const preConc  = parseFloat(_getIUIField('pre-conc'))||0;
+  const postConc = parseFloat(_getIUIField('post-conc'))||0;
+  const vol      = parseFloat(_getIUIField('volume'))||2;
+  const preA  = parseFloat(_getIUIField('pre-gradeA'))||0;
+  const preB  = parseFloat(_getIUIField('pre-gradeB'))||0;
+  const preC  = parseFloat(_getIUIField('pre-gradeC'))||0;
+  const preD  = parseFloat(_getIUIField('pre-gradeD'))||0;
+  const postA = parseFloat(_getIUIField('post-gradeA'))||0;
+  const postB = parseFloat(_getIUIField('post-gradeB'))||0;
+  const postC = parseFloat(_getIUIField('post-gradeC'))||0;
+  const postD = parseFloat(_getIUIField('post-gradeD'))||0;
+
+  const f2=(n)=>parseFloat(n.toFixed(2));
+  const rec = {
+    id: window._iuiEditId||('iui-'+Date.now()),
+    patientId:ptId, patientName:ptName,
+    patientAge:ptObj.ageDisplay||'', patientGender:ptObj.gender||'male',
+    patientPhone:_getIUIField('pt-phone'),
+    doctorId:_getIUIDoctor().id, doctorName:_getIUIDoctor().name,
+    date:_getIUIField('date')||new Date().toISOString().split('T')[0],
+    createdAt:Date.now(),
+    timeProduced:_getIUIField('time-produced'), timeExam:_getIUIField('time-exam'),
+    // Macroscopic
+    collection:_getIUIField('collection'), abstinence:_getIUIField('abstinence'),
+    volume:_getIUIField('volume'), liquefaction:_getIUIField('liquefaction'),
+    color:_getIUIField('color'), viscosity:_getIUIField('viscosity'),
+    reaction:_getIUIField('reaction'), fructose:_getIUIField('fructose'),
+    // Microscopic
+    totalConc:_getIUIField('total-conc'),
+    totalEjaculate: preConc>0 ? f2(preConc*vol) : '',
+    pus:_getIUIField('pus'), rbc:_getIUIField('rbc'),
+    agglutinationMicro:_getIUIField('agglutination-micro'),
+    epithelial:_getIUIField('epithelial'), spermatogenic:_getIUIField('spermatogenic'),
+    // Pre
+    preConc:_getIUIField('pre-conc'),
+    preGradeA:_getIUIField('pre-gradeA'), preGradeB:_getIUIField('pre-gradeB'),
+    preGradeC:_getIUIField('pre-gradeC'), preGradeD:_getIUIField('pre-gradeD'),
+    preMorphology:_getIUIField('pre-morphology'),
+    preAgglutination:_getIUIField('pre-agglutination'),
+    preRoundCells:_getIUIField('pre-roundcells'),
+    preTotalMotile: preConc>0 ? f2((preA+preB)) : '',
+    preTotalMotileM: preConc>0 ? f2(preConc*(preA+preB)/100) : '',
+    preGradeAm: preConc>0 ? f2(preConc*preA/100) : '',
+    preGradeBm: preConc>0 ? f2(preConc*preB/100) : '',
+    preGradeCm: preConc>0 ? f2(preConc*preC/100) : '',
+    preGradeDm: preConc>0 ? f2(preConc*preD/100) : '',
+    // Post
+    postConc:_getIUIField('post-conc'),
+    postGradeA:_getIUIField('post-gradeA'), postGradeB:_getIUIField('post-gradeB'),
+    postGradeC:_getIUIField('post-gradeC'), postGradeD:_getIUIField('post-gradeD'),
+    postMorphology:_getIUIField('post-morphology'),
+    postAgglutination:_getIUIField('post-agglutination'),
+    postRoundCells:_getIUIField('post-roundcells'),
+    postTotalMotile: postConc>0 ? f2((postA+postB)) : '',
+    postTotalMotileM: postConc>0 ? f2(postConc*(postA+postB)/100) : '',
+    postGradeAm: postConc>0 ? f2(postConc*postA/100) : '',
+    postGradeBm: postConc>0 ? f2(postConc*postB/100) : '',
+    postGradeCm: postConc>0 ? f2(postConc*postC/100) : '',
+    postGradeDm: postConc>0 ? f2(postConc*postD/100) : '',
+    note:_getIUIField('note')
+  };
+  loadIUIRecords();
+  if(window._iuiEditId){ const idx=iuiRecords.findIndex(x=>x.id===window._iuiEditId); if(idx>-1) iuiRecords[idx]=rec; else iuiRecords.push(rec); }
+  else iuiRecords.push(rec);
+  saveIUIRecords();
+  closeModal('m-iui-exam');
+  renderIUIList();
+  showNotif('تم','تم حفظ نتيجة IUI ✅','success');
+}
+
+function deleteIUIRecord(id){
+  if(!confirm('حذف هذا السجل؟')) return;
+  loadIUIRecords(); iuiRecords=iuiRecords.filter(r=>r.id!==id); saveIUIRecords(); renderIUIList();
+}
+
+function renderIUIList(){
+  loadIUIRecords();
+  const srch=(document.getElementById('iui-srch')||{}).value||'';
+  const body=document.getElementById('iui-list-body'); if(!body) return;
+  let list=[...iuiRecords].reverse();
+  if(srch) list=list.filter(r=>(r.patientName||'').includes(srch)||(r.patientId||'').includes(srch));
+  if(!list.length){ body.innerHTML='<div class="empty"><div class="empty-ic">💉</div><p>لا توجد نتائج بعد</p></div>'; return; }
+  body.innerHTML=`<table class="tbl"><thead><tr>
+    <th>المريض</th><th>التاريخ</th><th>التركيز قبل</th><th>متحركة قبل</th><th>التركيز بعد</th><th>متحركة بعد</th><th>الطبيب</th><th>الإجراءات</th>
+  </tr></thead><tbody>${list.map(r=>`<tr>
+    <td>${r.patientName||'—'}<div style="font-size:10px;color:var(--text2)">${r.patientId||''}</div></td>
+    <td>${r.date||'—'}</td>
+    <td>${r.preConc?r.preConc+' M/mL':'—'}</td>
+    <td>${r.preTotalMotile?`<span style="color:#c45000;font-weight:700">${r.preTotalMotile}%</span>`:'—'}</td>
+    <td>${r.postConc?r.postConc+' M/mL':'—'}</td>
+    <td>${r.postTotalMotile?`<span style="color:#006600;font-weight:700">${r.postTotalMotile}%</span>`:'—'}</td>
+    <td style="font-size:11px">${r.doctorName||'—'}</td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-sm btn-p" onclick="openEditIUIModal('${r.id}')">✏️</button>
+      <button class="btn btn-sm btn-ok" onclick="printIUIReport('${r.id}')">🖨️</button>
+      <button class="btn btn-sm btn-d" onclick="deleteIUIRecord('${r.id}')">🗑️</button>
+    </td>
+  </tr>`).join('')}</tbody></table>`;
+}
+
+// ── بناء التقرير المطبوع ──
+function _buildIUIPrintHTML(r){
+  if(typeof r==='string'){ loadIUIRecords(); r=iuiRecords.find(x=>x.id===r); }
+  if(!r) return '';
+  const pt=patients.find(p=>p.id===r.patientId)||{name:r.patientName,id:r.patientId};
+  const s=settings||{};
+  const color=s.hdrText?.color||'#003366';
+  let hdrHTML='';
+  if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:${(typeof s.hdrImgH==='number'&&s.hdrImgH>=70&&s.hdrImgH<=230)?s.hdrImgH:170}px;display:block;object-fit:fill">`;
+  else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
+  let ftrHTML='';
+  if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
+  else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
+
+  const drName=r.doctorName||pt.doctorName||(doctors&&doctors.find&&doctors.find(d=>d.id===pt.doctorId)?.name)||'';
+  const nameColor=s.colorName||'#cc0011';
+  const docColor=s.colorDoctor||'#cc0011';
+  const ptTitle=pt.title||'';
+  const ptFullName=ptTitle?ptTitle+' / '+(pt.name||r.patientName||'—'):(pt.name||r.patientName||'—');
+  const ageTxt=(pt.ageDisplay||r.patientAge||'—').replace(/سنة/g,'Year').replace(/شهر/g,'Month').replace(/يوم/g,'Day');
+  const printTime=new Date().toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const barcodeId=(pt.barcode||(pt.id||r.patientId||'').replace(/[^A-Z0-9]/gi,'').toUpperCase().substring(0,12))||'00000000';
+
+  // باركود
+  function _bc128(text){
+    const C128={chars:' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~',widths:[[2,1,2,2,2,2],[2,2,2,1,2,2],[2,2,2,2,2,1],[1,2,1,2,2,3],[1,2,1,3,2,2],[1,3,1,2,2,2],[1,2,2,2,1,3],[1,2,2,3,1,2],[1,3,2,2,1,2],[2,2,1,2,1,3],[2,2,1,3,1,2],[2,3,1,2,1,2],[1,1,2,2,3,2],[1,2,2,1,3,2],[1,2,2,2,3,1],[1,1,3,2,2,2],[1,2,3,1,2,2],[1,2,3,2,2,1],[2,2,3,2,1,1],[2,2,1,1,3,2],[2,2,1,2,3,1],[2,1,3,2,1,2],[2,2,3,1,1,2],[3,1,2,1,3,1],[3,1,1,2,2,2],[3,2,1,1,2,2],[3,2,1,2,2,1],[3,1,2,2,1,2],[3,2,2,1,1,2],[3,2,2,2,1,1],[2,1,2,4,1,1],[2,1,4,2,1,1],[4,1,2,2,1,1],[4,1,1,1,4,1],[1,1,4,2,2,1],[2,1,1,1,4,2],[2,1,1,4,1,2],[2,4,1,2,1,1],[4,1,1,2,1,2],[1,2,4,1,1,2],[1,4,1,4,1,1],[2,2,1,4,1,1],[4,4,1,1,1,1],[1,1,2,3,2,2],[1,2,2,3,2,1],[2,2,2,3,1,1],[1,1,3,2,3,1],[2,1,1,4,2,1],[1,4,2,1,2,1],[2,1,4,1,1,3],[1,3,2,3,1,1],[2,1,1,1,1,5],[2,1,1,5,1,1],[5,1,1,2,1,1],[2,1,5,1,1,2],[2,1,3,1,3,1],[2,3,1,1,3,1],[1,3,1,3,2,1],[1,4,2,2,1,1],[1,2,2,4,1,1],[1,2,4,1,2,1],[1,4,1,2,2,1],[2,1,4,4,1,1],[3,1,2,1,1,3],[3,1,1,1,2,3],[3,3,1,1,2,1],[3,1,2,3,1,1],[2,1,1,3,3,1],[1,1,2,2,1,4],[1,2,1,1,4,2],[1,2,1,4,1,2],[1,4,1,1,2,2],[3,1,1,2,4,1],[1,3,2,1,4,1],[2,3,1,2,3,1],[1,4,2,1,1,3],[4,1,4,1,1,2],[2,1,1,1,3,4],[3,1,4,1,2,1],[1,1,4,2,1,3],[1,4,4,1,1,2],[3,3,1,2,1,2],[3,1,1,4,2,1],[2,1,2,2,4,1],[2,1,4,2,2,1],[4,2,1,2,1,2],[2,4,2,2,1,1],[1,3,4,1,1,2],[2,3,4,1,1,1],[1,2,4,2,2,1],[3,2,4,1,1,1],[4,2,4,1,1,1],[2,2,1,1,1,5],[2,1,1,2,1,5],[3,2,1,1,1,4],[2,2,1,2,3,2],[2,2,3,2,1,2],[2,2,1,1,4,2],[2,2,3,1,2,2],[2,1,4,1,3,1],[4,2,1,1,3,1],[1,1,2,4,2,2],[1,2,2,4,2,1],[1,2,4,4,1,1],[1,4,4,2,1,1],[4,2,2,1,1,2],[4,2,2,2,1,1],[4,1,2,1,2,2],[1,2,4,1,3,1],[4,1,2,2,2,1],[1,1,1,1,4,3],[1,1,1,3,4,1],[1,3,1,1,4,1],[1,1,4,1,1,3],[1,1,4,3,1,1],[4,1,1,1,1,3],[4,1,1,3,1,1],[1,1,3,1,4,1],[1,1,4,1,3,1],[3,1,1,1,4,1],[4,1,1,1,3,1],[2,1,1,4,1,2],[2,1,1,2,1,4],[2,1,1,2,3,2]]};
+    const START_B=104,STOP=[2,3,3,1,1,1,2];let codes=[START_B];let check=START_B;
+    for(let i=0;i<text.length;i++){const idx=C128.chars.indexOf(text[i]);if(idx<0)continue;codes.push(idx);check+=(i+1)*idx;}
+    codes.push(check%103);let bars=[];codes.forEach(c=>{C128.widths[c].forEach((w,i)=>bars.push({w,dark:i%2===0}));});
+    STOP.forEach((w,i)=>bars.push({w,dark:i%2===0}));bars.push({w:2,dark:false});
+    const h=36,tw=bars.reduce((s,b)=>s+b.w*2,0);let x=0,rects='';
+    bars.forEach(b=>{if(b.dark)rects+=`<rect x="${x}" y="0" width="${b.w*2}" height="${h}" fill="#000"/>`;x+=b.w*2;});
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${tw}" height="${h}" viewBox="0 0 ${tw} ${h}" style="display:block">${rects}</svg>`;
+  }
+  const barcodeSvg=_bc128(barcodeId);
+
+  const ptfs=s.ptFontSize||'15px';
+  const ptSz=(()=>{const m=String(ptfs).match(/(\d+(?:\.\d+)?)/);return m?(parseFloat(m[1])-1)+'px':ptfs;})();
+  const ptWt=s.fontWeight||'800';
+  const LBL=`font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.6px;white-space:nowrap;width:52px;flex-shrink:0`;
+  const BL=(c,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:${ptSz};font-weight:${ptWt};color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  const RL=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><span style="${LBL}">${lbl}</span><span style="${BL(c,rtl)}">${val}</span></div>`;
+  const LBLR=`font-size:8px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;width:40px;flex-shrink:0`;
+  const BR=`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 6px;font-size:12px;font-weight:700;color:#000;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block`;
+  const RR=(lbl,val)=>`<div style="display:flex;align-items:center;gap:4px;margin-bottom:1px"><span style="${LBLR}">${lbl}</span><span style="${BR}">${val}</span></div>`;
+
+  const ptBox=`<div style="margin:2px 0;direction:ltr"><div style="display:flex;align-items:flex-start;gap:8px">
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+      ${RL('Name (H)',ptFullName,nameColor,true)}
+      ${RL('Age','Male / '+ageTxt,'#000',false)}
+      ${RL('Doctor',drName||'—',docColor,true)}
+    </div>
+    <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch">
+      <div style="text-align:right;margin-bottom:2px">${barcodeSvg}
+        <div style="font-size:7px;font-weight:900;color:#000;letter-spacing:2px;font-family:'Courier New',monospace;text-align:center">${barcodeId}</div>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        ${RR('ID',pt.id||r.patientId||'—')}
+        ${RR('Date',r.date||'—')}
+        ${RR('Print',printTime)}
+      </div>
+    </div>
+  </div></div>`;
+
+  // ── دالة بناء صف جدول ──
+  const tr=(label,pre,post,ref,abnPre,abnPost)=>`
+    <tr style="background:#fff">
+      <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#222;border:1px solid #ddd">${label}</td>
+      <td style="padding:3px 8px;font-size:12px;font-weight:${abnPre?900:700};color:${abnPre?'#cc0000':'#222'};text-align:center;border:1px solid #ddd">${pre||'—'}</td>
+      <td style="padding:3px 8px;font-size:12px;font-weight:${abnPost?900:700};color:${abnPost?'#cc0000':'#00700a'};text-align:center;border:1px solid #ddd">${post||'—'}</td>
+      <td style="padding:3px 8px;font-size:11px;color:#777;border:1px solid #ddd">${ref||''}</td>
+    </tr>`;
+
+  const pc=r.preConc?parseFloat(r.preConc):0;
+  const qc=r.postConc?parseFloat(r.postConc):0;
+  const fmt=(n)=>n!==''&&n!==undefined?parseFloat(n).toFixed(1):'—';
+  const pct=(n)=>n!==''&&n!==undefined?parseFloat(n).toFixed(1)+'%':'—';
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:Arial,sans-serif;color:#000;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .iui-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
+    .iui-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
+    @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @media print{.iui-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;}}
+    table{border-collapse:collapse;width:100%}
+  </style></head><body>
+  <div class="iui-content">
+    ${hdrHTML}
+    <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:13px;letter-spacing:1px">
+      In vitro sperm Activation Report Technique
+    </div>
+
+    <!-- بيانات المريض -->
+    <div style="border:1.5px solid #b8b8b8;margin:3px 0 3px;padding:4px 10px;background:#fafafa">
+      ${ptBox}
+    </div>
+
+    <!-- صف الأوقات -->
+    <div style="display:flex;gap:6px;margin-bottom:4px">
+      <div style="flex:1;border:1px solid #b8b8b8;background:#f5f5f5;padding:3px 10px;font-size:11px">
+        <b>Specimen Produced Time:</b> ${r.timeProduced||'—'}
+        &nbsp;&nbsp;&nbsp;
+        <b>Abstinence:</b> ${r.abstinence||'—'}
+      </div>
+      <div style="flex:1;border:1px solid #b8b8b8;background:#f5f5f5;padding:3px 10px;font-size:11px">
+        <b>Specimen Examination Time:</b> ${r.timeExam||'—'}
+      </div>
+    </div>
+
+    <!-- الفحص الكلي -->
+    <div style="border:1px solid #b8b8b8;margin-bottom:4px">
+      <div style="background:#cce0f5;padding:2px 8px;font-size:12px;font-weight:800">Macroscopic Examination</div>
+      <div style="display:flex;flex-wrap:wrap;padding:4px 8px;gap:12px;background:#fff">
+        <span style="font-size:12px"><b>Sample obtained by:</b> ${r.collection||'—'}</span>
+        <span style="font-size:12px"><b>Abstinence period:</b> ${r.abstinence||'—'}</span>
+        <span style="font-size:12px"><b>Volume:</b> ${r.volume||'—'} mL</span>
+        <span style="font-size:12px"><b>Liquefaction time:</b> ${r.liquefaction||'—'}</span>
+        <span style="font-size:12px"><b>Color:</b> ${r.color||'—'}</span>
+        <span style="font-size:12px"><b>Viscosity:</b> ${r.viscosity||'—'}</span>
+        <span style="font-size:12px"><b>Reaction:</b> ${r.reaction||'—'}</span>
+        <span style="font-size:12px"><b>Fructose test:</b> ${r.fructose||'—'}</span>
+      </div>
+    </div>
+
+    <!-- الفحص المجهري -->
+    <div style="border:1px solid #b8b8b8;margin-bottom:4px">
+      <div style="background:#cce0f5;padding:2px 8px;font-size:12px;font-weight:800">Microscopic Examination</div>
+      <div style="display:flex;flex-wrap:wrap;padding:4px 8px;gap:12px;background:#fff">
+        <span style="font-size:12px"><b>Total Sperm Count:</b> ${r.totalConc||'—'} million/mL = ${r.totalEjaculate||'—'} million/ejaculate</span>
+        <span style="font-size:12px"><b>Pus Cells:</b> ${r.pus||'—'} /HPF</span>
+        <span style="font-size:12px"><b>RBCs:</b> ${r.rbc||'—'} /HPF</span>
+        <span style="font-size:12px"><b>Agglutination:</b> ${r.agglutinationMicro||'—'}</span>
+        <span style="font-size:12px"><b>Epithelial cells:</b> ${r.epithelial||'—'}</span>
+        <span style="font-size:12px"><b>Spermatogenic cells:</b> ${r.spermatogenic||'—'} /HPF</span>
+      </div>
+    </div>
+
+    <!-- جدول Pre / Post -->
+    <table style="margin-bottom:4px;border:1px solid #b8b8b8">
+      <thead>
+        <tr style="background:#cce0f5">
+          <th style="padding:4px 8px;font-size:12px;text-align:left;border:1px solid #b8b8b8;width:38%"></th>
+          <th style="padding:4px 8px;font-size:12px;text-align:center;border:1px solid #b8b8b8;width:20%">Pre Activation</th>
+          <th style="padding:4px 8px;font-size:12px;text-align:center;border:1px solid #b8b8b8;width:20%">Post Activation</th>
+          <th style="padding:4px 8px;font-size:12px;text-align:left;border:1px solid #b8b8b8;width:22%">Reference (WHO)</th>
+        </tr>
+        <tr style="background:#e8e8e8">
+          <td style="padding:2px 8px;font-size:11px;font-style:italic;border:1px solid #ddd">Sperm Concentration</td>
+          <td style="padding:2px 8px;font-size:12px;font-weight:700;text-align:center;border:1px solid #ddd">${r.preConc||'—'} million/ml</td>
+          <td style="padding:2px 8px;font-size:12px;font-weight:700;text-align:center;border:1px solid #ddd">${r.postConc||'—'} million/ml</td>
+          <td style="padding:2px 8px;font-size:11px;color:#777;border:1px solid #ddd">≥ 16 M/mL</td>
+        </tr>
+      </thead>
+      <tbody>
+        ${tr(
+          'Grade A (Rapid, straight-line motility)',
+          `${pct(r.preGradeA)} — ${fmt(r.preGradeAm)} M/ml`,
+          `${pct(r.postGradeA)} — ${fmt(r.postGradeAm)} M/ml`,
+          '≥ 25%',
+          parseFloat(r.preGradeA||0)<25,
+          false
+        )}
+        ${tr(
+          'Grade B (Slower, lateral movement)',
+          `${pct(r.preGradeB)} — ${fmt(r.preGradeBm)} M/ml`,
+          `${pct(r.postGradeB)} — ${fmt(r.postGradeBm)} M/ml`,
+          '',false,false
+        )}
+        ${tr(
+          'Grade C (No forward progression)',
+          `${pct(r.preGradeC)} — ${fmt(r.preGradeCm)} M/ml`,
+          `${pct(r.postGradeC)} — ${fmt(r.postGradeCm)} M/ml`,
+          '',
+          parseFloat(r.preGradeC||0)>0,
+          parseFloat(r.postGradeC||0)>0
+        )}
+        ${tr(
+          'Grade D (No movement)',
+          `${pct(r.preGradeD)} — ${fmt(r.preGradeDm)} M/ml`,
+          `${pct(r.postGradeD)} — ${fmt(r.postGradeDm)} M/ml`,
+          '',false,false
+        )}
+        <tr style="background:#e8f5e8">
+          <td style="padding:3px 8px;font-size:12px;font-weight:900;color:#004400;border:1px solid #ddd">Total Motile Sperm</td>
+          <td style="padding:3px 8px;font-size:13px;font-weight:900;color:#c45000;text-align:center;border:1px solid #ddd">${fmt(r.preTotalMotileM)} M/ml &nbsp;|&nbsp; ${pct(r.preTotalMotile)}</td>
+          <td style="padding:3px 8px;font-size:13px;font-weight:900;color:#006600;text-align:center;border:1px solid #ddd">${fmt(r.postTotalMotileM)} M/ml &nbsp;|&nbsp; ${pct(r.postTotalMotile)}</td>
+          <td style="padding:3px 8px;font-size:11px;color:#777;border:1px solid #ddd">≥ 42%</td>
+        </tr>
+        ${tr(
+          'Normal Morphology',
+          pct(r.preMorphology),
+          pct(r.postMorphology),
+          '>14%',
+          parseFloat(r.preMorphology||0)<14,
+          parseFloat(r.postMorphology||0)<14
+        )}
+        ${tr('Round cells /HPF', r.preRoundCells||'—', r.postRoundCells||'—','(0-4)',false,false)}
+        ${tr('Agglutination', r.preAgglutination||'—', r.postAgglutination||'—','',
+          r.preAgglutination&&r.preAgglutination!=='Nil',
+          r.postAgglutination&&r.postAgglutination!=='Nil'
+        )}
+      </tbody>
+    </table>
+
+    ${r.note?`<div style="border:1px solid #b8b8b8;padding:4px 10px;font-size:12px"><b>Notes:</b> ${r.note}</div>`:''}
+  </div>
+  <div class="iui-footer">${ftrHTML}</div>
+  </body></html>`;
+}
+
+function printIUIReport(id){
+  loadIUIRecords();
+  let r;
+  if(id==='_current'){
+    const ptName=(document.getElementById('iui-pt-search')||{}).value.trim();
+    const ptId=(document.getElementById('iui-pt-id')||{}).value;
+    const preConc=parseFloat(_getIUIField('pre-conc'))||0;
+    const postConc=parseFloat(_getIUIField('post-conc'))||0;
+    const vol=parseFloat(_getIUIField('volume'))||2;
+    const f=(k)=>_getIUIField(k);
+    const f2=(n)=>parseFloat(n.toFixed(2));
+    const pA=parseFloat(f('pre-gradeA'))||0, pB=parseFloat(f('pre-gradeB'))||0;
+    const pC=parseFloat(f('pre-gradeC'))||0, pD=parseFloat(f('pre-gradeD'))||0;
+    const qA=parseFloat(f('post-gradeA'))||0, qB=parseFloat(f('post-gradeB'))||0;
+    const qC=parseFloat(f('post-gradeC'))||0, qD=parseFloat(f('post-gradeD'))||0;
+    r={
+      id:'_current', patientId:ptId, patientName:ptName,
+      date:f('date'), doctorName:_getIUIDoctor().name, doctorId:_getIUIDoctor().id,
+      timeProduced:f('time-produced'), timeExam:f('time-exam'),
+      collection:f('collection'), abstinence:f('abstinence'),
+      volume:f('volume'), liquefaction:f('liquefaction'), color:f('color'),
+      viscosity:f('viscosity'), reaction:f('reaction'), fructose:f('fructose'),
+      totalConc:f('total-conc'), totalEjaculate:preConc>0?f2(preConc*vol):'',
+      pus:f('pus'), rbc:f('rbc'), agglutinationMicro:f('agglutination-micro'),
+      epithelial:f('epithelial'), spermatogenic:f('spermatogenic'),
+      preConc:f('pre-conc'), postConc:f('post-conc'),
+      preGradeA:f('pre-gradeA'), preGradeB:f('pre-gradeB'),
+      preGradeC:f('pre-gradeC'), preGradeD:f('pre-gradeD'),
+      preMorphology:f('pre-morphology'), preAgglutination:f('pre-agglutination'),
+      preRoundCells:f('pre-roundcells'),
+      preTotalMotile:preConc>0?f2(pA+pB):'', preTotalMotileM:preConc>0?f2(preConc*(pA+pB)/100):'',
+      preGradeAm:preConc>0?f2(preConc*pA/100):'', preGradeBm:preConc>0?f2(preConc*pB/100):'',
+      preGradeCm:preConc>0?f2(preConc*pC/100):'', preGradeDm:preConc>0?f2(preConc*pD/100):'',
+      postGradeA:f('post-gradeA'), postGradeB:f('post-gradeB'),
+      postGradeC:f('post-gradeC'), postGradeD:f('post-gradeD'),
+      postMorphology:f('post-morphology'), postAgglutination:f('post-agglutination'),
+      postRoundCells:f('post-roundcells'),
+      postTotalMotile:postConc>0?f2(qA+qB):'', postTotalMotileM:postConc>0?f2(postConc*(qA+qB)/100):'',
+      postGradeAm:postConc>0?f2(postConc*qA/100):'', postGradeBm:postConc>0?f2(postConc*qB/100):'',
+      postGradeCm:postConc>0?f2(postConc*qC/100):'', postGradeDm:postConc>0?f2(postConc*qD/100):'',
+      note:f('note')
+    };
+  } else {
+    r=iuiRecords.find(x=>x.id===id);
+  }
+  if(!r){ showNotif('تنبيه','احفظ النتيجة أولاً','warning'); return; }
+  const html=_buildIUIPrintHTML(r);
+  window._medlabPrinting=true;
+  setTimeout(function(){window._medlabPrinting=false;},4000);
+  _printViaIframe(html);
+  showNotif('طباعة','تم إرسال تقرير IUI للطابعة 🖨️','success');
+}
+// ════════════════════════════════════════════════════════════
+
 // ════════════════════════════════════════════════════════════
 //  DNA FRAGMENTATION TEST — كامل الدوال
 // ════════════════════════════════════════════════════════════
