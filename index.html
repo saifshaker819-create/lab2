@@ -22932,10 +22932,24 @@ function _buildDNAFragModalBody(r){
     </div>
   </div>
 
-  <!-- ملاحظات -->
-  <div style="background:rgba(0,0,0,0.02);border:1px solid var(--border);border-radius:10px;padding:14px">
-    <div style="font-size:13px;font-weight:900;color:#0077cc;border-bottom:2px solid #0077cc;padding-bottom:4px;margin-bottom:10px">📋 ملاحظات</div>
-    <textarea class="fc" id="dnafrag-note" rows="2" placeholder="أي ملاحظات إضافية...">${v('note')}</textarea>
+  <!-- ملاحظات + صورة -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;background:rgba(0,0,0,0.02);border:1px solid var(--border);border-radius:10px;padding:14px">
+    <div class="fg" style="margin-bottom:0">
+      <div style="font-size:13px;font-weight:900;color:#0077cc;border-bottom:2px solid #0077cc;padding-bottom:4px;margin-bottom:10px">📋 ملاحظات</div>
+      <textarea class="fc" id="dnafrag-note" rows="3" placeholder="أي ملاحظات إضافية...">${v('note')}</textarea>
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <div style="font-size:13px;font-weight:900;color:#0077cc;border-bottom:2px solid #0077cc;padding-bottom:4px;margin-bottom:10px">🔬 صورة المجهر (اختياري)</div>
+      <div style="border:2px dashed var(--border);border-radius:8px;padding:10px;text-align:center;background:rgba(0,212,255,0.02)">
+        ${v('patientImg') ? `<img id="dnafrag-img-preview" src="${v('patientImg')}" style="max-width:100%;max-height:100px;border-radius:6px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto">` : `<div id="dnafrag-img-preview" style="font-size:11px;color:var(--text2);margin-bottom:8px">لا توجد صورة</div>`}
+        <label class="btn btn-s btn-sm" style="cursor:pointer;display:inline-block">
+          📷 اختر صورة
+          <input type="file" accept="image/*" id="dnafrag-img-input" style="display:none" onchange="dnafragLoadImg(this)">
+        </label>
+        ${v('patientImg') ? `<button class="btn btn-d btn-sm" style="margin-top:4px" onclick="dnafragClearImg()">🗑️ حذف الصورة</button>` : ''}
+      </div>
+      <input type="hidden" id="dnafrag-img-data" value="${v('patientImg')}">
+    </div>
   </div>`;
 
   body.innerHTML = html;
@@ -23031,6 +23045,38 @@ function calcDNAFrag(){
   `;
 }
 
+function dnafragLoadImg(input){
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const dataUrl = e.target.result;
+    document.getElementById('dnafrag-img-data').value = dataUrl;
+    const prev = document.getElementById('dnafrag-img-preview');
+    if(prev.tagName === 'DIV'){
+      // replace div with img
+      const img = document.createElement('img');
+      img.id = 'dnafrag-img-preview';
+      img.src = dataUrl;
+      img.style.cssText = 'max-width:100%;max-height:100px;border-radius:6px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto';
+      prev.parentNode.replaceChild(img, prev);
+    } else {
+      prev.src = dataUrl;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+function dnafragClearImg(){
+  document.getElementById('dnafrag-img-data').value = '';
+  const prev = document.getElementById('dnafrag-img-preview');
+  if(prev){
+    const div = document.createElement('div');
+    div.id = 'dnafrag-img-preview';
+    div.style.cssText = 'font-size:11px;color:var(--text2);margin-bottom:8px';
+    div.textContent = 'لا توجد صورة';
+    prev.parentNode.replaceChild(div, prev);
+  }
+}
+
 function saveDNAFragEntry(){
   let ptName = (document.getElementById('dnafrag-pt-search')||{}).value.trim();
   let ptId   = (document.getElementById('dnafrag-pt-id')||{}).value;
@@ -23076,7 +23122,8 @@ function saveDNAFragEntry(){
     noHaloPct: pct(nh, totalHalo), smallHaloPct: pct(sh, totalHalo),
     medHaloPct: pct(mh, totalHalo), bigHaloPct: pct(bh, totalHalo),
     dfi: dfi, fertility: fertility,
-    note: (document.getElementById('dnafrag-note')||{}).value||''
+    note: (document.getElementById('dnafrag-note')||{}).value||'',
+    patientImg: (document.getElementById('dnafrag-img-data')||{}).value||''
   };
   loadDNAFragRecords();
   if(window._dnafragEditId){ const idx = dnaFragRecords.findIndex(x=>x.id===window._dnafragEditId); if(idx>-1) dnaFragRecords[idx]=rec; else dnaFragRecords.push(rec); }
@@ -23201,6 +23248,59 @@ function _buildDNAFragPrintHTML(r){
     </div>
   </div></div>`;
 
+  // ── SVG bar chart builder ──
+  function _svgBar(items, chartW, chartH){
+    // items = [{label, value, color}]
+    if(!items.length) return '';
+    const maxVal = Math.max(...items.map(i=>i.value), 1);
+    const barW = Math.floor((chartW - 40) / items.length) - 8;
+    const barAreaH = chartH - 40;
+    let svgContent = '';
+    items.forEach((item, idx) => {
+      const x = 20 + idx * (barW + 8);
+      const barH = Math.max(2, Math.round((item.value / maxVal) * barAreaH));
+      const barY = chartH - 25 - barH;
+      svgContent += `<rect x="${x}" y="${barY}" width="${barW}" height="${barH}" fill="${item.color}" rx="2"/>`;
+      // value label on top
+      svgContent += `<text x="${x + barW/2}" y="${barY - 3}" text-anchor="middle" font-size="9" font-weight="700" fill="#000">${item.value.toFixed(2)}</text>`;
+      // x-axis label (multi-line by splitting on space)
+      const words = item.label.split(' ');
+      if(words.length <= 2){
+        const lineY = chartH - 10;
+        svgContent += `<text x="${x + barW/2}" y="${lineY}" text-anchor="middle" font-size="7.5" fill="#333">${item.label}</text>`;
+      } else {
+        // up to 2 lines
+        svgContent += `<text x="${x + barW/2}" y="${chartH - 17}" text-anchor="middle" font-size="7" fill="#333">${words.slice(0, Math.ceil(words.length/2)).join(' ')}</text>`;
+        svgContent += `<text x="${x + barW/2}" y="${chartH - 8}" text-anchor="middle" font-size="7" fill="#333">${words.slice(Math.ceil(words.length/2)).join(' ')}</text>`;
+      }
+    });
+    // y-axis line
+    svgContent += `<line x1="18" y1="5" x2="18" y2="${chartH-24}" stroke="#999" stroke-width="1"/>`;
+    // x-axis line
+    svgContent += `<line x1="18" y1="${chartH-24}" x2="${chartW-5}" y2="${chartH-24}" stroke="#999" stroke-width="1"/>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${chartW}" height="${chartH}" style="display:block;overflow:visible">${svgContent}</svg>`;
+  }
+
+  // chart 1: Halo + Degraded distribution
+  const haloChartItems = [];
+  if(r.degradN)   haloChartItems.push({label:'Degraded',     value:r.degradPct||0,    color:'#a0522d'});
+  if(r.noHaloN)   haloChartItems.push({label:'Without Halo', value:r.noHaloPct||0,    color:'#6a8fc8'});
+  if(r.smallHaloN)haloChartItems.push({label:'Small Halo',   value:r.smallHaloPct||0, color:'#9b59b6'});
+  if(r.medHaloN)  haloChartItems.push({label:'Medium Halo',  value:r.medHaloPct||0,   color:'#e74c3c'});
+  if(r.bigHaloN)  haloChartItems.push({label:'Big Halo',     value:r.bigHaloPct||0,   color:'#3498db'});
+
+  // chart 2: Non-frag / Frag / Total
+  const fragChartItems = [
+    {label:'Non-fragmented', value:r.nonfragPct||0, color:'#27ae60'},
+    {label:'Fragmented',     value:r.fragPct||0,    color:'#e74c3c'},
+    {label:'Total Sperm',    value:100,             color:'#3498db'}
+  ];
+
+  const haloChartSVG  = haloChartItems.length ? _svgBar(haloChartItems, 260, 120) : '';
+  const fragChartSVG  = _svgBar(fragChartItems, 210, 120);
+
+  const patientImg = r.patientImg ? `<img src="${r.patientImg}" style="width:100%;height:100%;object-fit:contain;display:block">` : '';
+
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:Arial,sans-serif;color:#000;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -23214,69 +23314,111 @@ function _buildDNAFragPrintHTML(r){
     <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:14px;letter-spacing:1px">
       DNA FRAGMENTATION TEST REPORT
     </div>
+
     <!-- بيانات المريض -->
     <div style="border:1.5px solid #b8b8b8;margin:3px 0 4px;padding:4px 10px;background:#fafafa">
       ${ptBox}
     </div>
     <div style="margin:0 0 4px;height:2px;background:${color}"></div>
 
-    <!-- DFI الرئيسي -->
-    <div style="border:2px solid ${fColor};border-radius:4px;background:${fBg};padding:10px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-      <div>
-        <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:0.5px">DNA FRAGMENTATION INDEX (DFI)</div>
-        <div style="font-size:32px;font-weight:900;color:${fColor};line-height:1.1">${dfi.toFixed(2)}%</div>
-        <div style="font-size:10px;color:#777;margin-top:2px">Reference: &lt; 15%</div>
+    <!-- الجدول الرئيسي (القسم الأول: Non-frag, Frag, Total + DFI) -->
+    <div style="display:flex;gap:6px;margin-bottom:5px;align-items:flex-start">
+      <!-- جدول البيانات الكامل -->
+      <div style="flex:1;min-width:0">
+        <table style="width:100%;border-collapse:collapse;border:1px solid #b8b8b8">
+          <thead>
+            <tr style="background:#cce0f5">
+              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:left;border:1px solid #b8b8b8"></th>
+              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">%</th>
+              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">No.</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background:#fff">
+              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Non-fragmented</td>
+              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.nonfragPct||0).toFixed(2)}</td>
+              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.nonfragN||0}</td>
+            </tr>
+            <tr style="background:#fff3f3">
+              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#cc0000;border:1px solid #ddd">Fragmented</td>
+              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#cc0000;text-align:center;border:1px solid #ddd">${(r.fragPct||0).toFixed(2)}</td>
+              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#cc0000;text-align:center;border:1px solid #ddd">${r.fragN||0}</td>
+            </tr>
+            <tr style="background:#e8f0fb">
+              <td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;border:1px solid #ddd">Total Sperm</td>
+              <td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">100.00</td>
+              <td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">${total}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- الجدول الثاني: Halo + Degraded -->
+        ${(r.degradN||r.totalHalo) ? `
+        <table style="width:100%;border-collapse:collapse;border:1px solid #b8b8b8;margin-top:4px">
+          <thead>
+            <tr style="background:#cce0f5">
+              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:left;border:1px solid #b8b8b8"></th>
+              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">%</th>
+              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">No.</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${r.degradN ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Degraded</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.degradPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.degradN}</td></tr>` : ''}
+            ${r.noHaloN   ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Without Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.noHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.noHaloN}</td></tr>` : ''}
+            ${r.smallHaloN? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Small Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.smallHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.smallHaloN}</td></tr>` : ''}
+            ${r.medHaloN  ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Medium Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.medHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.medHaloN}</td></tr>` : ''}
+            ${r.bigHaloN  ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Big Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.bigHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.bigHaloN}</td></tr>` : ''}
+            ${r.totalHalo ? `<tr style="background:#e8f0fb"><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;border:1px solid #ddd"></td><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">100.00</td><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">${r.totalHalo}</td></tr>` : ''}
+          </tbody>
+        </table>` : ''}
       </div>
-      <div style="text-align:right">
-        <div style="font-size:16px;font-weight:900;color:${fColor}">${r.fertility||'—'}</div>
-        <div style="font-size:10px;color:#777;margin-top:4px">&lt; 15% = Excellent &nbsp;|&nbsp; 15-30% = Good &nbsp;|&nbsp; &gt; 30% = Poor</div>
-        <div style="font-size:10px;color:#777;margin-top:2px">Total cells counted: ${total}</div>
+
+      <!-- DFI box على اليمين -->
+      <div style="width:210px;flex-shrink:0">
+        <table style="width:100%;border-collapse:collapse;border:1px solid #b8b8b8;margin-bottom:4px">
+          <thead><tr style="background:#cce0f5"><th colspan="2" style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">DNA Fragmentation Index</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:3px 8px;font-size:13px;font-weight:700;color:#000;border:1px solid #ddd">DFI</td>
+                <td style="padding:3px 8px;font-size:14px;font-weight:900;color:${fColor};text-align:center;border:1px solid #ddd">${dfi.toFixed(2)}&nbsp;%</td></tr>
+            <tr><td style="padding:3px 8px;font-size:12px;color:#000;border:1px solid #ddd">&lt; 15</td>
+                <td style="padding:3px 8px;font-size:12px;font-style:italic;color:#000;border:1px solid #ddd">Excellent fertility potential</td></tr>
+            <tr><td style="padding:3px 8px;font-size:12px;color:#000;border:1px solid #ddd">15 - 30</td>
+                <td style="padding:3px 8px;font-size:12px;font-style:italic;color:#000;border:1px solid #ddd">Good fertility potential</td></tr>
+            <tr><td style="padding:3px 8px;font-size:12px;color:#000;border:1px solid #ddd">&gt; 30</td>
+                <td style="padding:3px 8px;font-size:12px;font-style:italic;color:#000;border:1px solid #ddd">Poor fertility potential</td></tr>
+          </tbody>
+        </table>
+        <!-- Comment box -->
+        <div style="border:1px solid #b8b8b8;background:#cce0f5;text-align:center;padding:3px 6px;font-size:12px;font-weight:800;color:#000;margin-bottom:3px">Comment</div>
+        <div style="border:1px solid #b8b8b8;background:#e8f5e8;text-align:center;padding:6px 8px;font-size:12px;font-weight:700;color:#000;margin-bottom:3px">The Sample has a <b>${dfi<15?'Excellent':dfi<=30?'Good':'Poor'}</b> fertility potential</div>
+        <div style="text-align:center;font-size:11px;font-style:italic;color:#333;margin-top:2px">according to WHO strict criteria</div>
       </div>
     </div>
 
-    <!-- جدول الأقسام -->
-    <div style="border:1.5px solid #b8b8b8;border-radius:2px;margin-bottom:5px;overflow:hidden">
-      <div style="background:#f0f0f0;padding:3px 10px;border-bottom:1.5px solid #b8b8b8">
-        <span style="font-size:14px;font-weight:900;color:#1a4fa0">Sperm Classification</span>
+    <!-- المخططات البيانية -->
+    <div style="display:flex;gap:8px;margin-bottom:5px;align-items:flex-start">
+      ${haloChartSVG ? `
+      <div style="flex:1;border:1px solid #ddd;border-radius:3px;padding:6px;background:#fff">
+        <div style="font-size:10px;font-weight:700;color:#333;margin-bottom:4px;text-align:center">Halo & Degraded Distribution (%)</div>
+        ${haloChartSVG}
+      </div>` : ''}
+      <div style="flex:0 0 230px;border:1px solid #ddd;border-radius:3px;padding:6px;background:#fff">
+        <div style="font-size:10px;font-weight:700;color:#333;margin-bottom:4px;text-align:center">Sperm Count Distribution (%)</div>
+        ${fragChartSVG}
       </div>
-      <table style="width:100%;border-collapse:collapse">
-        <thead><tr style="background:#f5f5f5">
-          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:left;border-bottom:1.5px solid #b8b8b8;width:40%">Parameter</th>
-          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:center;border-bottom:1.5px solid #b8b8b8;width:22%">Percentage</th>
-          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:center;border-bottom:1.5px solid #b8b8b8;width:18%">Count</th>
-          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:left;border-bottom:1.5px solid #b8b8b8;width:20%">Reference</th>
-        </tr></thead>
-        <tbody>
-          ${row('Non-Fragmented', pf(r.nonfragPct), r.nonfragN||0, '≥ 85%', false)}
-          ${row('Fragmented (DFI)', pf(r.fragPct), r.fragN||0, '< 15%', (r.dfi||0) >= 15)}
-          ${r.degradN ? row('Degraded', pf(r.degradPct), r.degradN||0, '—', false) : ''}
-        </tbody>
-      </table>
     </div>
 
-    ${(r.totalHalo) ? `
-    <div style="border:1.5px solid #b8b8b8;border-radius:2px;margin-bottom:5px;overflow:hidden">
-      <div style="background:#f0f0f0;padding:3px 10px;border-bottom:1.5px solid #b8b8b8">
-        <span style="font-size:14px;font-weight:900;color:#1a4fa0">Halo Size Distribution</span>
-        <span style="font-size:11px;color:#777;margin-right:8px">(Total: ${r.totalHalo} cells)</span>
+    <!-- صف أسفل: الصورة + الملاحظات -->
+    <div style="display:flex;gap:8px;align-items:flex-start;margin-top:3px">
+      <!-- صورة المريض أسفل اليسار -->
+      <div style="width:150px;height:130px;border:1px solid #b8b8b8;border-radius:4px;overflow:hidden;background:#f9f9f9;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+        ${patientImg || '<div style="font-size:10px;color:#aaa;text-align:center;padding:8px"></div>'}
       </div>
-      <table style="width:100%;border-collapse:collapse">
-        <thead><tr style="background:#f5f5f5">
-          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:left;border-bottom:1.5px solid #b8b8b8;width:40%">Halo Category</th>
-          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:center;border-bottom:1.5px solid #b8b8b8;width:22%">Percentage</th>
-          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:center;border-bottom:1.5px solid #b8b8b8;width:18%">Count</th>
-          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:left;border-bottom:1.5px solid #b8b8b8;width:20%">Interpretation</th>
-        </tr></thead>
-        <tbody>
-          ${r.noHaloN  ? row('Without Halo',  pf(r.noHaloPct),   r.noHaloN,   'Fragmented DNA',       true)  : ''}
-          ${r.smallHaloN? row('Small Halo',    pf(r.smallHaloPct),r.smallHaloN,'Fragmented DNA',       true)  : ''}
-          ${r.medHaloN ? row('Medium Halo',    pf(r.medHaloPct),  r.medHaloN,  'Intact / Borderline',  false) : ''}
-          ${r.bigHaloN ? row('Big Halo',       pf(r.bigHaloPct),  r.bigHaloN,  'Intact DNA',           false) : ''}
-        </tbody>
-      </table>
-    </div>` : ''}
-
-    ${r.note ? `<div style="border:1.5px solid #b8b8b8;padding:5px 12px;margin-top:3px"><span style="font-size:12px;font-weight:800;color:#444">Notes: </span><span style="font-size:12px;color:#333">${r.note}</span></div>` : ''}
+      <!-- ملاحظات -->
+      <div style="flex:1">
+        ${r.note ? `<div style="border:1.5px solid #b8b8b8;padding:5px 10px;border-radius:3px"><span style="font-size:12px;font-weight:800;color:#444">Notes: </span><span style="font-size:12px;color:#333">${r.note}</span></div>` : ''}
+      </div>
+    </div>
   </div>
   <div class="dna-footer">${ftrHTML}</div>
   </body></html>`;
@@ -23306,7 +23448,8 @@ function printDNAFragReport(id){
       nonfragPct:pct(nf,total),fragPct:pct(fr,total),degradPct:pct(dg,total),
       noHaloPct:pct(nh,totalHalo),smallHaloPct:pct(sh,totalHalo),medHaloPct:pct(mh,totalHalo),bigHaloPct:pct(bh,totalHalo),
       dfi:dfi, fertility:dfi<15?'Excellent fertility potential':dfi<=30?'Good fertility potential':'Poor fertility potential',
-      note:(document.getElementById('dnafrag-note')||{}).value||''
+      note:(document.getElementById('dnafrag-note')||{}).value||'',
+      patientImg:(document.getElementById('dnafrag-img-data')||{}).value||''
     };
   } else {
     r = dnaFragRecords.find(x=>x.id===id);
