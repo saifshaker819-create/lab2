@@ -23587,7 +23587,7 @@ function _buildDNAFragModalBody(r){
     <div class="fg" style="margin-bottom:0">
       <div style="font-size:13px;font-weight:900;color:#0077cc;border-bottom:2px solid #0077cc;padding-bottom:4px;margin-bottom:10px">🔬 صورة المجهر (اختياري)</div>
       <div style="border:2px dashed var(--border);border-radius:8px;padding:10px;text-align:center;background:rgba(0,212,255,0.02)">
-        ${v('patientImg') ? `<img id="dnafrag-img-preview" src="${v('patientImg')}" style="max-width:100%;max-height:100px;border-radius:6px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto">` : `<div id="dnafrag-img-preview" style="font-size:11px;color:var(--text2);margin-bottom:8px">لا توجد صورة</div>`}
+        ${v('patientImg') ? `<img id="dnafrag-img-preview" src="${v('patientImg')}" style="max-width:100%;max-height:200px;border-radius:6px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto">` : `<div id="dnafrag-img-preview" style="font-size:11px;color:var(--text2);margin-bottom:8px">لا توجد صورة</div>`}
         <label class="btn btn-s btn-sm" style="cursor:pointer;display:inline-block">
           📷 اختر صورة
           <input type="file" accept="image/*" id="dnafrag-img-input" style="display:none" onchange="dnafragLoadImg(this)">
@@ -23703,7 +23703,7 @@ function dnafragLoadImg(input){
       const img = document.createElement('img');
       img.id = 'dnafrag-img-preview';
       img.src = dataUrl;
-      img.style.cssText = 'max-width:100%;max-height:100px;border-radius:6px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto';
+      img.style.cssText = 'max-width:100%;max-height:200px;border-radius:6px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto';
       prev.parentNode.replaceChild(img, prev);
     } else {
       prev.src = dataUrl;
@@ -24014,7 +24014,7 @@ function _buildDNAFragPrintHTML(r){
             ${r.smallHaloN? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Small Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.smallHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.smallHaloN}</td></tr>` : ''}
             ${r.medHaloN  ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Medium Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.medHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.medHaloN}</td></tr>` : ''}
             ${r.bigHaloN  ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Big Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.bigHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.bigHaloN}</td></tr>` : ''}
-            ${r.totalHalo ? `<tr style="background:#e8f0fb"><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;border:1px solid #ddd"></td><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">100.00</td><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">${r.totalHalo}</td></tr>` : ''}
+            ${r.totalHalo ? `<tr style="background:#e8f0fb"><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;border:1px solid #ddd"></td><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">100.00</td><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">${r.total}</td></tr>` : ''}
           </tbody>
         </table>` : ''}
       </div>
@@ -24057,7 +24057,7 @@ function _buildDNAFragPrintHTML(r){
     <!-- صف أسفل: الصورة + الملاحظات -->
     <div style="display:flex;gap:8px;align-items:flex-start;margin-top:3px">
       <!-- صورة المريض أسفل اليسار -->
-      <div style="width:150px;height:130px;border:1px solid #b8b8b8;border-radius:4px;overflow:hidden;background:#f9f9f9;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+      <div style="width:210px;height:180px;border:1px solid #b8b8b8;border-radius:4px;overflow:hidden;background:#f9f9f9;flex-shrink:0;display:flex;align-items:center;justify-content:center">
         ${patientImg || '<div style="font-size:10px;color:#aaa;text-align:center;padding:8px"></div>'}
       </div>
       <!-- ملاحظات -->
