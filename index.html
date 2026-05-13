@@ -23945,7 +23945,7 @@ function _buildDNAFragPrintHTML(r){
   const haloChartSVG  = haloChartItems.length ? _svgBar(haloChartItems, 260, 120) : '';
   const fragChartSVG  = _svgBar(fragChartItems, 210, 120);
 
-  const patientImg = r.patientImg ? `<img src="${r.patientImg}" style="width:100%;height:100%;object-fit:contain;display:block">` : '';
+  const patientImg = r.patientImg ? `<img src="${r.patientImg}" style="width:100%;height:100%;object-fit:cover;display:block">` : '';
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
@@ -24036,7 +24036,7 @@ function _buildDNAFragPrintHTML(r){
         </table>
         <!-- Comment box -->
         <div style="border:1px solid #b8b8b8;background:#cce0f5;text-align:center;padding:3px 6px;font-size:12px;font-weight:800;color:#000;margin-bottom:3px">Comment</div>
-        <div style="border:1px solid #b8b8b8;background:#e8f5e8;text-align:center;padding:6px 8px;font-size:12px;font-weight:700;color:#000;margin-bottom:3px">The Sample has a <b>${dfi<15?'Excellent':dfi<=30?'Good':'Poor'}</b> fertility potential</div>
+        <div style="border:1.5px solid ${fColor};background:${fBg};text-align:center;padding:6px 8px;font-size:12px;font-weight:700;color:${fColor};margin-bottom:3px">The Sample has a <b>${dfi<15?'Excellent':dfi<=30?'Good':'Poor'}</b> fertility potential</div>
         <div style="text-align:center;font-size:11px;font-style:italic;color:#333;margin-top:2px">according to WHO strict criteria</div>
       </div>
     </div>
