@@ -23683,10 +23683,10 @@ function calcDNAFrag(){
     ${total>0 ? card('Fragmented',pct(fr,total),fr,'#cc0000') : ''}
     ${dg>0 && total>0 ? card('Degraded',pct(dg,total),dg,'#cc5500') : ''}
     ${totalHalo>0 ? `
-      ${nh>0 ? card('Without Halo',pct(nh,totalHalo),nh,'#999') : ''}
-      ${sh>0 ? card('Small Halo',pct(sh,totalHalo),sh,'#0077cc') : ''}
-      ${mh>0 ? card('Medium Halo',pct(mh,totalHalo),mh,'#0077cc') : ''}
-      ${bh>0 ? card('Big Halo',pct(bh,totalHalo),bh,'#005599') : ''}
+      ${nh>0 ? card('Without Halo',pct(nh,total),nh,'#999') : ''}
+      ${sh>0 ? card('Small Halo',pct(sh,total),sh,'#0077cc') : ''}
+      ${mh>0 ? card('Medium Halo',pct(mh,total),mh,'#0077cc') : ''}
+      ${bh>0 ? card('Big Halo',pct(bh,total),bh,'#005599') : ''}
     ` : ''}
   `;
 }
@@ -23765,8 +23765,8 @@ function saveDNAFragEntry(){
     noHaloN: nh, smallHaloN: sh, medHaloN: mh, bigHaloN: bh,
     total: total, totalHalo: totalHalo,
     nonfragPct: pct(nf, total), fragPct: pct(fr, total), degradPct: pct(dg, total),
-    noHaloPct: pct(nh, totalHalo), smallHaloPct: pct(sh, totalHalo),
-    medHaloPct: pct(mh, totalHalo), bigHaloPct: pct(bh, totalHalo),
+    noHaloPct: pct(nh, total), smallHaloPct: pct(sh, total),
+    medHaloPct: pct(mh, total), bigHaloPct: pct(bh, total),
     dfi: dfi, fertility: fertility,
     note: (document.getElementById('dnafrag-note')||{}).value||'',
     patientImg: (document.getElementById('dnafrag-img-data')||{}).value||''
@@ -24092,7 +24092,7 @@ function printDNAFragReport(id){
       nonfragN:nf,fragN:fr,degradN:dg,noHaloN:nh,smallHaloN:sh,medHaloN:mh,bigHaloN:bh,
       total:total,totalHalo:totalHalo,
       nonfragPct:pct(nf,total),fragPct:pct(fr,total),degradPct:pct(dg,total),
-      noHaloPct:pct(nh,totalHalo),smallHaloPct:pct(sh,totalHalo),medHaloPct:pct(mh,totalHalo),bigHaloPct:pct(bh,totalHalo),
+      noHaloPct:pct(nh,total),smallHaloPct:pct(sh,total),medHaloPct:pct(mh,total),bigHaloPct:pct(bh,total),
       dfi:dfi, fertility:dfi<15?'Excellent fertility potential':dfi<=30?'Good fertility potential':'Poor fertility potential',
       note:(document.getElementById('dnafrag-note')||{}).value||'',
       patientImg:(document.getElementById('dnafrag-img-data')||{}).value||''
