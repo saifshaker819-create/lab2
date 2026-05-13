@@ -1861,6 +1861,39 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
   .res-tbl th{padding:7px 8px!important;font-size:10px!important;}
   .res-tbl td{padding:5px 8px!important;}
   .res-input{width:80px!important;font-size:11px!important;}
+/* ── أزرار علامات المقارنة (< >) بجانب مربع النتيجة ── */
+.cmp-sign-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;min-width:26px;
+  border:1.5px solid var(--border);
+  border-radius:6px;
+  background:rgba(0,212,255,0.10);
+  color:var(--primary);
+  font-weight:900;font-size:15px;
+  cursor:pointer;padding:0;line-height:1;
+  user-select:none;flex-shrink:0;
+  font-family:Arial,sans-serif;
+  transition:all 0.15s;
+}
+.cmp-sign-btn:hover{
+  background:rgba(0,212,255,0.22);
+  border-color:var(--primary);
+  transform:scale(1.05);
+}
+.cmp-sign-btn:active{
+  transform:scale(0.95);
+  background:rgba(0,212,255,0.30);
+}
+body.light-mode .cmp-sign-btn{
+  background:rgba(0,100,180,0.08);
+  color:#0066aa;
+  border-color:rgba(0,100,180,0.3);
+}
+body.light-mode .cmp-sign-btn:hover{
+  background:rgba(0,100,180,0.18);
+  border-color:#0066aa;
+}
+.res-cmp-wrap{vertical-align:middle;}
 
   /* ── شريط بيانات المريض ── */
   .pt-bar{grid-template-columns:repeat(2,1fr)!important;gap:8px!important;padding:10px!important;}
@@ -2504,6 +2537,7 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
     <div class="ni" data-perm="results"  onclick="nav('results')"><span class="ni-ic">🧪</span>إدخال النتائج</div>
     <div class="ni" data-perm="culture"  onclick="nav('culture')"><span class="ni-ic">🦠</span>نتائج الزرع</div>
     <div class="ni" data-perm="results"  onclick="nav('semen')"><span class="ni-ic">🔬</span>Semen Analysis</div>
+    <div class="ni" data-perm="results"  onclick="nav('dnafrag')"><span class="ni-ic">🧬</span>DNA Fragmentation</div>
     <div class="ni" data-perm="print"    onclick="nav('print')"><span class="ni-ic">🖨️</span>طباعة النتائج</div>
     <div class="ni" data-perm="results"  onclick="nav('esr')"><span class="ni-ic">⏱️</span>عداد ESR<span class="ni-badge warn" id="nb-esr" style="display:none">0</span></div>
   </div>
@@ -2803,6 +2837,22 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
             <div class="srch-box" style="flex:1;min-width:200px"><span class="srch-ic">🔍</span><input class="srch-inp" id="semen-srch" lang="ar" dir="rtl" placeholder="ابحث باسم المريض أو رقمه..." oninput="renderSemenList()"></div>
           </div>
           <div id="semen-list-body"><div class="empty"><div class="empty-ic">🔬</div><p>لا توجد نتائج بعد</p></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DNA FRAGMENTATION -->
+    <div class="sec" id="sec-dnafrag">
+      <div class="gc" style="max-width:1000px;margin:0 auto">
+        <div class="gc-hdr">
+          <div class="gc-title">🧬 DNA Fragmentation Test</div>
+          <button class="btn btn-p btn-sm" onclick="openNewDNAFragModal()">➕ إدخال نتيجة جديدة</button>
+        </div>
+        <div class="gc-body">
+          <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+            <div class="srch-box" style="flex:1;min-width:200px"><span class="srch-ic">🔍</span><input class="srch-inp" id="dnafrag-srch" lang="ar" dir="rtl" placeholder="ابحث باسم المريض أو رقمه..." oninput="renderDNAFragList()"></div>
+          </div>
+          <div id="dnafrag-list-body"><div class="empty"><div class="empty-ic">🧬</div><p>لا توجد نتائج بعد</p></div></div>
         </div>
       </div>
     </div>
@@ -5031,6 +5081,19 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
 </div>
 
 
+<!-- DNA Fragmentation Modal -->
+<div class="moverlay" id="m-dnafrag-exam">
+  <div class="modal" style="max-width:860px;max-height:92vh;overflow-y:auto">
+    <div class="mhdr"><div class="mtitle" id="dnafrag-modal-title">🧬 DNA Fragmentation Test</div><button class="mclose" onclick="closeModal('m-dnafrag-exam')">✕</button></div>
+    <div class="mbody" id="dnafrag-modal-body"></div>
+    <div class="mftr">
+      <button class="btn btn-s" onclick="closeModal('m-dnafrag-exam')">إلغاء</button>
+      <button class="btn btn-ok btn-lg" onclick="printDNAFragReport(window._dnafragEditId||'_current')">🖨️ طباعة</button>
+      <button class="btn btn-p btn-lg" onclick="saveDNAFragEntry()">💾 حفظ النتيجة</button>
+    </div>
+  </div>
+</div>
+
 <div class="moverlay" id="m-culture">
   <div class="modal" style="max-width:820px;max-height:90vh;overflow-y:auto">
     <div class="mhdr">
@@ -5271,6 +5334,23 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
           </div>
         </div>
       </div>
+      <!-- ➕ إضافة مجموعة فرعية جديدة -->
+      <div id="add-subcat-panel" style="background:rgba(0,255,157,0.05);border:1px solid rgba(0,255,157,0.25);border-radius:10px;padding:12px 14px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:10px">➕ إضافة مجموعة فرعية جديدة</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:flex-end">
+          <div class="fg" style="margin-bottom:0">
+            <label class="fl" style="font-size:11px">المجموعة الرئيسية</label>
+            <select class="fc" id="new-subcat-main" style="font-size:12px"></select>
+          </div>
+          <div class="fg" style="margin-bottom:0">
+            <label class="fl" style="font-size:11px">اسم المجموعة الفرعية الجديدة</label>
+            <input class="fc" id="new-subcat-name" placeholder="مثال: Cardiac Enzymes" style="font-size:12px">
+          </div>
+          <button class="btn btn-p" style="height:38px;padding:0 16px;font-size:12px;white-space:nowrap" onclick="addCustomSubCat()">➕ إضافة</button>
+        </div>
+        <div id="custom-subcats-list" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+
       <div class="fr4">
         <div class="fg"><label class="fl">Section (Main) <span class="req">*</span></label><select class="fc" id="et-cat" onchange="updateSubCatDropdown()"></select></div>
         <div class="fg"><label class="fl">Sub-Section <span class="req">*</span></label><select class="fc" id="et-subcat"><option value="">-- اختر --</option></select></div>
@@ -5595,37 +5675,7 @@ Menopause — 25–135 IU/L" style="font-size:12px;resize:vertical;line-height:1
   </div>
 </div>
 
-<!-- ==================== شاشة أول تشغيل (اختيار مجلد D:\MedLabPro) ==================== -->
-<div id="firstrun-screen" class="hidden">
-  <div class="firstrun-box">
-    <div style="font-size:52px;margin-bottom:12px">🗂️</div>
-    <h2>إعداد مجلد حفظ البيانات</h2>
-    <p>هذه الخطوات تتم <b style="color:#00d4ff" class="fr-highlight">مرة واحدة فقط</b> عند أول تشغيل للبرنامج على هذا الجهاز.<br>بعدها سيعمل البرنامج تلقائياً بالكامل دون أي تدخل.</p>
 
-    <div class="firstrun-step">
-      <span class="firstrun-step-num">1</span>
-      <span style="font-size:13px" class="fr-text">افتح <b class="fr-highlight">My Computer</b> (هذا الحاسوب) ثم افتح القرص <b class="fr-highlight">D:</b></span>
-    </div>
-    <div class="firstrun-step">
-      <span class="firstrun-step-num">2</span>
-      <span style="font-size:13px" class="fr-text">انقر بالزر الأيمن ← <b class="fr-highlight">New → Folder</b> ثم سمّه بالضبط: <b class="fr-accent">MedLabPro</b></span>
-    </div>
-    <div class="firstrun-step">
-      <span class="firstrun-step-num">3</span>
-      <span style="font-size:13px" class="fr-text">اضغط الزر أدناه ثم اختر مجلد <b class="fr-accent">D:\MedLabPro</b> الذي أنشأته للتو</span>
-    </div>
-
-    <div class="firstrun-note">
-      💡 بعد اختيار المجلد، سيحفظ البرنامج جميع بياناتك فيه تلقائياً كل يوم.<br>
-      <b>لا حاجة لأي إجراء يدوي — كل شيء يعمل بشكل تلقائي.</b>
-    </div>
-
-    <button id="firstrun-btn" onclick="fsaChooseFolderFirstRun()">
-      📁 اختيار مجلد MedLabPro من D:
-    </button>
-    <div id="firstrun-status"></div>
-  </div>
-</div>
 <div id="expired-banner">
   <div class="expired-box">
     <div class="ic">⏰</div>
@@ -7228,8 +7278,22 @@ const SUB_CATS = {
   'Special':     ['Miscellaneous','Other Special'],
   'Calculated':  ['Miscellaneous','Other Calculated']
 };
-// إرجاع المجاميع الفرعية لمجموعة رئيسية معينة
-function getSubCats(cat){ return (SUB_CATS[cat]||[]).concat(['Other']); }
+// المجاميع الفرعية المخصصة (يضيفها المستخدم) — تُحفظ في localStorage وتدوم بعد الريفريش
+let customSubCats = {};
+function loadCustomSubCats(){
+  try{ const v=load('customSubCats',{}); if(v&&typeof v==='object') customSubCats=v; }catch(e){ customSubCats={}; }
+}
+function saveCustomSubCats(){
+  save('customSubCats', customSubCats);
+}
+// إرجاع المجاميع الفرعية لمجموعة رئيسية معينة (الافتراضية + المخصصة)
+function getSubCats(cat){
+  const base = SUB_CATS[cat]||[];
+  const custom = customSubCats[cat]||[];
+  // دمج بدون تكرار، مع إبقاء 'Other' في النهاية
+  const merged = [...new Set([...base, ...custom])];
+  return merged.filter(s=>s!=='Other').concat(['Other']);
+}
 // إرجاع كل المجاميع الفرعية المستخدمة فعلياً في قاعدة البيانات
 function getAllUsedSubCats(){ const s=new Set(); tests.forEach(t=>{ if(t.subCat) s.add(t.subCat); }); return [...s]; }
 const CAT_AR={'All':'الكل','Hematology':'هيماتولوجيا','Blood Gases':'غازات الدم','Biochemistry':'كيمياء حيوية','Hormones':'هرمونات','Immunology':'مناعة','Vitamins & Minerals':'فيتامينات','Tumor Markers':'أورام','Infections':'أمراض معدية','Urinalysis':'بول','Microbiology':'ميكروبيولوجيا','Stool':'براز','Special':'خاص','Calculated':'محسوبة'};
@@ -7269,7 +7333,11 @@ function initUserData(){
   inventory=[{id:'i1',name:'HbA1c Reagent',qty:45,unit:'test',min:20,exp:'2025-12-31',sup:'Vista Lab'},{id:'i2',name:'CBC Reagent',qty:200,unit:'test',min:50,exp:'2025-10-30',sup:'MedLab Co'},{id:'i3',name:'TSH Kit',qty:8,unit:'kit',min:10,exp:'2025-09-15',sup:'BioTech'}];
   qcRecords=[]; testGroups=[]; billingRecords=[];
   cultureRecords=[]; uaRecords=[]; stoolExamRecords=[]; semenRecords=[];
-  tests=ALL_TESTS.slice();
+  // ⭐ تطبيق قائمة المحذوفات (من localStorage الفوري) قبل تحميل IDB
+  // بهذا تظل التحاليل المحذوفة محذوفة حتى عند تحديث الصفحة أو رفع نسخة جديدة
+  let _deletedIds = [];
+  try{ _deletedIds = load('deletedTestIds',[]) || []; }catch(e){}
+  tests = ALL_TESTS.filter(t => _deletedIds.indexOf(t.id) < 0);
 
   // ③ نقل أي بيانات قديمة لا تزال في localStorage إلى IDB (مرة واحدة عند التشغيل)
   _migrateLegacyLS();
@@ -7395,13 +7463,25 @@ async function _mergeIDBInBackground(){
       }
     }
     // التحاليل
+    // ⭐ قراءة قائمة المحذوفات من IDB (أحدث من localStorage في حالات المزامنة)
+    let _delIds = [];
+    try{
+      const _delFromIdb = await IDB.get(pfx+'deletedTestIds');
+      if(Array.isArray(_delFromIdb)) _delIds = _delFromIdb;
+      else _delIds = load('deletedTestIds',[]) || [];
+    }catch(e){ _delIds = load('deletedTestIds',[]) || []; }
+    const _delSet = new Set(_delIds);
+
     const idbTests=await IDB.get(pfx+'tests');
     if(idbTests&&Array.isArray(idbTests)&&idbTests.length>0){
       const allMap=new Map(ALL_TESTS.map(function(x){return [x.id,x];}));
-      const map=new Map(tests.map(function(x){return [x.id,x];}));
+      // ⭐ ابدأ المخطط من idbTests فقط (وليس من tests الذي يحوي ALL_TESTS كاملة)
+      // ثم أضف من ALL_TESTS أي عناصر جديدة لم تكن في idbTests وليست محذوفة
+      const map=new Map();
       let tc=false;
       idbTests.forEach(function(t){
         if(!t.id)return;
+        if(_delSet.has(t.id))return; // تخطى المحذوفة
         const orig=allMap.get(t.id);
         const merged=Object.assign({},t);
         if(orig){
@@ -7412,12 +7492,26 @@ async function _mergeIDBInBackground(){
           }
           else{delete merged.isCalc;delete merged.calcFormula;delete merged.calcInputSettings;}
         }
-        if(!map.has(t.id)||JSON.stringify(map.get(t.id))!==JSON.stringify(merged)){
-          map.set(t.id,merged); tc=true;
+        map.set(t.id,merged);
+      });
+      // أضف أي عناصر جديدة من ALL_TESTS لم تكن في idbTests وليست محذوفة
+      ALL_TESTS.forEach(function(t){
+        if(!map.has(t.id) && !_delSet.has(t.id)){
+          map.set(t.id, Object.assign({}, t));
         }
       });
-      if(tc){tests=[...map.values()];changed=true;}
+      tests=[...map.values()];
+      tc=true;
+      changed=true;
       _MC[pfx+'tests']=tests;
+    } else {
+      // لا يوجد idbTests — استخدم ALL_TESTS مع تطبيق المحذوفات
+      const filtered = ALL_TESTS.filter(t => !_delSet.has(t.id));
+      if(filtered.length !== tests.length || filtered.some((t,i)=>tests[i] && t.id !== tests[i].id)){
+        tests = filtered;
+        changed = true;
+        _MC[pfx+'tests']=tests;
+      }
     }
     if(changed){
       renderAll(); updateDashboard(); updateBadges();
@@ -7450,6 +7544,7 @@ function startApp(){
   loadSettings();   // أولاً: ضع القيم المحفوظة في settings object والـ DOM
   applyFontCustom(); // ثانياً: طبّق الكل على CSS
   applyCustomExamFields();
+  loadCustomSubCats();
   buildTestCatTabs();
   renderAll();
   applyPermissionsToSidebar();
@@ -7876,7 +7971,7 @@ function applyPermissionsToSidebar(){
 // ============================================================
 // NAVIGATION
 // ============================================================
-const pages={dashboard:['لوحة التحكم','الرئيسية / لوحة التحكم'],patients:['إدارة المرضى','الرئيسية / المرضى'],requests:['طلبات التحاليل','الرئيسية / الطلبات'],results:['إدخال النتائج','الرئيسية / النتائج'],print:['طباعة النتائج','الرئيسية / الطباعة'],invoices:['الفواتير','الرئيسية / المالية'],billing:['الحسابات','الرئيسية / الحسابات'],'tests-db':['قاعدة التحاليل','الرئيسية / التحاليل'],packages:['الباقات الطبية','الرئيسية / الباقات'],doctors:['الأطباء','الرئيسية / الأطباء'],inventory:['المخزون','الرئيسية / المخزون'],reports:['التقارير','الرئيسية / التقارير'],quality:['ضبط الجودة','الرئيسية / الجودة'],settings:['الإعدادات','الرئيسية / الإعدادات'],database:['قاعدة البيانات','الرئيسية / قاعدة البيانات'],culture:['🦠 نتائج الزرع','الرئيسية / الزرع'],ua:['💧 Urine Examination','Home / Urine'],stool:['🧫 Stool Examination','Home / Stool'],semen:['🔬 Semen Analysis','Home / Semen'],waitqueue:['⏳ طابور الانتظار','الرئيسية / طابور الانتظار'],lis:['🔬 ربط الأجهزة — LIS Bridge','الرئيسية / ربط الأجهزة'],esr:['⏱️ عداد ESR','الرئيسية / عداد ESR']};
+const pages={dashboard:['لوحة التحكم','الرئيسية / لوحة التحكم'],patients:['إدارة المرضى','الرئيسية / المرضى'],requests:['طلبات التحاليل','الرئيسية / الطلبات'],results:['إدخال النتائج','الرئيسية / النتائج'],print:['طباعة النتائج','الرئيسية / الطباعة'],invoices:['الفواتير','الرئيسية / المالية'],billing:['الحسابات','الرئيسية / الحسابات'],'tests-db':['قاعدة التحاليل','الرئيسية / التحاليل'],packages:['الباقات الطبية','الرئيسية / الباقات'],doctors:['الأطباء','الرئيسية / الأطباء'],inventory:['المخزون','الرئيسية / المخزون'],reports:['التقارير','الرئيسية / التقارير'],quality:['ضبط الجودة','الرئيسية / الجودة'],settings:['الإعدادات','الرئيسية / الإعدادات'],database:['قاعدة البيانات','الرئيسية / قاعدة البيانات'],culture:['🦠 نتائج الزرع','الرئيسية / الزرع'],ua:['💧 Urine Examination','Home / Urine'],stool:['🧫 Stool Examination','Home / Stool'],semen:['🔬 Semen Analysis','Home / Semen'],dnafrag:['🧬 DNA Fragmentation','Home / DNA Fragmentation'],waitqueue:['⏳ طابور الانتظار','الرئيسية / طابور الانتظار'],lis:['🔬 ربط الأجهزة — LIS Bridge','الرئيسية / ربط الأجهزة'],esr:['⏱️ عداد ESR','الرئيسية / عداد ESR']};
 
 function nav(p){
   // إغلاق الشريط الجانبي على الجوال بعد الضغط
@@ -7894,6 +7989,7 @@ function nav(p){
     ua:'results',
     stool:'results',
     semen:'results',
+    dnafrag:'results',
     print:'print',
     invoices:'billing',
     billing:'billing',
@@ -7924,6 +8020,8 @@ function nav(p){
     const s2=document.getElementById('sec-stool-exam'); if(s2) s2.classList.add('active');
   } else if(p==='semen'){
     const s3=document.getElementById('sec-semen-exam'); if(s3) s3.classList.add('active');
+  } else if(p==='dnafrag'){
+    const s4=document.getElementById('sec-dnafrag'); if(s4) s4.classList.add('active');
   } else {
     const s=document.getElementById('sec-'+p); if(s) s.classList.add('active');
   }
@@ -7955,6 +8053,7 @@ function nav(p){
   if(p==='ua') renderUAList();
   if(p==='stool') renderStoolList();
   if(p==='semen') renderSemenList();
+  if(p==='dnafrag') renderDNAFragList();
   if(p==='requests'){
     // إعادة تعيين الـ pill
     document.querySelectorAll('#sec-requests .req-pill[data-filter]').forEach(t=>t.classList.remove('active'));
@@ -7977,7 +8076,20 @@ function nav(p){
       })(20);
     }
     const srch=document.getElementById('req-srch-inp');
-    if(srch){ requestAnimationFrame(function(){ srch.focus(); srch.select(); }); }
+    if(srch){
+      // ⭐ تركيز قوي ومتعدد المحاولات — يضمن النجاح حتى بعد العودة من نافذة الطباعة
+      // المشكلة: على الجوال، عند العودة من window.print()، الـ focus قد يكون
+      // غير مستقر، فالمحاولة الواحدة قد تفشل. لذا نحاول 3 مرات بفواصل قصيرة.
+      const _doFocusReq = function(){
+        srch.focus();
+        try{ srch.select(); }catch(e){}
+        // على بعض المتصفحات، select() قد يفشل فوراً بعد focus، فنُعيد المحاولة
+        try{ srch.setSelectionRange(0, (srch.value||'').length); }catch(e){}
+      };
+      requestAnimationFrame(_doFocusReq);
+      setTimeout(_doFocusReq, 50);
+      setTimeout(_doFocusReq, 200);
+    }
   }
   if(p==='patients') renderPatients();
   if(p==='doctors') renderDoctors();
@@ -8016,8 +8128,10 @@ function openPatientQuickPanel(pid){
     const reqTests=r.tests.map(tid=>tests.find(t=>t.id===tid)).filter(Boolean);
     const testSummary=reqTests.map(t=>{
       const val=r.results&&r.results[t.id]?r.results[t.id]:'—';
-      const isHigh=t.minVal!==null&&val!=='—'&&parseFloat(val)>t.maxVal;
-      const isLow=t.minVal!==null&&val!=='—'&&parseFloat(val)<t.minVal;
+      // ⭐ تجاهل علامات < > في القيمة عند فحص H/L
+      const _pv8052 = (typeof val==='string' && (val.charAt(0)==='<'||val.charAt(0)==='>')) ? parseFloat(val.substring(1).trim()) : parseFloat(val);
+      const isHigh=t.minVal!==null&&val!=='—'&&_pv8052>t.maxVal;
+      const isLow=t.minVal!==null&&val!=='—'&&_pv8052<t.minVal;
       const cls=isHigh?'color:var(--danger)':isLow?'color:var(--warning)':'color:var(--success)';
       return `<span style="font-size:10px;${cls}">${t.code}:${val}</span>`;
     }).join(' | ');
@@ -8315,7 +8429,7 @@ function renderWizStep(){
               <button onclick="_toggleMRTEdit()" id="mrt-edit-btn" style="font-size:9px;padding:2px 7px;border-radius:5px;border:1px solid var(--border);background:rgba(255,255,255,0.05);color:var(--text2);cursor:pointer;font-family:'Cairo',sans-serif">✏️ تعديل</button>
             </div>
             <div id="mrt-buttons-area" style="display:flex;flex-wrap:wrap;gap:4px;max-height:120px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--primary) transparent"></div>
-            <div id="mrt-edit-area" style="display:none;margin-top:6px;background:var(--bg-glass);border:1px solid var(--border);border-radius:8px;padding:8px;position:relative;z-index:50">
+            <div id="mrt-edit-area" style="display:none;margin-top:6px;background:var(--bg-glass);border:1px solid var(--border);border-radius:8px;padding:8px;position:relative;z-index:99999">
               <div style="display:flex;gap:8px;align-items:flex-start">
                 <!-- يسار: منطقة البحث والإضافة -->
                 <div style="width:175px;flex-shrink:0;display:flex;flex-direction:column;align-items:stretch">
@@ -8681,6 +8795,18 @@ function toggleWizTest(tid){
   _wizRightPanelUpdateOne(t, tid, nowSelected);
 
   updateWizTotal();
+
+  // ⭐ بعد اختيار/إلغاء تحليل: أعد التركيز لحقل البحث وحدّد محتواه
+  // ليتمكن المستخدم من كتابة التحليل التالي مباشرة بدون نقر إضافي
+  const _wizSrch = document.getElementById('wiz-test-srch');
+  if(_wizSrch){
+    // استخدم rAF لتأخير بسيط جداً (frame واحد) حتى تكتمل عملية تحديث الـ DOM
+    requestAnimationFrame(function(){
+      _wizSrch.focus();
+      try{ _wizSrch.select(); }catch(e){}
+      try{ _wizSrch.setSelectionRange(0, (_wizSrch.value||'').length); }catch(e){}
+    });
+  }
 }
 
 // تحديث جزئي سريع: يضيف أو يحذف عنصر واحد فقط من القائمة اليمنى
@@ -9151,8 +9277,10 @@ function viewPatientFullModal(pid){
     const reqTests=r.tests.map(tid=>tests.find(t=>t.id===tid)).filter(Boolean);
     const testRows=reqTests.map(t=>{
       const val=r.results&&r.results[t.id]?r.results[t.id]:'—';
-      const isHigh=t.minVal!==null&&val!=='—'&&parseFloat(val)>t.maxVal;
-      const isLow=t.minVal!==null&&val!=='—'&&parseFloat(val)<t.minVal;
+      // ⭐ تجاهل علامات < > في القيمة عند فحص H/L
+      const _pv8052 = (typeof val==='string' && (val.charAt(0)==='<'||val.charAt(0)==='>')) ? parseFloat(val.substring(1).trim()) : parseFloat(val);
+      const isHigh=t.minVal!==null&&val!=='—'&&_pv8052>t.maxVal;
+      const isLow=t.minVal!==null&&val!=='—'&&_pv8052<t.minVal;
       const cls=isHigh?'color:var(--danger);font-weight:700':isLow?'color:var(--warning);font-weight:700':'color:var(--success)';
       const flag=isHigh?'⬆️':isLow?'⬇️':val!=='—'?'✅':'';
       return `<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid rgba(255,255,255,0.04)">
@@ -9193,7 +9321,7 @@ function showSingleReqResults(rid){
   reqTests.forEach(t=>{
     const val=r.results[t.id]||'-';
     let flag='',cls='';
-    if(t.minVal!==null&&val!=='-'){const v=parseFloat(val);if(v>t.maxVal){flag='▲ High';cls='color:var(--danger);font-weight:700';}else if(v<t.minVal){flag='▼ Low';cls='color:var(--warning);font-weight:700';}else{flag='Normal';cls='color:var(--success)';}}
+    if(t.minVal!==null&&val!=='-'){const _vR=(typeof val==='string'&&(val.charAt(0)==='<'||val.charAt(0)==='>'))?parseFloat(val.substring(1).trim()):parseFloat(val); const v=_vR; if(v>t.maxVal){flag='▲ High';cls='color:var(--danger);font-weight:700';}else if(v<t.minVal){flag='▼ Low';cls='color:var(--warning);font-weight:700';}else{flag='Normal';cls='color:var(--success)';}}
     else if(val==='Positive'){flag='Positive ⚠️';cls='color:var(--danger);font-weight:700';}else if(val==='Negative'){flag='Negative ✅';cls='color:var(--success)';}
     html+=`<tr><td>${t.nameEn}<br><span style="font-size:9px;color:var(--text2)">${t.code}</span></td><td style="${cls};font-size:14px;font-weight:800">${val}</td><td style="font-size:11px">${t.unit}</td><td style="font-size:11px">${t.ref||'-'}</td><td style="${cls}">${flag}</td></tr>`;
   });
@@ -9355,11 +9483,11 @@ function renderRequestsFiltered(filter='today',srch=''){
     <td>${r.printed?'<span class="bdg bdg-ok">🖨️ مطبوع</span>':'<span class="bdg" style="background:rgba(255,214,10,0.13);color:var(--warning);border:1px solid rgba(255,214,10,0.28)">⏸ غير مطبوع</span>'}</td>
     <td>
       <div class="rrw">
-        <button class="rrt ${r.status==='done'?'green':'blue'}"
+        <button class="rrt ${r.status==='done'?(r.printed?'green':'orange'):'blue'}"
           data-rid="${r.id}"
           data-mode="${r.status==='done'?'done':'pending'}"
           onclick="rrOpen(this)"
-          title="${r.status==='done'?'تعديل وطباعة':'نتائج وطباعة'}">
+          title="${r.status==='done'?(r.printed?'تعديل وطباعة (مطبوع)':'تعديل وطباعة (غير مطبوع)'):'نتائج وطباعة'}">
           ${r.status==='done'?'✏️🖨️':'🧪'}
         </button>
       </div>
@@ -9566,7 +9694,7 @@ function openViewResultsModal(rid){
     const val=r.results[t.id]||'';
     const isQual=(t.unit==='qualitative'||t.refType==='pos-neg');
     let interp='',cls='';
-    if(!isQual&&val){const v=parseFloat(val);if(v>t.maxVal){interp='⬆️ High';cls='color:var(--danger);font-weight:700';}else if(v<t.minVal){interp='⬇️ Low';cls='color:var(--warning);font-weight:700';}else{interp='✅ Normal';cls='color:var(--success)';}}
+    if(!isQual&&val){const _vR=(typeof val==='string'&&(val.charAt(0)==='<'||val.charAt(0)==='>'))?parseFloat(val.substring(1).trim()):parseFloat(val); const v=_vR; if(v>t.maxVal){interp='⬆️ High';cls='color:var(--danger);font-weight:700';}else if(v<t.minVal){interp='⬇️ Low';cls='color:var(--warning);font-weight:700';}else{interp='✅ Normal';cls='color:var(--success)';}}
     else if(val==='Positive'){interp='⚠️ Positive';cls='color:var(--danger);font-weight:700';}
     else if(val==='Negative'||val==='Non-Reactive'){interp='✅ Negative';cls='color:var(--success)';}
 
@@ -9610,8 +9738,15 @@ function openViewResultsModal(rid){
           +' oninput="vrCheckResult(\''+t.id+'\',this.value);document.getElementById(\'vr-rv-'+t.id+'\').value=\'__manual__\'">'
           +'</div>';
     } else {
-      const iCls=val?(parseFloat(val)>t.maxVal?'res-high':parseFloat(val)<t.minVal?'res-low':'res-ok'):'';
-      inputHtml=`<input type="text" class="res-input ${iCls}" id="vr-rv-${t.id}" lang="en" inputmode="decimal" value="${val}" oninput="vrCheckResult('${t.id}',this.value)" placeholder="...">`;
+      // ⭐ استعمل _parseRes ليتجاهل علامات < > عند تحديد class الأولي
+      const _ipv=_parseRes(val);
+      const iCls=val&&!isNaN(_ipv)?(_ipv>t.maxVal?'res-high':_ipv<t.minVal?'res-low':'res-ok'):'';
+      // ⭐ مربع النتيجة + زرّا < > على جانبيه لإدراج علامات المقارنة
+      inputHtml=`<span class="res-cmp-wrap" style="display:inline-flex;align-items:center;gap:4px;">
+        <button type="button" class="cmp-sign-btn" title="أدرج علامة <" onclick="_insertCmpSign('vr-rv-${t.id}','<', function(v){vrCheckResult('${t.id}',v);})">&lt;</button>
+        <input type="text" class="res-input ${iCls}" id="vr-rv-${t.id}" lang="en" inputmode="text" value="${val}" oninput="vrCheckResult('${t.id}',this.value)" placeholder="...">
+        <button type="button" class="cmp-sign-btn" title="أدرج علامة >" onclick="_insertCmpSign('vr-rv-${t.id}','>', function(v){vrCheckResult('${t.id}',v);})">&gt;</button>
+      </span>`;
     }
 
     rows+=`<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
@@ -9742,7 +9877,8 @@ function vrCheckResult(tid,val){
     interp.style.cssText=val==='Positive'?'color:var(--danger);font-weight:700':'color:var(--success);font-weight:700';
     _vrAutoSave(); return;
   }
-  const v=parseFloat(val);if(isNaN(v)){interp.textContent='';return;}
+  // ⭐ استعمل _parseRes ليتجاهل علامات < > في البداية
+  const v=_parseRes(val);if(isNaN(v)){interp.textContent='';return;}
   if(v>t.maxVal){interp.textContent='⬆️ High';interp.style.cssText='color:var(--danger);font-weight:700';if(inp)inp.className='res-input res-high';}
   else if(v<t.minVal){interp.textContent='⬇️ Low';interp.style.cssText='color:var(--warning);font-weight:700';if(inp)inp.className='res-input res-low';}
   else{interp.textContent='✅ Normal';interp.style.cssText='color:var(--success);font-weight:700';if(inp)inp.className='res-input res-ok';}
@@ -10049,8 +10185,15 @@ function loadResultEntry(){
         +' oninput="checkResult(\''+t.id+'\',this.value);document.getElementById(\'rv-'+t.id+'\').value=\'__manual__\';_autoSaveResults()">'
         +'</div>';
     } else {
-      const cls=savedVal&&ref.min!==null?(parseFloat(savedVal)>ref.max?'res-high':parseFloat(savedVal)<ref.min?'res-low':'res-ok'):'';
-      inputHtml=`<input type="text" class="res-input ${cls}" id="rv-${t.id}" lang="en" inputmode="decimal" value="${savedVal||''}" oninput="checkResult('${t.id}',this.value)" placeholder="...">`;
+      // ⭐ استعمل _parseRes ليتجاهل علامات < > عند تحديد class الأولي
+      const _pv = _parseRes(savedVal);
+      const cls=savedVal&&ref.min!==null&&!isNaN(_pv)?(_pv>ref.max?'res-high':_pv<ref.min?'res-low':'res-ok'):'';
+      // ⭐ مربع النتيجة + زرّا < > على جانبيه لإدراج علامات المقارنة
+      inputHtml=`<span class="res-cmp-wrap" style="display:inline-flex;align-items:center;gap:4px;">
+        <button type="button" class="cmp-sign-btn" title="أدرج علامة <" onclick="_insertCmpSign('rv-${t.id}','<', function(v){checkResult('${t.id}',v);})">&lt;</button>
+        <input type="text" class="res-input ${cls}" id="rv-${t.id}" lang="en" inputmode="text" value="${savedVal||''}" oninput="checkResult('${t.id}',this.value)" placeholder="...">
+        <button type="button" class="cmp-sign-btn" title="أدرج علامة >" onclick="_insertCmpSign('rv-${t.id}','>', function(v){checkResult('${t.id}',v);})">&gt;</button>
+      </span>`;
     }
     // جمع آخر 4 نتائج لهذا التحليل بالذات لنفس المريض
     const prevForThisTest=prevReqs.filter(pr=>pr.results&&pr.results[t.id]!==undefined&&pr.results[t.id]!=='').slice(0,4);
@@ -10238,6 +10381,62 @@ function _autoSaveResults(){
     updateDashboard(); updateBadges();
   }, 500);
 }
+// ─── إدراج علامة المقارنة (< أو >) في مربع النتيجة ───
+// عند الضغط على زر < أو > بجانب مربع النتيجة:
+// - إذا كان المربع فارغاً: تُدرج العلامة في بداية النص
+// - إذا كانت العلامة موجودة بالفعل في البداية: يُترك الحقل كما هو
+// - إذا كان هناك نص بدون علامة: تُضاف العلامة في البداية
+// - بعد الإدراج: يضع التركيز في النهاية ليتمكن المستخدم من الكتابة مباشرة
+// - يستدعي onCheck لإعادة تشغيل منطق التحقق (checkResult أو vrCheckResult)
+function _insertCmpSign(inputId, sign, onCheck){
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  const cur = inp.value || '';
+  const trimmed = cur.replace(/^\s+/, '');
+  let newVal;
+  if(trimmed.length === 0){
+    newVal = sign;
+  } else if(trimmed.charAt(0) === sign){
+    // العلامة موجودة بالفعل — لا شيء
+    newVal = cur;
+  } else if(trimmed.charAt(0) === '<' || trimmed.charAt(0) === '>'){
+    // علامة مقارنة أخرى موجودة — استبدلها
+    newVal = sign + trimmed.substring(1);
+  } else {
+    newVal = sign + trimmed;
+  }
+  inp.value = newVal;
+  // ضع التركيز في نهاية النص
+  inp.focus();
+  try{
+    const len = newVal.length;
+    inp.setSelectionRange(len, len);
+  }catch(e){}
+  // أعد تشغيل onCheck (مثل checkResult / vrCheckResult)
+  if(typeof onCheck === 'function'){
+    try{ onCheck(newVal); }catch(e){ console.error(e); }
+  } else if(typeof onCheck === 'string'){
+    // يدعم تمرير اسم دالة كنص (إذا احتجنا)
+    try{ window[onCheck] && window[onCheck](inp.id.replace(/^[a-z\-]+/, ''), newVal); }catch(e){}
+  }
+  // تشغيل event 'input' ليلتقط أي مستمع آخر (مثل auto-save)
+  try{ inp.dispatchEvent(new Event('input', {bubbles:true})); }catch(e){}
+}
+
+// ─── _parseRes: تحليل قيمة نتيجة قد تحتوي على علامة < أو > في البداية ───
+// مثلاً "<100" → 100 ، ">5.5" → 5.5 ، "100" → 100 ، "abc" → NaN
+// العلامة بصرية فقط (تظهر في التقرير) ولا تؤثر على منطق H/L/Normal
+function _parseRes(val){
+  if(val===null||val===undefined) return NaN;
+  let s=String(val).trim();
+  if(s.length===0) return NaN;
+  // إزالة < أو > من البداية (يدعم مسافات أيضاً)
+  if(s.charAt(0)==='<'||s.charAt(0)==='>'){
+    s=s.substring(1).trim();
+  }
+  return parseFloat(s);
+}
+
 function checkResult(tid,val){
   const t=tests.find(x=>x.id===tid);
   const inp=document.getElementById('rv-'+tid);
@@ -10247,7 +10446,8 @@ function checkResult(tid,val){
     interp.textContent=val==='Positive'?'⚠️ Positive':val==='Negative'?'✅ Negative':val;
     interp.className=val==='Positive'?'high':'normal';return;
   }
-  const v=parseFloat(val);
+  // ⭐ استعمل _parseRes ليتجاهل علامات < > في البداية
+  const v=_parseRes(val);
   if(isNaN(v)){interp.textContent='';return;}
   // Get current patient ref
   const id=document.getElementById('res-req-sel').value;
@@ -10492,7 +10692,6 @@ function openGroupingModal(reqId){
   // المجموعة الفرعية مثل: "Liver Functions", "Lipid Profile", "Thyroid Hormones"
   // وليس القسم الرئيسي مثل: "Hematology", "Chemistry"
   const grouped = {};
-  const catOrder = []; // الترتيب الأصلي للمجموعات
   regularTests.forEach(t => {
     const v = (req.results && req.results[t.id]) || '';
     if(!v || !v.toString().trim()) return; // تخطى التحاليل الفارغة
@@ -10500,10 +10699,12 @@ function openGroupingModal(reqId){
     const cat = t.subCat || t.cat || 'Other';
     if(!grouped[cat]){
       grouped[cat] = [];
-      catOrder.push(cat);
     }
     grouped[cat].push(t);
   });
+  // ⭐ ترتيب المجموعات أبجدياً — مطابق لـ buildPrintHTML (السطر 11627)
+  // هذا يضمن أن الترتيب في modal التجميع يطابق ترتيب الطباعة الفعلية
+  const catOrder = Object.keys(grouped).sort((a,b)=>a.localeCompare(b));
 
   if(catOrder.length === 0){
     showNotif('تنبيه','لا توجد تحاليل بنتائج لتجميعها','warning');
@@ -10513,9 +10714,31 @@ function openGroupingModal(reqId){
   // قراءة pageGroups المحفوظ مسبقاً (إن وُجد)
   let savedGroups = Array.isArray(req.pageGroups) ? req.pageGroups.map(g => Array.isArray(g) ? g.slice() : []) : null;
 
-  // إذا لم يُحفظ توزيع → جميع المجموعات في الصفحة الأولى، صفحة ثانية فارغة
+  // ⭐ إذا لم يُحفظ توزيع → نحاكي التوزيع التلقائي للطباعة
+  // حساب تقديري: ~22 صف لكل ورقة A4 (مع رأس وذيل)
+  // لكل مجموعة: 1 صف لاسم المجموعة + N صف للتحاليل
   if(!savedGroups || savedGroups.length === 0){
-    savedGroups = [catOrder.slice(), []];
+    const ROWS_PER_PAGE = 22;        // عدد الصفوف التقريبي في ورقة واحدة
+    const HEADER_ROWS = 1;           // عنوان كل مجموعة فرعية
+    savedGroups = [];
+    let curPage = [];
+    let curRows = 0;
+    catOrder.forEach(cat => {
+      const tests = grouped[cat] || [];
+      const need = HEADER_ROWS + tests.length;
+      // إذا المجموعة لا تتسع وكانت الصفحة فيها محتوى → ابدأ صفحة جديدة
+      if(curPage.length > 0 && (curRows + need) > ROWS_PER_PAGE){
+        savedGroups.push(curPage);
+        curPage = [cat];
+        curRows = need;
+      } else {
+        curPage.push(cat);
+        curRows += need;
+      }
+    });
+    if(curPage.length > 0) savedGroups.push(curPage);
+    // ضمان وجود صفحتين على الأقل
+    while(savedGroups.length < 2) savedGroups.push([]);
   } else {
     // التحقق من أن الـ savedGroups يحتوي على المجموعات الموجودة فقط
     // أي cats جديدة (مضافة بعد آخر حفظ) → تذهب للصفحة الأولى
@@ -10763,11 +10986,36 @@ function _moveTestBetweenPages(testId, fromPage, toPage){
 /**
  * نقل مجموعة فرعية كاملة بين صفحتين
  */
+// ⭐ حساب تقديري لعدد الصفوف في صفحة منطقية (header + tests count)
+function _countPageRows(pageList){
+  const state = window._groupingState;
+  if(!state || !Array.isArray(pageList)) return 0;
+  let total = 0;
+  pageList.forEach(e => {
+    let cName = e;
+    if(typeof e === 'string' && e.indexOf('::') > 0) cName = e.split('::')[0];
+    const cTests = state.grouped[cName] || [];
+    total += 1 + cTests.length; // 1 للعنوان + N للتحاليل
+  });
+  return total;
+}
+
+const _PAGE_CAPACITY = 22; // عدد الصفوف المسموح بها لكل ورقة A4
+
 function _moveCatBetweenPages(catName, fromPage, toPage){
   const state = window._groupingState;
   if(!state) return;
   const fromList = state.pages[fromPage];
   const toList = state.pages[toPage];
+
+  // ⭐ تحقق من سعة الصفحة الهدف قبل النقل
+  const movingTests = state.grouped[catName] || [];
+  const movingRows = 1 + movingTests.length;
+  const currentToRows = _countPageRows(toList);
+  if(currentToRows + movingRows > _PAGE_CAPACITY){
+    showNotif('تنبيه',`⚠️ الصفحة ${_arabicNum(toPage+1)} لا تستوعب هذه المجموعة (${_arabicNum(movingRows)} صف). أضف صفحة جديدة أو انقل لصفحة أخرى.`,'warning');
+    return; // إلغاء النقل
+  }
 
   // إزالة جميع entries المتعلقة بـ catName من الصفحة المصدر
   const removeIdxs = [];
@@ -10834,7 +11082,7 @@ function _showSimpleChoice(title, choices){
   if(old) old.remove();
   const m = document.createElement('div');
   m.id = 'm-grouping-choice';
-  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:14px';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999999;display:flex;align-items:center;justify-content:center;padding:14px';
   let btns = choices.map((c, i) => `<button class="btn btn-p" data-i="${i}" style="margin:4px;min-width:140px">${_esc(c.label)}</button>`).join('');
   m.innerHTML = `
     <div style="background:var(--card,#fff);border:1px solid var(--border);border-radius:12px;max-width:420px;width:100%;padding:16px;box-shadow:0 10px 35px rgba(0,0,0,0.4)">
@@ -10993,7 +11241,8 @@ function finalizeAndPrint(){
 }
 function getInterp(t,val,gender,age){
   if(t.minVal===null&&!(t.ageRanges&&t.ageRanges.length))return val==='Positive'?'<span class="high">⚠️ Positive</span>':'<span class="normal">✅ Negative</span>';
-  const v=parseFloat(val);if(isNaN(v))return '';
+  // ⭐ تجاهل علامات < > في القيمة عند التفسير
+  const v=_parseRes(val);if(isNaN(v))return '';
   const ref=getPatientRef(t,gender||'male',age||0);
   if(ref.min===null||ref.max===null)return '';
   if(v>ref.max)return '<span class="high">⬆️ High</span>';
@@ -11666,7 +11915,7 @@ function buildPrintHTML(req, opts){
   const footerH = hasFtrImg ? _ftrUserH : hasFtrTxt ? 46 : (settings.hdrMode==='text' ? 48 : 0);
   const totalFooterH = footerH + sigH;
   // هامش سفلي للصفحة = إجمالي ارتفاع الذيل + 6mm احتياطي
-  const pageBottomMm = totalFooterH>0 ? Math.ceil(totalFooterH*0.265+1) : 1;
+  const pageBottomMm = totalFooterH>0 ? Math.ceil(totalFooterH*0.265) : 0;
   const css=`
     /* Google Fonts removed for faster print — using system fonts */
     *{margin:0;padding:0;box-sizing:border-box;}
@@ -11674,11 +11923,12 @@ function buildPrintHTML(req, opts){
     @page{margin:0 !important;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     body{font-family:${reportFontFamily};color:#000;font-weight:${reportFontWeight};
          -webkit-print-color-adjust:exact;print-color-adjust:exact;
-         padding:1mm 4mm 0 4mm;}
-    /* الذيل ثابت في الحافة السفلية للورقة — مرفوع 6mm لتجنب المنطقة غير المطبوعة */
+         padding:1mm 3mm 0 3mm;}
+    /* الذيل ثابت في الحافة السفلية للورقة — bottom:0 لاستغلال كل المساحة المتاحة */
+    /* مع 0mm margin في @page نضمن أن الذيل يلامس الحافة (الطابعة ستحترم منطقتها غير المطبوعة) */
     #print-footer{
       position:fixed;
-      bottom:1mm;
+      bottom:3mm;
       left:0;
       right:0;
       background:#ffffff;
@@ -11695,13 +11945,13 @@ function buildPrintHTML(req, opts){
       margin:0;
       padding:0;
     }
-    #print-spacer{height:${totalFooterH+22}px;display:block;}
+    #print-spacer{height:${totalFooterH+12}px;display:block;}
     @media print{
       @page{margin:0 !important;size:A4 portrait;}
-      body{padding:1mm 4mm 0 4mm;}
-      #print-footer{position:fixed;bottom:1mm;left:0;right:0;background:#ffffff;z-index:9999;}
+      body{padding:1mm 3mm 0 3mm;}
+      #print-footer{position:fixed;bottom:3mm;left:0;right:0;background:#ffffff;z-index:9999;}
       #print-footer img{display:block;width:100%;height:${footerH}px;object-fit:fill;margin:0;padding:0;}
-      #print-spacer{display:block;height:${totalFooterH+22}px;}
+      #print-spacer{display:block;height:${totalFooterH+12}px;}
     }
   `;
 
@@ -11770,7 +12020,7 @@ function buildPrintHTML(req, opts){
     codes.forEach(c=>{ C128.widths[c].forEach((w,i)=>bars.push({w,dark:i%2===0})); });
     STOP.forEach((w,i)=>bars.push({w,dark:i%2===0}));
     bars.push({w:2,dark:false});
-    const h=40, totalW=bars.reduce((s,b)=>s+b.w*2,0);
+    const h=32, totalW=bars.reduce((s,b)=>s+b.w*2,0);  // ⭐ ارتفاع مُقلَّص قليلاً
     let x=0, rects='';
     bars.forEach(b=>{ if(b.dark) rects+=`<rect x="${x}" y="0" width="${b.w*2}" height="${h}" fill="#000"/>`; x+=b.w*2; });
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${h}" viewBox="0 0 ${totalW} ${h}" style="display:block">${rects}</svg>`;
@@ -11793,37 +12043,61 @@ function buildPrintHTML(req, opts){
   const doctorColor = settings.colorDoctor||'#cc0011';
   const stripColor  = settings.colorResults||'#003366';
   const sectionColor = settings.colorSection||'#003366';
-  // Name/Doctor: 17px bold — باقي البيانات: 16px عادي
-  const LBL=`font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.6px;white-space:nowrap;width:48px;flex-shrink:0`;
-  const BOX_NAME=(color,rtl)=>`min-width:${COL_W};border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:3px 7px;font-size:17px;font-weight:900;color:${color||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block${rtl?';direction:rtl;text-align:right':''}`;
-  const BOX_INFO=(color,rtl)=>`min-width:${COL_W};border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:3px 7px;font-size:16px;font-weight:400;color:${color||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block${rtl?';direction:rtl;text-align:right':''}`;
-  const BOX_SMALL=(color,rtl)=>`min-width:${COL_W};border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:3px 7px;font-size:${pfs};font-weight:700;color:${color||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block${rtl?';direction:rtl;text-align:right':''}`;
-  const rowName=(lbl,val,color,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><span style="${LBL}">${lbl}</span><span style="${BOX_NAME(color,rtl)}">${val}</span></div>`;
-  const rowInfo=(lbl,val,color,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><span style="${LBL}">${lbl}</span><span style="${BOX_INFO(color,rtl)}">${val}</span></div>`;
-  const row=(lbl,val,color,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="${LBL}">${lbl}</span><span style="${BOX_SMALL(color,rtl)}">${val}</span></div>`;
+  // ⭐ بيانات المريض — تخطيط مرن:
+  // اليسار: Name/Sex-Age/Doctor — يتمدد كوحدة واحدة حسب طول النص (flex:1)
+  // اليمين: الباركود + 3 مستطيلات (ID/Input/Print) بعرض ثابت = عرض الباركود
+  // الباركود ملاصق للحافة اليمنى للورقة (مع الرأس)
+  // ارتفاعات مستطيلات اليسار مُقلَّصة (padding أقل ليكون النص ملاصقاً)
+  const _ptInfoSize = ptfs;
+  const _ptInfoWt   = settings.fontWeight || reportFontWeight || '700';
+  // ⭐ Sex/Age دائماً أصغر بدرجة (1px) من Name/Doctor
+  const _ptInfoSizeSA = (function(){
+    const m = String(_ptInfoSize).match(/(\d+(?:\.\d+)?)/);
+    if(!m) return _ptInfoSize;
+    const n = parseFloat(m[1]);
+    return (n - 2) + 'px';  // Sex/Age أصغر بدرجتين
+  })();
+
+  // أنماط مستطيلات اليسار (Name, Sex/Age, Doctor) — تتمدد سوياً، ارتفاع مضغوط
+  const LBL_L = `font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.6px;white-space:nowrap;width:48px;flex-shrink:0`;
+  // padding:1px 7px → ارتفاع المستطيل ملاصق للنص
+  // text-align:center → النص في وسط المستطيل (أنيق ومرتب)
+  const BOX_L = (color,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:${_ptInfoSize};font-weight:${_ptInfoWt};color:${color||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  // ⭐ BOX_L_SA: لـ Sex/Age فقط — أصغر بدرجة من Name/Doctor
+  const BOX_L_SA = (color,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:${_ptInfoSizeSA};font-weight:${_ptInfoWt};color:${color||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  const rowL = (lbl,val,color,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><span style="${LBL_L}">${lbl}</span><span style="${BOX_L(color,rtl)}">${val}</span></div>`;
+  const rowL_SA = (lbl,val,color,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><span style="${LBL_L}">${lbl}</span><span style="${BOX_L_SA(color,rtl)}">${val}</span></div>`;
+
+  // أنماط مستطيلات اليمين (ID, Input, Print) — أصغر، عرض كامل (= عرض الباركود)
+  // الـ wrapper يحدد العرض الكلي، والمستطيلات الداخلية تأخذ flex:1 لملء العرض
+  const LBL_R = `font-size:8px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;width:36px;flex-shrink:0`;
+  const BOX_R = (color)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 6px;font-size:13px;font-weight:700;color:${color||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block`;
+  const rowR = (lbl,val)=>`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><span style="${LBL_R}">${lbl}</span><span style="${BOX_R('#000')}">${val}</span></div>`;
 
   const ptBox=`
-  <div style="margin:3px 6px;direction:ltr">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+  <div style="margin:3px 0;direction:ltr">
+    <div style="display:flex;align-items:flex-start;gap:10px">
 
-      <!-- يسار: اسم وجنس ودكتور -->
-      <div style="flex:0 0 auto;min-width:180px">
-        ${rowName('Name', ptFullName, nameColor, true)}
-        ${rowInfo('Sex/Age', genderTxt+' / '+ageTxt, '#000', false)}
-        ${rowName('Doctor', req.doctorName||'—', doctorColor, true)}
+      <!-- اليسار: 3 مستطيلات تتمدد سوياً (flex:1) -->
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+        ${rowL('Name', ptFullName, nameColor, true)}
+        ${rowL_SA('Sex/Age', genderTxt+' / '+ageTxt, '#000', false)}
+        ${rowL('Doctor', req.doctorName||'—', doctorColor, true)}
       </div>
 
-      <!-- وسط: باركود فقط -->
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
-        <div style="display:inline-block">${barcodeSvg}</div>
-        <div style="font-size:8px;font-weight:900;color:#000;letter-spacing:2px;margin-top:2px;font-family:'Courier New',monospace;text-align:center">${barcodeId}</div>
-      </div>
-
-      <!-- يمين: ID والأوقات -->
-      <div style="flex:0 0 auto;min-width:160px">
-        ${row('ID', pt.id||'—')}
-        ${row('Input', inputTime)}
-        ${row('Print', printTime)}
+      <!-- اليمين: عرض ثابت = عرض الباركود، ملاصق للحافة اليمنى -->
+      <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch">
+        <!-- الباركود (display:block ليأخذ عرضه الطبيعي ويلتصق باليمين) -->
+        <div style="text-align:right;margin-bottom:3px">
+          ${barcodeSvg}
+          <div style="font-size:8px;font-weight:900;color:#000;letter-spacing:2px;font-family:'Courier New',monospace;text-align:center;line-height:1">${barcodeId}</div>
+        </div>
+        <!-- مستطيلات ID/Input/Print بنفس عرض الباركود تماماً -->
+        <div style="display:flex;flex-direction:column">
+          ${rowR('ID', pt.id||'—')}
+          ${rowR('Input', inputTime)}
+          ${rowR('Print', printTime)}
+        </div>
       </div>
 
     </div>
@@ -11863,14 +12137,17 @@ function buildPrintHTML(req, opts){
     const ci = _visibleCatCount; // استخدم العداد الفعلي للفاصل
     _visibleCatCount++;
 
-    // بداية chunk لهذه المجموعة الفرعية — الفاصل يُضاف داخل الـ chunk نفسه (باستثناء الأولى)
+    // ⭐ فاصل المجموعة الفرعية — يُخزَّن منفصلاً في الـ chunk (catDividerHtml)
+    // ثم في pagination JS: يُضاف فقط إذا الـ chunk ليس أول واحد في ورقته الفعلية
+    // هذا يحل مشكلة الفواصل عند نقل المجموعات يدوياً بين الصفحات
     let _chunkHtml = '';
-    if(ci>0){
+    let _catDividerHtml = '';
+    {
       const _catDotted=settings.div_cat_dotted;
       const _catSolid=settings.div_cat_solid;
-      if(_catSolid)       _chunkHtml+=`<div style="margin:5px 6px;border-top:2px solid #888"></div>`;
-      else if(_catDotted) _chunkHtml+=`<div style="margin:5px 6px;border-top:2px dotted #aab8c8"></div>`;
-      else                _chunkHtml+=`<div style="margin:4px 6px;border-top:1px dotted #aab8c8"></div>`;
+      if(_catSolid)       _catDividerHtml = `<div style="margin:5px 6px;border-top:2px solid #888"></div>`;
+      else if(_catDotted) _catDividerHtml = `<div style="margin:5px 6px;border-top:2px dotted #aab8c8"></div>`;
+      else                _catDividerHtml = `<div style="margin:4px 6px;border-top:1px dotted #aab8c8"></div>`;
     }
     _chunkHtml+=`<div style="margin:4px 6px 0;direction:ltr">
       <div style="padding:3px 10px 2px">
@@ -11970,9 +12247,15 @@ function buildPrintHTML(req, opts){
 
       let isHigh=false, isLow=false, isQualAbnormal=false;
       if(!isQual&&displayVal!=='—'){
-        const v=parseFloat(displayVal);
-        if(ref.min!==null&&v>ref.max) isHigh=true;
-        else if(ref.min!==null&&v<ref.min) isLow=true;
+        // ⭐ تجاهل علامات < > عند فحص H/L
+        let _pvNum = displayVal;
+        if(typeof _pvNum==='string' && _pvNum.length>0){
+          const _ch = _pvNum.charAt(0);
+          if(_ch==='<' || _ch==='>') _pvNum = _pvNum.substring(1).trim();
+        }
+        const v=parseFloat(_pvNum);
+        if(ref.min!==null&&!isNaN(v)&&v>ref.max) isHigh=true;
+        else if(ref.min!==null&&!isNaN(v)&&v<ref.min) isLow=true;
       } else if(isQual&&displayVal!=='—'){
         // Option-based (qualitative) tests: red box when value differs from normal — no H/L letter
         const _qNormal = t.qualDefault || null;
@@ -12005,22 +12288,25 @@ function buildPrintHTML(req, opts){
         :`<span style="width:12px;flex-shrink:0;display:inline-block"></span>`;
 
       // عرض المدى المرجعي
-      // الأولوية: t.ref النصي دائماً > refM/refF (حسب الجنس) > localRef.ref > الأرقام فقط إذا لم يوجد أي نص
+      // ⭐ الأولوية: localRef (تعديل محلي للمريض) > refM/refF (حسب الجنس) > t.ref > الأرقام
+      // التعديل المحلي من زر "Normally" يأخذ أولوية مطلقة لأنه قرار طبي مخصص لهذا المريض
       let refTxt='—';
       let refIsMultiLine=false;
-      if(ptGender==='female'&&t.refF&&t.refF.trim()){
+      if(localRef&&localRef.ref&&String(localRef.ref).trim()){
+        // أولوية مطلقة: نص المدى الطبيعي المخصص للمريض
+        refTxt=String(localRef.ref).trim();
+      } else if(localRef&&localRef.min!==null){
+        // أرقام المدى المخصص للمريض
+        refTxt=String(localRef.min)+' – '+String(localRef.max);
+      } else if(ptGender==='female'&&t.refF&&t.refF.trim()){
         refTxt=t.refF.trim();
       } else if(ptGender!=='female'&&t.refM&&t.refM.trim()){
         refTxt=t.refM.trim();
       } else if(t.ref&&t.ref.trim()){
         refTxt=t.ref.trim();
-      } else if(localRef&&localRef.ref){
-        refTxt=localRef.ref;
       } else if(t.ageRanges&&t.ageRanges.length>0){
         if(ref.ref) refTxt=ref.ref;
         else if(ref.min!==null) refTxt=String(ref.min)+' – '+String(ref.max);
-      } else if(localRef&&localRef.min!==null){
-        refTxt=String(localRef.min)+' – '+String(localRef.max);
       } else if(t.minVal!==null){
         refTxt=ptGender==='female'&&t.minF!==null?(String(t.minF)+' – '+String(t.maxF)):(String(t.minVal)+' – '+String(t.maxVal));
       }
@@ -12103,8 +12389,11 @@ function buildPrintHTML(req, opts){
       }
     });
     // أضف الـ chunk إلى المصفوفة وإلى body
-    // ⭐ كل chunk الآن يحمل اسم المجموعة الفرعية (cat) لدعم خاصية "تجميع" (pageGroups)
-    catChunks.push({cat: cat, html: _chunkHtml});
+    // ⭐ كل chunk يحمل: cat (اسم المجموعة) + html (المحتوى) + catDividerHtml (فاصل المجموعة)
+    // الـ body المباشر (للـ blankBody) يحتوي على الفاصل بشكل صحيح كما كان (لا يتأثر)
+    catChunks.push({cat: cat, html: _chunkHtml, catDividerHtml: _catDividerHtml});
+    // body المباشر يحتفظ بالفاصل (لـ blankBody fallback) — يضيفه إن لم يكن الأول
+    if(_visibleCatCount > 1) body += _catDividerHtml;
     body += _chunkHtml;
   });
   } // end if(!blankBody)
@@ -12139,10 +12428,14 @@ function buildPrintHTML(req, opts){
       `<div style="width:100%;line-height:0"><img src="${settings.footerImg}" style="width:100%;height:${footerH}px;display:block;object-fit:fill;margin:0;padding:0"></div>` +
       (settings.footerCustomText?`<div style="background:#f5f7fa;border-top:1px solid #ccc;padding:4px 16px;font-family:'Inter',Arial,sans-serif;font-size:9px;color:#555;text-align:center;line-height:1.5;line-height:normal">${settings.footerCustomText}</div>`:'');
   } else if(settings.ftrMode==='txt'&&(settings.ftrAddress||settings.ftrPhone||settings.ftrNote)){
-    ftrInner = sigBlock + `<div style="background:#f5f7fa;border-top:2px solid #003366;padding:7px 20px;font-family:'Inter',Arial,sans-serif;font-size:11px;color:#444;text-align:center;direction:ltr;line-height:1.6;line-height:normal">
-      ${settings.ftrAddress?`<span style="margin-left:18px">📍 ${settings.ftrAddress}</span>`:''}
-      ${settings.ftrPhone?`<span style="margin-left:18px">📞 ${settings.ftrPhone}</span>`:''}
-      ${settings.ftrNote?`<br><span style="font-style:italic;font-size:10px;color:#666">${settings.ftrNote}</span>`:''}
+    // ⭐ الذيل النصي: العنوان يمين، رقم الهاتف يسار، حجم الخط 16
+    // ارتفاع الذيل لا يتأثر — فقط الخط داخله يكبر
+    ftrInner = sigBlock + `<div style="background:#f5f7fa;border-top:2px solid #003366;padding:7px 20px;font-family:'Inter',Arial,sans-serif;font-size:16px;color:#444;direction:ltr;line-height:1.4">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="text-align:left;flex:0 0 auto">${settings.ftrPhone?`📞 ${settings.ftrPhone}`:''}</span>
+        <span style="text-align:right;flex:0 0 auto">${settings.ftrAddress?`📍 ${settings.ftrAddress}`:''}</span>
+      </div>
+      ${settings.ftrNote?`<div style="text-align:center;font-style:italic;font-size:13px;color:#666;margin-top:3px">${settings.ftrNote}</div>`:''}
     </div>`;
   } else {
     ftrInner = sigBlock;
@@ -12154,9 +12447,9 @@ function buildPrintHTML(req, opts){
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
     <style>${css}</style></head>
     <body>
-    <div id="print-content" style="background:#ffffff;font-family:'Inter',Arial,sans-serif;direction:ltr;width:100%;padding:1mm 4mm 0 4mm">
+    <div id="print-content" style="background:#ffffff;font-family:'Inter',Arial,sans-serif;direction:ltr;width:100%;padding:1mm 3mm 0 3mm">
       ${hdr}${ptBox}<!--BLANK_BODY_PLACEHOLDER-->
-      <div id="print-spacer" style="height:${totalFooterH+22}px"></div>
+      <div id="print-spacer" style="height:${totalFooterH+12}px"></div>
     </div>
     <div id="print-footer" style="line-height:normal">
       ${ftrInner}
@@ -12200,7 +12493,7 @@ function buildPrintHTML(req, opts){
     @media print{
       .report-page{page-break-inside:auto;}
       .report-page+.report-page{page-break-before:always;break-before:page;}
-      #print-footer{position:fixed;bottom:1mm;left:0;right:0;background:#ffffff;z-index:9999;}
+      #print-footer{position:fixed;bottom:3mm;left:0;right:0;background:#ffffff;z-index:9999;}
     }
   `;
 
@@ -12234,26 +12527,39 @@ function buildPrintHTML(req, opts){
       var TOP_MARGIN_PX = Math.round(1 * DPI_RATIO);   // 1mm هامش body (مُقلَّص ليبدأ التقرير من بداية الورقة)
       var BOT_MARGIN_PX = Math.round(1 * DPI_RATIO);   // 1mm هامش سفلي مُقلَّص
       // الذيل + هامش أمان مُصغَّر — لأن الذيل نزل للأسفل أكثر، يمكن الآن استيعاب تحاليل إضافية
-      var FOOTER_RESERVED = TOTAL_FOOTER_H + 25;
+      // قُلِّل من 25 إلى 12 لاستيعاب أكبر عدد من التحاليل قبل الذيل
+      // ⭐ تقليل الهامش المحجوز للذيل
+      // قياس chunkHeights متحفظ (يجمع margins/padding بدون collapse الفعلي)
+      // لذا نطرح -25 (سالب) ليعوّض الفرق ويسمح بتحاليل أكثر قبل الانتقال للورقة التالية
+      var FOOTER_RESERVED = TOTAL_FOOTER_H - 25;
+      if(FOOTER_RESERVED < 30) FOOTER_RESERVED = 30; // حد أدنى للأمان
       var USABLE_H = PAGE_H_PX - TOP_MARGIN_PX - BOT_MARGIN_PX - FOOTER_RESERVED;
 
-      // مقاس probe ثابت بـ px يعادل 210mm A4 = ~793.7px (نطرح هامش 4mm من كل جانب = 30.2px)
-      var PROBE_W_PX = Math.round(210 * DPI_RATIO) - Math.round(8 * DPI_RATIO); // عرض المحتوى الفعلي
+      // مقاس probe ثابت بـ px يعادل 210mm A4 = ~793.7px (نطرح هامش 3mm من كل جانب = 22.7px)
+      var PROBE_W_PX = Math.round(210 * DPI_RATIO) - Math.round(6 * DPI_RATIO); // عرض المحتوى الفعلي
 
       function buildPage(chunksForPage, isFirst, isLast){
         var div = document.createElement('div');
         div.className = 'report-page';
-        div.style.padding = '1mm 4mm 0 4mm';
+        div.style.padding = '1mm 3mm 0 3mm';
         var html = HDR_HTML + COL_HDR_HTML;
         for(var i=0;i<chunksForPage.length;i++){
-          // chunksForPage[i] قد يكون object {cat,html} أو string (للتوافق الرجعي)
+          // chunksForPage[i] قد يكون object {cat,html,catDividerHtml} أو string (توافق رجعي)
           var ch = chunksForPage[i];
-          html += (typeof ch === 'string') ? ch : (ch && ch.html ? ch.html : '');
+          if(typeof ch === 'string'){
+            html += ch;
+          } else if(ch && ch.html){
+            // ⭐ أضف فاصل المجموعة قبل الـ chunk فقط إذا ليس أول واحد في هذه الورقة
+            if(i > 0 && ch.catDividerHtml){
+              html += ch.catDividerHtml;
+            }
+            html += ch.html;
+          }
         }
         // الملاحظات تظهر في آخر صفحة فقط
         if(isLast && NOTES_HTML) html += NOTES_HTML;
         // spacer يمنع المحتوى من الاختباء خلف الـ footer الثابت
-        html += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+22)+'px"></div>';
+        html += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+12)+'px"></div>';
         div.innerHTML = html;
         return div;
       }
@@ -12277,9 +12583,9 @@ function buildPrintHTML(req, opts){
           // لا توجد تحاليل — صفحة واحدة بالـ header فقط
           var p = document.createElement('div');
           p.className = 'report-page';
-          p.style.padding = '1mm 4mm 0 4mm';
+          p.style.padding = '1mm 3mm 0 3mm';
           p.innerHTML = HDR_HTML + COL_HDR_HTML +
-            '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+22)+'px"></div>';
+            '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+12)+'px"></div>';
           container.appendChild(p);
           return;
         }
@@ -12288,11 +12594,15 @@ function buildPrintHTML(req, opts){
         var hdrMeasured = measureHtml(HDR_HTML + COL_HDR_HTML);
         if(!hdrMeasured) hdrMeasured = 220; // fallback آمن
 
-        // ── قياس ارتفاع كل chunk مرة واحدة فقط ──
+        // ── قياس ارتفاع كل chunk (مع فاصل المجموعة لو موجود) ──
+        // نقيس ارتفاع الـ html + catDividerHtml لأن الفاصل يُضاف عملياً قبل الـ chunk
+        // (إلا إذا كان أول chunk في صفحته، لكن نقيس بالأكبر للأمان)
         var chunkHeights = [];
         for(var i=0;i<CAT_CHUNKS.length;i++){
           var ch_i = CAT_CHUNKS[i];
-          var ch_html = (typeof ch_i === 'string') ? ch_i : (ch_i && ch_i.html ? ch_i.html : '');
+          var ch_html = (typeof ch_i === 'string')
+            ? ch_i
+            : (ch_i && ch_i.html ? ((ch_i.catDividerHtml||'') + ch_i.html) : '');
           var h = measureHtml(ch_html);
           chunkHeights.push(h || 60);
         }
@@ -12346,17 +12656,38 @@ function buildPrintHTML(req, opts){
           }
           if(unassigned.length > 0) logicalPages.push(unassigned);
 
-          // 4) ⭐ السلوك المطلوب:
-          // - كل صفحة منطقية تأخذ ورقة طباعة (مع رأس كامل)
+          // 4) ⭐ السلوك المطلوب (ذكي):
+          // - كل صفحة منطقية تبدأ في ورقة طباعة جديدة (مع رأس كامل) — افتراضياً
           // - إذا امتلأت الصفحة المنطقية بأكثر من حجم A4، تنقسم على عدة أوراق طباعة
           //   وكل ورقة جديدة تأخذ رأساً كاملاً عبر buildPage
-          // - المجموعات الفرعية تبقى متماسكة: إذا مجموعة لا تستوعب في الباقي،
-          //   تنتقل بكاملها للورقة التالية (لا تنقسم في المنتصف)
+          // - المجموعات الفرعية تبقى متماسكة: لا تنقسم في المنتصف
+          // - استثناء ذكي: إذا الصفحة المنطقية السابقة احتاجت أكثر من ورقة طباعة
+          //   (أي تجاوزت A4 طبيعياً)، فالصفحة المنطقية التالية تكمل في الورقة الأخيرة
+          //   إذا كان فيها مساحة كافية. هذا يحل مشكلة:
+          //   "عندما تحاليل ورقتين أصلاً ونقل مجموعة → لا يجب أن تظهر ورقة ثالثة"
+          var currentPageChunks = [];
+          var currentH = hdrMeasured;
+          var prevLogicalUsedMultiPages = false; // هل الصفحة المنطقية السابقة احتاجت >1 ورقة؟
           for(var lp=0; lp<logicalPages.length; lp++){
             var idxs = logicalPages[lp];
             var isLastLogicalPage = (lp === logicalPages.length - 1);
-            var currentPageChunks = [];
-            var currentH = hdrMeasured;
+            var pagesAtStartOfLogical = pages.length;
+
+            // ── قرار البدء بورقة جديدة أم الإكمال في الحالية ──
+            if(lp > 0){
+              if(prevLogicalUsedMultiPages && currentPageChunks.length > 0){
+                // السابقة استهلكت >1 ورقة → نُكمل في الورقة الحالية إذا أمكن (لا نُجبر ورقة جديدة)
+                // currentPageChunks و currentH يبقيان كما هما
+              } else {
+                // السابقة استهلكت ورقة واحدة فقط → ابدأ ورقة جديدة (force break)
+                if(currentPageChunks.length > 0){
+                  pages.push(currentPageChunks);
+                  currentPageChunks = [];
+                  currentH = hdrMeasured;
+                }
+              }
+            }
+
             for(var ji=0; ji<idxs.length; ji++){
               var jIdx = idxs[ji];
               var chunkObj = CAT_CHUNKS[jIdx];
@@ -12379,8 +12710,14 @@ function buildPrintHTML(req, opts){
                 currentH = hdrMeasured + chunkH + extraH;
               }
             }
-            if(currentPageChunks.length > 0) pages.push(currentPageChunks);
+            // حدّد إن كانت هذه الصفحة المنطقية استهلكت أكثر من ورقة طباعة
+            // (عدد الأوراق المضافة في pages أثناء هذا lp + 1 للورقة الحالية لو فيها محتوى)
+            var addedDuringThisLogical = pages.length - pagesAtStartOfLogical;
+            var totalPagesForLogical = addedDuringThisLogical + (currentPageChunks.length > 0 ? 1 : 0);
+            prevLogicalUsedMultiPages = (totalPagesForLogical > 1);
           }
+          // ادفع آخر ورقة لو فيها محتوى
+          if(currentPageChunks.length > 0) pages.push(currentPageChunks);
         } else {
           // ── النظام الأصلي: pagination تلقائي بالكامل ──
           var currentPageChunksA = [];
@@ -12431,14 +12768,20 @@ function buildPrintHTML(req, opts){
           if(container){
             var fp = document.createElement('div');
             fp.className = 'report-page';
-            fp.style.padding = '1mm 4mm 0 4mm';
+            fp.style.padding = '1mm 3mm 0 3mm';
             var fhtml = HDR_HTML + COL_HDR_HTML;
             for(var ii=0;ii<CAT_CHUNKS.length;ii++){
               var fb_ch = CAT_CHUNKS[ii];
-              fhtml += (typeof fb_ch === 'string') ? fb_ch : (fb_ch && fb_ch.html ? fb_ch.html : '');
+              if(typeof fb_ch === 'string'){
+                fhtml += fb_ch;
+              } else if(fb_ch && fb_ch.html){
+                // أضف الفاصل قبل كل chunk عدا الأول
+                if(ii > 0 && fb_ch.catDividerHtml) fhtml += fb_ch.catDividerHtml;
+                fhtml += fb_ch.html;
+              }
             }
             if(NOTES_HTML) fhtml += NOTES_HTML;
-            fhtml += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+22)+'px"></div>';
+            fhtml += '<div class="page-footer-spacer" style="height:'+(TOTAL_FOOTER_H+12)+'px"></div>';
             fp.innerHTML = fhtml;
             container.appendChild(fp);
           }
@@ -12494,7 +12837,9 @@ function buildCalcTestPrintHTML(req, calcTest){
   // دالة مساعدة لبناء صف تحليل بنفس تنسيق buildPrintHTML
   function _makeRow(name, val, unit, refTxt, minV, maxV){
     if(!val && val!==0) return '';
-    const v = parseFloat(val);
+    // ⭐ تجاهل علامات < > في القيمة عند فحص H/L
+    const _vR = (typeof val==='string' && (val.charAt(0)==='<'||val.charAt(0)==='>')) ? parseFloat(val.substring(1).trim()) : parseFloat(val);
+    const v = _vR;
     let isHigh=false, isLow=false;
     if(!isNaN(v) && minV!==null && maxV!==null){
       if(v>maxV) isHigh=true;
@@ -13069,7 +13414,7 @@ function generatePDFBlob(callback){
               const ftrEl=ftrDiv.firstElementChild;
               if(ftrEl){
                 ftrEl.style.position='absolute';
-                ftrEl.style.bottom='1mm';
+                ftrEl.style.bottom='3mm';
                 ftrEl.style.left='0';
                 ftrEl.style.right='0';
                 ftrEl.style.zIndex='auto';
@@ -13085,7 +13430,7 @@ function generatePDFBlob(callback){
               pg.style.boxSizing='border-box';
               pg.style.overflow='hidden';
               pg.style.margin='0';
-              pg.style.padding=pg.style.padding||'1mm 4mm 0 4mm';
+              pg.style.padding=pg.style.padding||'1mm 3mm 0 3mm';
             });
             // body بدون padding/margin إضافي
             body.style.margin='0';
@@ -13428,11 +13773,77 @@ function updateSubCatDropdown(selectedVal){
   const subs=getSubCats(cat);
   subEl.innerHTML=subs.map(s=>`<option value="${s}" ${s===selectedVal?'selected':''}>${s}</option>`).join('');
 }
+
+// ── إدارة المجاميع الفرعية المخصصة ──────────────────────────
+function addCustomSubCat(){
+  const mainSel=document.getElementById('new-subcat-main');
+  const nameEl=document.getElementById('new-subcat-name');
+  if(!mainSel||!nameEl) return;
+  const cat=mainSel.value.trim();
+  const name=nameEl.value.trim();
+  if(!cat){ showNotif('خطأ','اختر مجموعة رئيسية','error'); return; }
+  if(!name){ showNotif('خطأ','أدخل اسم المجموعة الفرعية','error'); return; }
+  // تحقق من عدم التكرار في الافتراضية أو المخصصة
+  const existing=getSubCats(cat);
+  if(existing.map(s=>s.toLowerCase()).includes(name.toLowerCase())){
+    showNotif('تنبيه','هذه المجموعة الفرعية موجودة مسبقاً','warning'); return;
+  }
+  if(!customSubCats[cat]) customSubCats[cat]=[];
+  customSubCats[cat].push(name);
+  saveCustomSubCats();
+  nameEl.value='';
+  // تحديث القوائم
+  updateSubCatDropdown(name); // اختر المجموعة المضافة تلقائياً في et-subcat
+  renderCustomSubcatsList();
+  showNotif('تم','تمت إضافة المجموعة الفرعية ✅','success');
+}
+
+function removeCustomSubCat(cat, name){
+  if(!customSubCats[cat]) return;
+  customSubCats[cat]=customSubCats[cat].filter(s=>s!==name);
+  if(customSubCats[cat].length===0) delete customSubCats[cat];
+  saveCustomSubCats();
+  updateSubCatDropdown();
+  renderCustomSubcatsList();
+  showNotif('تم','تم حذف المجموعة الفرعية','success');
+}
+
+function renderCustomSubcatsList(){
+  const listEl=document.getElementById('custom-subcats-list');
+  if(!listEl) return;
+  const allCustom=[];
+  Object.keys(customSubCats).forEach(cat=>{
+    (customSubCats[cat]||[]).forEach(name=>{
+      allCustom.push({cat,name});
+    });
+  });
+  if(!allCustom.length){
+    listEl.innerHTML='<span style="font-size:11px;color:var(--text2)">لا توجد مجاميع فرعية مضافة بعد.</span>';
+    return;
+  }
+  listEl.innerHTML=allCustom.map(function(item){
+    var cat=item.cat, name=item.name;
+    var safeCat=cat.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    var safeName=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.3);border-radius:20px;padding:3px 10px 3px 6px;font-size:11px;color:var(--accent)">'
+      +'<span style="color:var(--text2);font-size:10px">'+cat+'</span> / '+name
+      +' <button onclick="removeCustomSubCat(\''+safeCat+'\',\''+safeName+'\')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;line-height:1;padding:0 2px" title="حذف">×</button>'
+      +'</span>';
+  }).join('');
+}
+
+function _fillNewSubcatMainDropdown(){
+  const sel=document.getElementById('new-subcat-main');
+  if(!sel) return;
+  const cats=typeof TEST_CATS!=='undefined'?TEST_CATS.filter(c=>c!=='All'):Object.keys(SUB_CATS);
+  sel.innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
 function buildTestCatTabs(){
   const tabs=document.getElementById('test-cat-tabs');if(!tabs)return;
   tabs.innerHTML=TEST_CATS.map(c=>`<button class="tab ${c==='All'?'active':''}" onclick="setTestCat('${c}',this)">${c}</button>`).join('');
   const etCat=document.getElementById('et-cat');
   if(etCat){etCat.innerHTML=TEST_CATS.filter(c=>c!=='All').map(c=>`<option>${c}</option>`).join('');updateSubCatDropdown();}
+  _fillNewSubcatMainDropdown();
 }
 function setTestCat(cat,el){currentTestCat=cat;document.querySelectorAll('#test-cat-tabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderTestsDB();}
 function renderTestsDB(){
@@ -13464,6 +13875,9 @@ function openEditTest(id){
   document.getElementById('age-ranges-list').innerHTML='';
   const etCat=document.getElementById('et-cat');
   etCat.innerHTML=TEST_CATS.filter(c=>c!=='All').map(c=>`<option>${c}</option>`).join('');
+  // ملء قائمة المجموعة الرئيسية في حقل الإضافة
+  _fillNewSubcatMainDropdown();
+  renderCustomSubcatsList();
   if(id){
     const t=tests.find(x=>x.id===id);if(!t)return;
     document.getElementById('et-id').value=t.id;
@@ -13652,7 +14066,24 @@ function saveTest(){
   renderTestsDB();buildTestCatTabs();closeModal('m-edit-test');
   showNotif('Saved',`Test saved: ${t.nameEn} ✅`,'success');
 }
-function deleteTest(id){if(confirm('Delete this test?')){tests=tests.filter(t=>t.id!==id);save('tests',tests);IDB.set(DB._pfx()+'tests',tests).catch(e=>console.warn('[MedLab] IDB tests save error',e));renderTestsDB();showNotif('Deleted','Test deleted');}}
+function deleteTest(id){
+  if(!confirm('Delete this test?')) return;
+  tests=tests.filter(t=>t.id!==id);
+  save('tests',tests);
+  IDB.set(DB._pfx()+'tests',tests).catch(e=>console.warn('[MedLab] IDB tests save error',e));
+  // ⭐ تتبع الحذف بشكل دائم — يمنع عودة التحليل عند تحديث الصفحة أو رفع نسخة جديدة
+  try{
+    const pfx=DB._pfx();
+    const cur=load('deletedTestIds',[]);
+    if(cur.indexOf(id)<0){
+      cur.push(id);
+      save('deletedTestIds',cur);
+      IDB.set(pfx+'deletedTestIds', cur).catch(()=>{});
+    }
+  }catch(e){console.warn('[MedLab] track deletion failed',e);}
+  renderTestsDB();
+  showNotif('Deleted','Test deleted');
+}
 
 // ── إعدادات مدخلات التحليل المحسوب ──────────────────────────
 function renderCalcInputSettings(existingSettings){
@@ -14519,7 +14950,7 @@ function updateDashboard(){
   const criticals=[];
   requests.filter(r=>r.status==='done').forEach(r=>{
     r.tests.forEach(tid=>{const t=tests.find(x=>x.id===tid);const val=r.results[tid];
-      if(t&&val&&t.minVal!==null){const v=parseFloat(val);if(v>t.maxVal*1.2||v<t.minVal*0.8)criticals.push({req:r,test:t,val});}
+      if(t&&val&&t.minVal!==null){const _vR=(typeof val==='string'&&(val.charAt(0)==='<'||val.charAt(0)==='>'))?parseFloat(val.substring(1).trim()):parseFloat(val); const v=_vR; if(v>t.maxVal*1.2||v<t.minVal*0.8)criticals.push({req:r,test:t,val});}
     });
   });
   // Arabic critical alerts - sorted newest first, show ALL
@@ -16079,39 +16510,85 @@ function generateToken(){
 }
 
 // تسجيل جهاز جديد في Firebase
-// يرجع true إذا نجح، false إذا وصل الحد الأقصى
+// ⭐ يقرأ الحد لكل مستخدم من admin/users/{username}/maxDevices (افتراضي: 1)
+// يرجع {ok:true} إذا نجح، {ok:false, reason} إذا وصل الحد الأقصى
 function assignDeviceToken(username){
   return new Promise(resolve => {
     const myToken    = generateToken();
     const myDeviceId = _getDeviceId();
     sessionStorage.setItem('medlab_my_token', myToken);
 
-    // بدون إنترنت أو Firebase — اسمح بالدخول مباشرة
+    // بدون إنترنت أو Firebase — اسمح بالدخول إذا الجهاز مسجّل محلياً سابقاً
+    // هذا يضمن: أول دخول يحتاج نت، لكن بعدها يعمل offline
     if(!navigator.onLine || !fbReady || !fbDb){
-      resolve(true);
+      // تحقق: هل سبق هذا الجهاز أن سُجّل لهذا المستخدم؟
+      const localKey = 'medlab_device_registered_' + username;
+      if(localStorage.getItem(localKey) === '1'){
+        resolve({ok:true, offline:true});
+      } else {
+        resolve({ok:false, reason:'first_login_needs_internet'});
+      }
       return;
     }
 
-    const ref = fbDb.ref('sessions/' + username);
-    // timeout 4 ثواني — إذا تأخر Firebase نسمح بالدخول
-    const t = setTimeout(()=>resolve(true), 4000);
+    // ⭐ اقرأ الحد المسموح لهذا المستخدم
+    fbDb.ref('admin/users/' + username + '/maxDevices').once('value').then(snap => {
+      let userMax = snap.val();
+      if(typeof userMax !== 'number' || userMax < 1) userMax = 1; // افتراضي: جهاز واحد فقط
 
-    ref.transaction(current => {
-      const devices = current || {};
-      const ids = Object.keys(devices);
-      if(devices[myDeviceId]){
-        devices[myDeviceId] = { token:myToken, ts:Date.now() };
-        return devices;
-      }
-      if(ids.length < MAX_DEVICES){
-        devices[myDeviceId] = { token:myToken, ts:Date.now() };
-        return devices;
-      }
-      return; // abort — حد الأجهزة
-    }).then(result => {
-      clearTimeout(t);
-      resolve(result.committed);
-    }).catch(()=>{ clearTimeout(t); resolve(true); });
+      const ref = fbDb.ref('sessions/' + username);
+      const t = setTimeout(()=>resolve({ok:true, timeout:true}), 4000);
+
+      ref.transaction(current => {
+        const devices = current || {};
+        const ids = Object.keys(devices);
+        // الجهاز مسجّل سابقاً → جدّد الـ token
+        if(devices[myDeviceId]){
+          devices[myDeviceId] = { token:myToken, ts:Date.now() };
+          return devices;
+        }
+        // جهاز جديد، الحد لم يُستنفد بعد → سجّل
+        if(ids.length < userMax){
+          devices[myDeviceId] = { token:myToken, ts:Date.now() };
+          return devices;
+        }
+        return; // abort — وصل الحد الأقصى
+      }).then(result => {
+        clearTimeout(t);
+        if(result.committed){
+          // علِّم محلياً أن هذا الجهاز مُسجَّل (لأجل الـ offline check)
+          try{ localStorage.setItem('medlab_device_registered_' + username, '1'); }catch(e){}
+          resolve({ok:true});
+        } else {
+          resolve({ok:false, reason:'max_devices', max:userMax});
+        }
+      }).catch(()=>{
+        clearTimeout(t);
+        resolve({ok:true, error:true}); // عند خطأ في القراءة، اسمح بالدخول
+      });
+    }).catch(()=>{
+      // فشل قراءة الحد — fallback إلى السلوك القديم (افتراضي 1)
+      const ref = fbDb.ref('sessions/' + username);
+      ref.transaction(current => {
+        const devices = current || {};
+        if(devices[myDeviceId]){
+          devices[myDeviceId] = { token:myToken, ts:Date.now() };
+          return devices;
+        }
+        if(Object.keys(devices).length < 1){
+          devices[myDeviceId] = { token:myToken, ts:Date.now() };
+          return devices;
+        }
+        return;
+      }).then(result => {
+        if(result.committed){
+          try{ localStorage.setItem('medlab_device_registered_' + username, '1'); }catch(e){}
+          resolve({ok:true});
+        } else {
+          resolve({ok:false, reason:'max_devices', max:1});
+        }
+      }).catch(()=>resolve({ok:true, error:true}));
+    });
   });
 }
 
@@ -16636,7 +17113,40 @@ function _finalizeLogin(uname, user){
     }, 500);
     setTimeout(()=>{
       try{ updateLabDirectoryOnLogin(uname); }catch(e){}
-      try{ assignDeviceToken(uname).then(()=>startDeviceCheckLoop(uname)).catch(()=>{}); }catch(e){}
+      // ⭐ تحقق من حد الأجهزة — إذا فشل، اطرد المستخدم برسالة مناسبة
+      try{
+        assignDeviceToken(uname).then(result => {
+          if(result && result.ok === false){
+            // فشل — اعرض رسالة وامنع الدخول
+            let msg = '';
+            if(result.reason === 'first_login_needs_internet'){
+              msg = '🌐 أول تسجيل دخول لهذا الحساب يتطلب اتصالاً بالإنترنت.\nيرجى الاتصال بالإنترنت ثم المحاولة مرة أخرى.';
+            } else if(result.reason === 'max_devices'){
+              const maxN = result.max || 1;
+              msg = '🔒 هذا الحساب مفتوح بالفعل على ' + maxN + ' ' + (maxN===1?'جهاز':'أجهزة') + '.\nلفتحه على هذا الجهاز، يرجى التواصل مع الدعم.';
+            } else {
+              msg = '🔒 تعذّر تسجيل الجهاز. يرجى التواصل مع الدعم.';
+            }
+            // نفّذ الإخراج بعد عرض الرسالة
+            setTimeout(()=>{
+              try{ _forceLogout(msg); }catch(e){
+                alert(msg);
+                try{ clearSession(); }catch(_){}
+                try{ sessionStorage.removeItem('medlab_my_token'); }catch(_){}
+                location.reload();
+              }
+            }, 100);
+          } else {
+            // نجح — ابدأ مراقبة الجلسة
+            startDeviceCheckLoop(uname);
+          }
+        }).catch(()=>{
+          // عند خطأ غير متوقع، السلوك الآمن: ابدأ المراقبة (لا نمنع المستخدم)
+          try{ startDeviceCheckLoop(uname); }catch(e){}
+        });
+      }catch(e){
+        try{ startDeviceCheckLoop(uname); }catch(_){}
+      }
     }, 1000);
   }
   loadFirebase().then(ok=>{
@@ -20256,22 +20766,44 @@ function _buildCultureHTML(cid){
   const rowI=(lbl,val,clr,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><span style="${LBL}">${lbl}</span><span style="${BOX_INFO(clr,rtl)}">${val}</span></div>`;
   const rowS=(lbl,val)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="${LBL}">${lbl}</span><span style="${BOX_SM()}">${val}</span></div>`;
 
+  // ⭐ ربط حجم وثخانة بيانات المريض بالإعدادات (ptFontSize + fontWeight) — مطابق للتقرير العام
+  const _ptfs2 = s.ptFontSize || '15px';
+  const _ptInfoSize2 = _ptfs2;
+  const _ptInfoSizeSA2 = (function(){
+    const m = String(_ptfs2).match(/(\d+(?:\.\d+)?)/);
+    if(!m) return _ptfs2;
+    const n = parseFloat(m[1]);
+    return (n - 2) + 'px';  // Sex/Age أصغر بدرجتين
+  })();
+  const _ptInfoWt2 = s.fontWeight || '800';
+  // ⭐ بنية جديدة: اليسار يتمدد، الوسط = العنوان (Culture & Sensitivity)، اليمين ثابت
+  // الحجم والثخانة من الإعدادات، Sex/Age أصغر بدرجة
+  const _cuBL=(clr,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:${_ptInfoSize2};font-weight:${_ptInfoWt2};color:${clr||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  const _cuBLSA=(clr,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:${_ptInfoSizeSA2};font-weight:${_ptInfoWt2};color:${clr||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  const _cuRL=(lbl,val,clr,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><span style="${LBL}">${lbl}</span><span style="${_cuBL(clr,rtl)}">${val}</span></div>`;
+  const _cuRL_SA=(lbl,val,clr,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><span style="${LBL}">${lbl}</span><span style="${_cuBLSA(clr,rtl)}">${val}</span></div>`;
+  const _cuLBLR=`font-size:8px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;width:54px;flex-shrink:0`;
+  const _cuBR=(clr)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 6px;font-size:13px;font-weight:700;color:${clr||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block`;
+  const _cuRR=(lbl,val)=>`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><span style="${_cuLBLR}">${lbl}</span><span style="${_cuBR('#000')}">${val}</span></div>`;
+
   const ptBox=`
   <div style="margin:4px 6px 2px;direction:ltr">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-      <div style="flex:0 0 auto;min-width:200px">
-        ${rowN('Name', pt.name, nameColor, true)}
-        ${rowI('Sex/Age', (pt.gender==='female'?'Female':'Male')+' / '+(ageDisplay||'—'), '#000', false)}
-        ${rowN('Doctor', drName||'—', doctorColor, true)}
+    <div style="display:flex;align-items:flex-start;gap:10px">
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+        ${_cuRL('Name', pt.name, nameColor, true)}
+        ${_cuRL_SA('Sex/Age', (pt.gender==='female'?'Female':'Male')+' / '+(ageDisplay||'—'), '#000', false)}
+        ${_cuRL('Doctor', drName||'—', doctorColor, true)}
       </div>
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:700;color:#555;font-family:Arial,sans-serif">
-        &#129440; CULTURE &amp; SENSITIVITY
-        <div style="font-size:13px;font-weight:900;color:${color};margin-top:2px;font-family:Arial,sans-serif">${ct.en}</div>
-      </div>
-      <div style="flex:0 0 auto;min-width:180px">
-        ${rowS('ID', pt.id||'—')}
-        ${rowS('Date', c.date)}
-        ${rowS('Specimen', c.specimenDetail||ct.en)}
+      <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch;min-width:200px">
+        <div style="text-align:center;margin-bottom:3px;font-size:11px;font-weight:700;color:#555;font-family:Arial,sans-serif">
+          &#129440; CULTURE &amp; SENSITIVITY
+          <div style="font-size:13px;font-weight:900;color:${color};margin-top:1px;font-family:Arial,sans-serif">${ct.en}</div>
+        </div>
+        <div style="display:flex;flex-direction:column">
+          ${_cuRR('ID', pt.id||'—')}
+          ${_cuRR('Date', c.date)}
+          ${_cuRR('Specimen', c.specimenDetail||ct.en)}
+        </div>
       </div>
     </div>
   </div>`;
@@ -20364,11 +20896,12 @@ function _buildCultureHTML(cid){
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    html,body{background:#fff;font-family:Arial,sans-serif;color:#000;font-size:16px;height:100%;}
-    body{display:flex;flex-direction:column;min-height:100vh;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .content{flex:1;}
-    .footer{width:100%;margin-top:auto;}
+    html,body{background:#fff;font-family:Arial,sans-serif;color:#000;font-size:16px;}
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
+    .footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:0 !important;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @media print{ .footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
   </style></head><body>
   <div class="content">
     ${hdrHTML}
@@ -20794,26 +21327,26 @@ function _buildUAPrintHTML(r){
       const isAbn=!isEmpty&&f.normal&&val!=='—'&&val!==f.normal;
       const rowBg=fi%2===0?'#ffffff':'#f9f9f9';
       return `<tr style="background:${rowBg}">
-        <td style="font-size:15px;font-weight:700;color:#000000;padding:3px 10px;width:38%;border:none;border-bottom:1px solid #e0e0e0">
-          <span style="color:#000;margin-right:6px">■</span>${f.label}
+        <td style="font-size:14px;font-weight:700;color:#000000;padding:2px 8px;width:38%;border:none;border-bottom:1px solid #e0e0e0">
+          <span style="color:#000;margin-right:5px">■</span>${f.label}
         </td>
-        <td style="font-size:15px;font-weight:700;color:#000000;padding:3px 10px;width:32%;border:none;border-bottom:1px solid #e0e0e0;text-align:center">
-          <span style="display:inline-block;border:1.5px solid ${isAbn?'#cc0000':'#b0b0b0'};border-radius:4px;padding:1px 10px;min-width:90px;text-align:center;background:${isAbn?'#fff5f5':'#fff'};color:${isAbn?'#cc0000':'#000000'};font-weight:${isAbn?'900':'700'}">${val}</span>
+        <td style="font-size:14px;font-weight:700;color:#000000;padding:2px 8px;width:32%;border:none;border-bottom:1px solid #e0e0e0;text-align:center">
+          <span style="display:inline-block;border:1.5px solid ${isAbn?'#cc0000':'#b0b0b0'};border-radius:4px;padding:1px 8px;min-width:80px;text-align:center;background:${isAbn?'#fff5f5':'#fff'};color:${isAbn?'#cc0000':'#000000'};font-weight:${isAbn?'900':'700'}">${val}</span>
         </td>
-        <td style="font-size:15px;font-weight:700;color:#000000;padding:3px 10px;width:30%;border:none;border-bottom:1px solid #e0e0e0">${f.normal||'—'}</td>
+        <td style="font-size:14px;font-weight:700;color:#000000;padding:2px 8px;width:30%;border:none;border-bottom:1px solid #e0e0e0">${f.normal||'—'}</td>
       </tr>`;
     }).join('');
 
     return `<div style="border:1.5px solid #b8b8b8;border-radius:0;margin-bottom:2px;overflow:hidden;page-break-inside:avoid">
-      <div style="background:#ffffff;padding:2px 10px;border-bottom:1px solid #b8b8b8">
-        <span style="font-size:15px;font-weight:900;color:#1a4fa0;letter-spacing:0.3px">${sec.label}</span>
+      <div style="background:#ffffff;padding:2px 8px;border-bottom:1px solid #b8b8b8">
+        <span style="font-size:14px;font-weight:900;color:#1a4fa0;letter-spacing:0.3px">${sec.label}</span>
       </div>
       <table style="width:100%;border-collapse:collapse">
         <thead>
           <tr style="background:#f0f0f0">
-            <th style="font-size:15px;font-weight:800;color:#000000;padding:2px 8px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:38%">Parameter</th>
-            <th style="font-size:15px;font-weight:800;color:#000000;padding:2px 8px;text-align:center;border:none;border-bottom:1.5px solid #b8b8b8;width:32%">Result</th>
-            <th style="font-size:15px;font-weight:800;color:#000000;padding:2px 8px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:30%">Normal Range</th>
+            <th style="font-size:13px;font-weight:800;color:#000000;padding:2px 8px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:38%">Parameter</th>
+            <th style="font-size:13px;font-weight:800;color:#000000;padding:2px 8px;text-align:center;border:none;border-bottom:1.5px solid #b8b8b8;width:32%">Result</th>
+            <th style="font-size:13px;font-weight:800;color:#000000;padding:2px 8px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:30%">Normal Range</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -20847,41 +21380,73 @@ function _buildUAPrintHTML(r){
   const BOX_SMALL=(c,rtl)=>`min-width:${COL_W};border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:3px 7px;font-size:12px;font-weight:700;color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block${rtl?';direction:rtl;text-align:right':''}`;
   const rowN=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><span style="${LBL}">${lbl}</span><span style="${BOX_NAME(c,rtl)}">${val}</span></div>`;
   const rowS=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="${LBL}">${lbl}</span><span style="${BOX_SMALL(c,rtl)}">${val}</span></div>`;
-  const uaPtBox=`<div style="margin:3px 0;direction:ltr"><div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-    <div style="flex:0 0 auto;min-width:180px">
-      ${rowN('Name',ptFullName,nameColor,true)}
-      ${rowS('Sex/Age',genderTxt+' / '+ageTxt,'#000',false)}
-      ${rowN('Doctor',drName||'—',doctorColor,true)}
+  // ⭐ ربط حجم وثخانة بيانات المريض بالإعدادات (ptFontSize + fontWeight) — مطابق للتقرير العام
+  const _ptfs2 = s.ptFontSize || '15px';
+  const _ptInfoSize2 = _ptfs2;
+  const _ptInfoSizeSA2 = (function(){
+    const m = String(_ptfs2).match(/(\d+(?:\.\d+)?)/);
+    if(!m) return _ptfs2;
+    const n = parseFloat(m[1]);
+    return (n - 2) + 'px';  // Sex/Age أصغر بدرجتين
+  })();
+  const _ptInfoWt2 = s.fontWeight || '800';
+  // ⭐ بنية جديدة: اليسار يتمدد، اليمين بعرض ثابت = عرض الباركود
+  // الحجم والثخانة من الإعدادات، Sex/Age أصغر بدرجة
+  const _uaBL=(c,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:${_ptInfoSize2};font-weight:${_ptInfoWt2};color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  const _uaBLSA=(c,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:${_ptInfoSizeSA2};font-weight:${_ptInfoWt2};color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  const _uaRL=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><span style="${LBL}">${lbl}</span><span style="${_uaBL(c,rtl)}">${val}</span></div>`;
+  const _uaRL_SA=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><span style="${LBL}">${lbl}</span><span style="${_uaBLSA(c,rtl)}">${val}</span></div>`;
+  const _uaLBLR=`font-size:8px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;width:36px;flex-shrink:0`;
+  const _uaBR=(c)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 6px;font-size:13px;font-weight:700;color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block`;
+  const _uaRR=(lbl,val)=>`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><span style="${_uaLBLR}">${lbl}</span><span style="${_uaBR('#000')}">${val}</span></div>`;
+
+  const uaPtBox=`<div style="margin:3px 0;direction:ltr"><div style="display:flex;align-items:flex-start;gap:10px">
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+      ${_uaRL('Name',ptFullName,nameColor,true)}
+      ${_uaRL_SA('Sex/Age',genderTxt+' / '+ageTxt,'#000',false)}
+      ${_uaRL('Doctor',drName||'—',doctorColor,true)}
     </div>
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
-      <div style="display:inline-block">${barcodeSvg}</div>
-      <div style="font-size:8px;font-weight:900;color:#000;letter-spacing:2px;margin-top:2px;font-family:'Courier New',monospace">${barcodeId}</div>
-    </div>
-    <div style="flex:0 0 auto;min-width:150px">
-      ${rowS('ID',pt.id||r.patientId||'—')}
-      ${rowS('Date',r.date||'—')}
-      ${rowS('Print',printTime)}
+    <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch">
+      <div style="text-align:right;margin-bottom:3px">
+        ${barcodeSvg}
+        <div style="font-size:8px;font-weight:900;color:#000;letter-spacing:2px;font-family:'Courier New',monospace;text-align:center;line-height:1">${barcodeId}</div>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        ${_uaRR('ID',pt.id||r.patientId||'—')}
+        ${_uaRR('Date',r.date||'—')}
+        ${_uaRR('Print',printTime)}
+      </div>
     </div>
   </div></div>`;
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:Arial,sans-serif;color:#000;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    /* ⭐ الذيل ثابت أسفل الورقة (position:fixed) — مطابق لتقرير CBC */
+    body{font-family:Arial,sans-serif;color:#000;font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .ua-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
+    .ua-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    @media print{body{font-size:13px;} .ua-sec div[style*="font-size:15px"]{font-size:13px !important;} th,td{font-size:13px !important;padding:3px 8px !important;} .ua-title{font-size:13px !important;} .ua-sec-hdr{font-size:14px !important;} }
+    @media print{
+      body{font-size:13px;}
+      .ua-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;}
+      th,td{font-size:13px !important;padding:2px 7px !important;}
+      .ua-title{font-size:13px !important;} .ua-sec-hdr{font-size:13px !important;}
+    }
   </style></head><body>
-    ${hdrHTML}
-    <div style="border:1.5px solid #b8b8b8;margin:2px 0 3px;padding:4px 10px;background:#fafafa">
-      ${uaPtBox}
+    <div class="ua-content">
+      ${hdrHTML}
+      <div style="border:1.5px solid #b8b8b8;margin:2px 0 2px;padding:3px 10px;background:#fafafa">
+        ${uaPtBox}
+      </div>
+      <div style="color:#cc0000;padding:3px 16px;text-align:center;font-weight:900;font-size:16px;letter-spacing:1px;margin:2px 0;">
+        &#x1F52C; General Urine Examination
+      </div>
+      <div style="margin:0 0 2px;height:2px;background:${color}"></div>
+      <div class="ua-sec">
+        ${Object.values(UA_FIELDS).map(renderSec).join('')}
+      </div>
     </div>
-    <div style="color:#cc0000;padding:5px 16px;text-align:center;font-weight:900;font-size:19px;letter-spacing:1px;margin:4px 0;">
-      &#x1F52C; General Urine Examination
-    </div>
-    <div style="margin:0 0 2px;height:2px;background:${color}"></div>
-    <div class="ua-sec">
-      ${Object.values(UA_FIELDS).map(renderSec).join('')}
-    </div>
-    <div style="margin-top:4px">${ftrHTML}</div>
+    <div class="ua-footer">${ftrHTML}</div>
   </body></html>`;
 }
 
@@ -21330,20 +21895,42 @@ function _buildStoolPrintHTML(r){
   const _sBS=(c,rtl)=>`min-width:${_sCOL_W};border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:3px 7px;font-size:12px;font-weight:700;color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block${rtl?';direction:rtl;text-align:right':''}`;
   const _sRN=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><span style="${_sLBL}">${lbl}</span><span style="${_sBN(c,rtl)}">${val}</span></div>`;
   const _sRS=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="${_sLBL}">${lbl}</span><span style="${_sBS(c,rtl)}">${val}</span></div>`;
-  const _sPtBox=`<div style="margin:3px 0;direction:ltr"><div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-    <div style="flex:0 0 auto;min-width:180px">
-      ${_sRN('Name',_sPtFullName,_sNameColor,true)}
-      ${_sRS('Sex/Age',_sGenderTxt+' / '+_sAgeTxt,'#000',false)}
-      ${_sRN('Doctor',drName||'—',_sDoctorColor,true)}
+  // ⭐ ربط حجم وثخانة بيانات المريض بالإعدادات (ptFontSize + fontWeight) — مطابق للتقرير العام
+  const _ptfs2 = s.ptFontSize || '15px';
+  const _ptInfoSize2 = _ptfs2;
+  const _ptInfoSizeSA2 = (function(){
+    const m = String(_ptfs2).match(/(\d+(?:\.\d+)?)/);
+    if(!m) return _ptfs2;
+    const n = parseFloat(m[1]);
+    return (n - 2) + 'px';  // Sex/Age أصغر بدرجتين
+  })();
+  const _ptInfoWt2 = s.fontWeight || '800';
+  // ⭐ بنية جديدة: اليسار يتمدد، اليمين ثابت = عرض الباركود
+  // الحجم والثخانة من الإعدادات، Sex/Age أصغر بدرجة
+  const _sBL=(c,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:${_ptInfoSize2};font-weight:${_ptInfoWt2};color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  const _sBLSA=(c,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:${_ptInfoSizeSA2};font-weight:${_ptInfoWt2};color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  const _sRL=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><span style="${_sLBL}">${lbl}</span><span style="${_sBL(c,rtl)}">${val}</span></div>`;
+  const _sRL_SA=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><span style="${_sLBL}">${lbl}</span><span style="${_sBLSA(c,rtl)}">${val}</span></div>`;
+  const _sLBLR=`font-size:8px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;width:36px;flex-shrink:0`;
+  const _sBR=(c)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 6px;font-size:13px;font-weight:700;color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block`;
+  const _sRR=(lbl,val)=>`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><span style="${_sLBLR}">${lbl}</span><span style="${_sBR('#000')}">${val}</span></div>`;
+
+  const _sPtBox=`<div style="margin:3px 0;direction:ltr"><div style="display:flex;align-items:flex-start;gap:10px">
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+      ${_sRL('Name',_sPtFullName,_sNameColor,true)}
+      ${_sRL_SA('Sex/Age',_sGenderTxt+' / '+_sAgeTxt,'#000',false)}
+      ${_sRL('Doctor',drName||'—',_sDoctorColor,true)}
     </div>
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
-      <div style="display:inline-block">${_sBarcodeSvg}</div>
-      <div style="font-size:8px;font-weight:900;color:#000;letter-spacing:2px;margin-top:2px;font-family:'Courier New',monospace">${_sBarcodeId}</div>
-    </div>
-    <div style="flex:0 0 auto;min-width:150px">
-      ${_sRS('ID',pt.id||r.patientId||'—')}
-      ${_sRS('Date',r.date||'—')}
-      ${_sRS('Print',_sPrintTime)}
+    <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch">
+      <div style="text-align:right;margin-bottom:3px">
+        ${_sBarcodeSvg}
+        <div style="font-size:8px;font-weight:900;color:#000;letter-spacing:2px;font-family:'Courier New',monospace;text-align:center;line-height:1">${_sBarcodeId}</div>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        ${_sRR('ID',pt.id||r.patientId||'—')}
+        ${_sRR('Date',r.date||'—')}
+        ${_sRR('Print',_sPrintTime)}
+      </div>
     </div>
   </div></div>`;
 
@@ -21401,20 +21988,26 @@ function _buildStoolPrintHTML(r){
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
+    /* ⭐ الذيل ثابت أسفل الورقة (position:fixed) — مطابق لتقرير CBC */
     body{font-family:Arial,sans-serif;color:#000;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .se-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
+    .se-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 5mm 1mm 5mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @media print{ .se-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
   </style></head><body>
-    ${hdrHTML}
-    <div style="border:1.5px solid #b8b8b8;margin:3px 0 4px;padding:4px 10px;background:#fafafa">
-      ${_sPtBox}
+    <div class="se-content">
+      ${hdrHTML}
+      <div style="border:1.5px solid #b8b8b8;margin:3px 0 4px;padding:4px 10px;background:#fafafa">
+        ${_sPtBox}
+      </div>
+      <div style="color:#cc0000;padding:5px 16px;text-align:center;font-weight:900;font-size:19px;letter-spacing:1px;margin:4px 0;">
+        &#x1F9EB; General Stool Examination
+      </div>
+      <div style="margin:0 0 3px;height:2px;background:${color}"></div>
+      <div>${Object.values(STOOL_FIELDS).map(renderSec).join('')}</div>
+      ${r.s_note?`<div style="border:1.5px solid #b8b8b8;padding:5px 12px;margin-top:3px"><span style="font-size:13px;font-weight:800;color:#444">Notes: </span><span style="font-size:13px;color:#333">${r.s_note}</span></div>`:''}
     </div>
-    <div style="color:#cc0000;padding:5px 16px;text-align:center;font-weight:900;font-size:19px;letter-spacing:1px;margin:4px 0;">
-      &#x1F9EB; General Stool Examination
-    </div>
-    <div style="margin:0 0 3px;height:2px;background:${color}"></div>
-    <div>${Object.values(STOOL_FIELDS).map(renderSec).join('')}</div>
-    ${r.s_note?`<div style="border:1.5px solid #b8b8b8;padding:5px 12px;margin-top:3px"><span style="font-size:13px;font-weight:800;color:#444">Notes: </span><span style="font-size:13px;color:#333">${r.s_note}</span></div>`:''}
-    <div style="margin-top:2px">${ftrHTML}</div>
+    <div class="se-footer">${ftrHTML}</div>
   </body></html>`;
 }
 function printStoolReport(id){
@@ -22226,6 +22819,507 @@ const SEMEN_FIELDS = {
 };
 
 let semenRecords_loaded=false;
+// ════════════════════════════════════════════════════════════
+//  DNA FRAGMENTATION TEST — كامل الدوال
+// ════════════════════════════════════════════════════════════
+let dnaFragRecords = [];
+function loadDNAFragRecords(){ dnaFragRecords = load('dnaFragRecords',[]); }
+function saveDNAFragRecords(){ save('dnaFragRecords', dnaFragRecords); }
+
+function openNewDNAFragModal(){
+  window._dnafragEditId = null;
+  document.getElementById('dnafrag-modal-title').textContent = '🧬 DNA Fragmentation Test — New Entry';
+  _buildDNAFragModalBody(null);
+  openModal('m-dnafrag-exam');
+}
+function openEditDNAFragModal(id){
+  loadDNAFragRecords();
+  const r = dnaFragRecords.find(x => x.id === id); if(!r) return;
+  window._dnafragEditId = id;
+  document.getElementById('dnafrag-modal-title').textContent = '✏️ تعديل نتيجة DNA Fragmentation';
+  _buildDNAFragModalBody(r);
+  openModal('m-dnafrag-exam');
+}
+
+function _buildDNAFragModalBody(r){
+  const today = new Date().toISOString().split('T')[0];
+  const body = document.getElementById('dnafrag-modal-body'); if(!body) return;
+  const ptName = r ? r.patientName : '';
+  const ptId   = r ? r.patientId  : '';
+  const recDate = r ? r.date : today;
+
+  // ── قيم محفوظة أو فارغة ──
+  const v = (k, def='') => r ? (r[k] !== undefined ? r[k] : def) : def;
+
+  let html = `
+  <!-- بيانات المريض -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:10px;padding:14px">
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">المريض</label>
+      <div style="position:relative">
+        <input class="fc" id="dnafrag-pt-search" lang="ar" placeholder="ابحث باسم أو رقم..." oninput="dnafragSearchPatient(this.value)" autocomplete="off" value="${ptName}">
+        <div id="dnafrag-pt-suggest" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:9999;background:var(--bg-modal,#080f20);border:1px solid var(--border);border-radius:9px;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.8)"></div>
+      </div>
+      <input type="hidden" id="dnafrag-pt-id" value="${ptId}">
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">التاريخ</label>
+      <input class="fc" type="date" id="dnafrag-date" value="${recDate}">
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">الطبيب المحول (اختياري)</label>
+      <select class="fc" id="dnafrag-doctor-sel" onchange="dnafragDoctorSelChanged()">
+        <option value="">-- بدون طبيب --</option>
+        ${doctors.map(d=>`<option value="${d.id}" data-name="${d.name}" ${r&&r.doctorId===d.id?'selected':''}>${d.name}${d.spec?' — '+d.spec:''}</option>`).join('')}
+        <option value="__manual__">✏️ كتابة يدوية</option>
+      </select>
+      <input class="fc" id="dnafrag-doctor-manual" placeholder="اسم الطبيب..." style="display:${r&&r.doctorName&&!doctors.find(d=>d.id===r.doctorId)?'block':'none'};margin-top:6px" value="${r&&r.doctorName&&!doctors.find(d=>d.id===r.doctorId)?r.doctorName:''}">
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">رقم الهاتف (اختياري)</label>
+      <input class="fc" id="dnafrag-pt-phone" type="tel" placeholder="07xxxxxxxxx" value="${v('patientPhone')}">
+    </div>
+  </div>
+
+  <!-- إدخال الأرقام -->
+  <div style="background:rgba(0,0,0,0.02);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="font-size:13px;font-weight:900;color:#0077cc;border-bottom:2px solid #0077cc;padding-bottom:4px;margin-bottom:14px">🔢 إدخال النتائج العددية</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">
+
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl" style="font-size:11px">غير مجزأة — Non-fragmented (عدد)</label>
+        <input class="fc" type="number" id="dnafrag-nonfrag-n" min="0" max="9999" step="1" value="${v('nonfragN')}" placeholder="عدد الحيوانات غير المجزأة" oninput="calcDNAFrag()">
+      </div>
+
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl" style="font-size:11px">مجزأة — Fragmented (عدد)</label>
+        <input class="fc" type="number" id="dnafrag-frag-n" min="0" max="9999" step="1" value="${v('fragN')}" placeholder="عدد الحيوانات المجزأة" oninput="calcDNAFrag()">
+      </div>
+
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl" style="font-size:11px">متدهورة — Degraded (عدد)</label>
+        <input class="fc" type="number" id="dnafrag-degrad-n" min="0" max="9999" step="1" value="${v('degradN')}" placeholder="عدد الخلايا المتدهورة" oninput="calcDNAFrag()">
+      </div>
+
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl" style="font-size:11px">بدون هالة — Without Halo (عدد)</label>
+        <input class="fc" type="number" id="dnafrag-nohalo-n" min="0" max="9999" step="1" value="${v('noHaloN')}" placeholder="" oninput="calcDNAFrag()">
+      </div>
+
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl" style="font-size:11px">هالة صغيرة — Small Halo (عدد)</label>
+        <input class="fc" type="number" id="dnafrag-smallhalo-n" min="0" max="9999" step="1" value="${v('smallHaloN')}" placeholder="" oninput="calcDNAFrag()">
+      </div>
+
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl" style="font-size:11px">هالة متوسطة — Medium Halo (عدد)</label>
+        <input class="fc" type="number" id="dnafrag-medhalo-n" min="0" max="9999" step="1" value="${v('medHaloN')}" placeholder="" oninput="calcDNAFrag()">
+      </div>
+
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl" style="font-size:11px">هالة كبيرة — Big Halo (عدد)</label>
+        <input class="fc" type="number" id="dnafrag-bighalo-n" min="0" max="9999" step="1" value="${v('bigHaloN')}" placeholder="" oninput="calcDNAFrag()">
+      </div>
+
+    </div>
+  </div>
+
+  <!-- النتائج المحسوبة تلقائياً -->
+  <div id="dnafrag-calc-box" style="background:rgba(0,212,255,0.05);border:1.5px solid var(--primary);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="font-size:13px;font-weight:900;color:var(--primary);margin-bottom:12px">📊 النتائج المحسوبة تلقائياً</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px" id="dnafrag-results-grid">
+      <div style="text-align:center;color:var(--text2);font-size:12px">أدخل الأرقام أعلاه لحساب النتائج تلقائياً</div>
+    </div>
+  </div>
+
+  <!-- ملاحظات -->
+  <div style="background:rgba(0,0,0,0.02);border:1px solid var(--border);border-radius:10px;padding:14px">
+    <div style="font-size:13px;font-weight:900;color:#0077cc;border-bottom:2px solid #0077cc;padding-bottom:4px;margin-bottom:10px">📋 ملاحظات</div>
+    <textarea class="fc" id="dnafrag-note" rows="2" placeholder="أي ملاحظات إضافية...">${v('note')}</textarea>
+  </div>`;
+
+  body.innerHTML = html;
+
+  // احسب فوراً إن كانت هناك قيم محفوظة
+  calcDNAFrag();
+}
+
+function dnafragSearchPatient(q){
+  const box = document.getElementById('dnafrag-pt-suggest'); if(!box) return;
+  if(!q || q.length < 1){ box.style.display='none'; return; }
+  const found = patients.filter(p=>(p.name||'').includes(q)||(p.id||'').includes(q)).slice(0,8);
+  if(!found.length){ box.style.display='none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = found.map(p=>`<div onclick="dnafragSelectPatient('${p.id}')" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12px;color:var(--text)" onmouseover="this.style.background='rgba(0,212,255,0.08)'" onmouseout="this.style.background=''">
+    <b style="color:var(--text)">${p.name}</b> <span style="color:var(--text2);font-size:10px">${p.id} · ${p.ageDisplay||''}</span>
+  </div>`).join('');
+}
+function dnafragSelectPatient(pid){
+  const pt = patients.find(p=>p.id===pid); if(!pt) return;
+  document.getElementById('dnafrag-pt-search').value = pt.name;
+  document.getElementById('dnafrag-pt-id').value = pt.id;
+  const phoneEl = document.getElementById('dnafrag-pt-phone');
+  if(phoneEl && pt.phone) phoneEl.value = pt.phone;
+  document.getElementById('dnafrag-pt-suggest').style.display = 'none';
+}
+function dnafragDoctorSelChanged(){
+  const sel = document.getElementById('dnafrag-doctor-sel');
+  const manual = document.getElementById('dnafrag-doctor-manual');
+  if(!sel||!manual) return;
+  manual.style.display = sel.value==='__manual__' ? 'block' : 'none';
+}
+function _getDNAFragDoctor(){
+  const sel = document.getElementById('dnafrag-doctor-sel'); if(!sel) return {id:'',name:''};
+  const manualEl = document.getElementById('dnafrag-doctor-manual');
+  const manualVal = (manualEl && manualEl.value || '').trim();
+  const manualVisible = manualEl && manualEl.style.display !== 'none';
+  if(sel.value==='__manual__' || (manualVisible && manualVal && !sel.value)) return {id:'', name:manualVal};
+  const opt = sel.options[sel.selectedIndex];
+  return {id:sel.value, name:opt?opt.dataset.name||opt.text:''};
+}
+
+// ── حساب DFI والنسب تلقائياً ──
+function calcDNAFrag(){
+  const nf = parseFloat(document.getElementById('dnafrag-nonfrag-n')?.value)||0;
+  const fr = parseFloat(document.getElementById('dnafrag-frag-n')?.value)||0;
+  const dg = parseFloat(document.getElementById('dnafrag-degrad-n')?.value)||0;
+  const nh = parseFloat(document.getElementById('dnafrag-nohalo-n')?.value)||0;
+  const sh = parseFloat(document.getElementById('dnafrag-smallhalo-n')?.value)||0;
+  const mh = parseFloat(document.getElementById('dnafrag-medhalo-n')?.value)||0;
+  const bh = parseFloat(document.getElementById('dnafrag-bighalo-n')?.value)||0;
+  const total = nf + fr;
+  const totalHalo = nh + sh + mh + bh;
+  const grid = document.getElementById('dnafrag-results-grid'); if(!grid) return;
+  if(total <= 0 && totalHalo <= 0){
+    grid.innerHTML='<div style="text-align:center;color:var(--text2);font-size:12px;grid-column:1/-1">أدخل الأرقام أعلاه لحساب النتائج تلقائياً</div>';
+    return;
+  }
+  const pct = (n, tot) => tot > 0 ? (n/tot*100).toFixed(2) : '0.00';
+  const dfi = total > 0 ? parseFloat(pct(fr, total)) : 0;
+  let fertility=''; let fColor='';
+  if(dfi < 15){ fertility='Excellent fertility potential'; fColor='#007a00'; }
+  else if(dfi <= 30){ fertility='Good fertility potential'; fColor='#c47a00'; }
+  else { fertility='Poor fertility potential'; fColor='#cc0000'; }
+
+  const card = (label, pctVal, count, color, bold) => `
+    <div style="background:#fff;border:1.5px solid ${color||'#b8b8b8'};border-radius:8px;padding:8px 12px;text-align:center">
+      <div style="font-size:10px;font-weight:700;color:#555;margin-bottom:4px">${label}</div>
+      <div style="font-size:18px;font-weight:900;color:${color||'#000'};${bold?'font-size:22px':''}">${pctVal}%</div>
+      ${count!==null?`<div style="font-size:11px;color:#777">العدد: ${count}</div>`:''}
+    </div>`;
+
+  grid.innerHTML = `
+    <div style="grid-column:1/-1;background:${fColor}18;border:2px solid ${fColor};border-radius:10px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#555">DNA Fragmentation Index (DFI)</div>
+        <div style="font-size:28px;font-weight:900;color:${fColor}">${dfi.toFixed(2)}%</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:800;color:${fColor}">${fertility}</div>
+        <div style="font-size:10px;color:#777;margin-top:3px">إجمالي الخلايا المفحوصة: ${total}</div>
+      </div>
+    </div>
+    ${total>0 ? card('Non-Fragmented',pct(nf,total),nf,'#007a00') : ''}
+    ${total>0 ? card('Fragmented',pct(fr,total),fr,'#cc0000') : ''}
+    ${dg>0 && total>0 ? card('Degraded',pct(dg,total),dg,'#cc5500') : ''}
+    ${totalHalo>0 ? `
+      ${nh>0 ? card('Without Halo',pct(nh,totalHalo),nh,'#999') : ''}
+      ${sh>0 ? card('Small Halo',pct(sh,totalHalo),sh,'#0077cc') : ''}
+      ${mh>0 ? card('Medium Halo',pct(mh,totalHalo),mh,'#0077cc') : ''}
+      ${bh>0 ? card('Big Halo',pct(bh,totalHalo),bh,'#005599') : ''}
+    ` : ''}
+  `;
+}
+
+function saveDNAFragEntry(){
+  let ptName = (document.getElementById('dnafrag-pt-search')||{}).value.trim();
+  let ptId   = (document.getElementById('dnafrag-pt-id')||{}).value;
+  if(!ptName){ showNotif('تنبيه','اختر المريض','error'); return; }
+  if(!ptId){
+    ptId = 'MR-'+(Date.now().toString().slice(-6));
+    const existPt = patients.find(p=>p.name===ptName);
+    if(existPt){ ptId = existPt.id; }
+    else {
+      const newPt = { id:ptId, name:ptName, phone:(document.getElementById('dnafrag-pt-phone')||{}).value||'', gender:'male', ageDisplay:'', ageVal:0, registered:new Date().toISOString().split('T')[0], visits:1, status:'active', barcode:ptId };
+      patients.push(newPt); save('patients',patients);
+      if(newPt.phone) addToPhoneBook(newPt.name, newPt.phone);
+    }
+    const idEl = document.getElementById('dnafrag-pt-id'); if(idEl) idEl.value = ptId;
+  }
+  const ptObj = patients.find(p=>p.id===ptId)||{};
+  const nf = parseFloat(document.getElementById('dnafrag-nonfrag-n')?.value)||0;
+  const fr = parseFloat(document.getElementById('dnafrag-frag-n')?.value)||0;
+  const dg = parseFloat(document.getElementById('dnafrag-degrad-n')?.value)||0;
+  const nh = parseFloat(document.getElementById('dnafrag-nohalo-n')?.value)||0;
+  const sh = parseFloat(document.getElementById('dnafrag-smallhalo-n')?.value)||0;
+  const mh = parseFloat(document.getElementById('dnafrag-medhalo-n')?.value)||0;
+  const bh = parseFloat(document.getElementById('dnafrag-bighalo-n')?.value)||0;
+  const total = nf + fr;
+  const totalHalo = nh + sh + mh + bh;
+  const pct = (n, tot) => tot > 0 ? parseFloat((n/tot*100).toFixed(2)) : 0;
+  const dfi = pct(fr, total);
+  let fertility = dfi < 15 ? 'Excellent fertility potential' : dfi <= 30 ? 'Good fertility potential' : 'Poor fertility potential';
+  const rec = {
+    id: window._dnafragEditId || ('dnafrag-'+Date.now()),
+    patientId: ptId, patientName: ptName,
+    patientAge: ptObj.ageDisplay||'',
+    patientGender: ptObj.gender||'male',
+    patientPhone: (document.getElementById('dnafrag-pt-phone')||{}).value||'',
+    doctorId: _getDNAFragDoctor().id,
+    doctorName: _getDNAFragDoctor().name,
+    date: (document.getElementById('dnafrag-date')||{}).value || new Date().toISOString().split('T')[0],
+    createdAt: Date.now(),
+    nonfragN: nf, fragN: fr, degradN: dg,
+    noHaloN: nh, smallHaloN: sh, medHaloN: mh, bigHaloN: bh,
+    total: total, totalHalo: totalHalo,
+    nonfragPct: pct(nf, total), fragPct: pct(fr, total), degradPct: pct(dg, total),
+    noHaloPct: pct(nh, totalHalo), smallHaloPct: pct(sh, totalHalo),
+    medHaloPct: pct(mh, totalHalo), bigHaloPct: pct(bh, totalHalo),
+    dfi: dfi, fertility: fertility,
+    note: (document.getElementById('dnafrag-note')||{}).value||''
+  };
+  loadDNAFragRecords();
+  if(window._dnafragEditId){ const idx = dnaFragRecords.findIndex(x=>x.id===window._dnafragEditId); if(idx>-1) dnaFragRecords[idx]=rec; else dnaFragRecords.push(rec); }
+  else dnaFragRecords.push(rec);
+  saveDNAFragRecords();
+  closeModal('m-dnafrag-exam');
+  renderDNAFragList();
+  showNotif('تم','تم حفظ نتيجة DNA Fragmentation ✅','success');
+}
+
+function deleteDNAFragRecord(id){
+  if(!confirm('حذف هذا السجل؟')) return;
+  loadDNAFragRecords(); dnaFragRecords = dnaFragRecords.filter(r=>r.id!==id); saveDNAFragRecords(); renderDNAFragList();
+}
+
+function renderDNAFragList(){
+  loadDNAFragRecords();
+  const srch = (document.getElementById('dnafrag-srch')||{}).value||'';
+  const body = document.getElementById('dnafrag-list-body'); if(!body) return;
+  let list = [...dnaFragRecords].reverse();
+  if(srch) list = list.filter(r=>(r.patientName||'').includes(srch)||(r.patientId||'').includes(srch));
+  if(!list.length){ body.innerHTML='<div class="empty"><div class="empty-ic">🧬</div><p>لا توجد نتائج بعد</p></div>'; return; }
+  const dfiColor = dfi => dfi < 15 ? '#007a00' : dfi <= 30 ? '#c47a00' : '#cc0000';
+  body.innerHTML = `<table class="tbl"><thead><tr>
+    <th>المريض</th><th>التاريخ</th><th>DFI %</th><th>الخصوبة</th><th>مجزأة %</th><th>غير مجزأة %</th><th>الإجراءات</th>
+  </tr></thead><tbody>${list.map(r=>`<tr>
+    <td>${r.patientName||'—'}<div style="font-size:10px;color:var(--text2)">${r.patientId||''}</div></td>
+    <td>${r.date||'—'}</td>
+    <td><span style="font-size:14px;font-weight:900;color:${dfiColor(r.dfi||0)}">${(r.dfi||0).toFixed(2)}%</span></td>
+    <td><span style="font-size:11px;font-weight:700;color:${dfiColor(r.dfi||0)}">${r.fertility||'—'}</span></td>
+    <td>${r.fragPct!==undefined?r.fragPct.toFixed(2)+'%':'—'}</td>
+    <td>${r.nonfragPct!==undefined?r.nonfragPct.toFixed(2)+'%':'—'}</td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-sm btn-p" onclick="openEditDNAFragModal('${r.id}')">✏️</button>
+      <button class="btn btn-sm btn-ok" onclick="printDNAFragReport('${r.id}')">🖨️</button>
+      <button class="btn btn-sm btn-d" onclick="deleteDNAFragRecord('${r.id}')">🗑️</button>
+    </td>
+  </tr>`).join('')}</tbody></table>`;
+}
+
+// ── بناء التقرير المطبوع ──
+function _buildDNAFragPrintHTML(r){
+  if(typeof r === 'string'){ loadDNAFragRecords(); r = dnaFragRecords.find(x=>x.id===r); }
+  if(!r) return '';
+  const pt = patients.find(p=>p.id===r.patientId)||{name:r.patientName, id:r.patientId};
+  const s = settings||{};
+  const color = s.hdrText?.color||'#003366';
+  let hdrHTML = '';
+  if(s.hdrMode==='text'&&s.hdrText) hdrHTML = buildTextHeader(s);
+  else if(s.headerImg) hdrHTML = `<img src="${s.headerImg}" style="width:100%;height:${(typeof s.hdrImgH==='number'&&s.hdrImgH>=70&&s.hdrImgH<=230)?s.hdrImgH:170}px;display:block;object-fit:fill">`;
+  else hdrHTML = `<div style="background:${color};color:#fff;padding:8px 18px;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
+  let ftrHTML = '';
+  if(s.hdrMode==='text'&&s.hdrText) ftrHTML = buildTextFooter(s);
+  else if(s.footerImg) ftrHTML = `<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
+
+  const drName = r.doctorName||pt.doctorName||(doctors&&doctors.find&&doctors.find(d=>d.id===pt.doctorId)?.name)||'';
+  const nameColor  = s.colorName||'#cc0011';
+  const docColor   = s.colorDoctor||'#cc0011';
+  const ptTitle    = pt.title||'';
+  const ptFullName = ptTitle ? ptTitle+' / '+(pt.name||r.patientName||'—') : (pt.name||r.patientName||'—');
+  const ageTxt     = (pt.ageDisplay||r.patientAge||'—').replace(/سنة/g,'Year').replace(/شهر/g,'Month').replace(/يوم/g,'Day').replace(/ساعة/g,'Hour');
+  const printTime  = new Date().toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const barcodeId  = (pt.barcode||(pt.id||r.patientId||'').replace(/[^A-Z0-9]/gi,'').toUpperCase().substring(0,12))||'00000000';
+
+  // ── باركود ──
+  function _barcode128(text){
+    const C128={chars:' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~',widths:[[2,1,2,2,2,2],[2,2,2,1,2,2],[2,2,2,2,2,1],[1,2,1,2,2,3],[1,2,1,3,2,2],[1,3,1,2,2,2],[1,2,2,2,1,3],[1,2,2,3,1,2],[1,3,2,2,1,2],[2,2,1,2,1,3],[2,2,1,3,1,2],[2,3,1,2,1,2],[1,1,2,2,3,2],[1,2,2,1,3,2],[1,2,2,2,3,1],[1,1,3,2,2,2],[1,2,3,1,2,2],[1,2,3,2,2,1],[2,2,3,2,1,1],[2,2,1,1,3,2],[2,2,1,2,3,1],[2,1,3,2,1,2],[2,2,3,1,1,2],[3,1,2,1,3,1],[3,1,1,2,2,2],[3,2,1,1,2,2],[3,2,1,2,2,1],[3,1,2,2,1,2],[3,2,2,1,1,2],[3,2,2,2,1,1],[2,1,2,4,1,1],[2,1,4,2,1,1],[4,1,2,2,1,1],[4,1,1,1,4,1],[1,1,4,2,2,1],[2,1,1,1,4,2],[2,1,1,4,1,2],[2,4,1,2,1,1],[4,1,1,2,1,2],[1,2,4,1,1,2],[1,4,1,4,1,1],[2,2,1,4,1,1],[4,4,1,1,1,1],[1,1,2,3,2,2],[1,2,2,3,2,1],[2,2,2,3,1,1],[1,1,3,2,3,1],[2,1,1,4,2,1],[1,4,2,1,2,1],[2,1,4,1,1,3],[1,3,2,3,1,1],[2,1,1,1,1,5],[2,1,1,5,1,1],[5,1,1,2,1,1],[2,1,5,1,1,2],[2,1,3,1,3,1],[2,3,1,1,3,1],[1,3,1,3,2,1],[1,4,2,2,1,1],[1,2,2,4,1,1],[1,2,4,1,2,1],[1,4,1,2,2,1],[2,1,4,4,1,1],[3,1,2,1,1,3],[3,1,1,1,2,3],[3,3,1,1,2,1],[3,1,2,3,1,1],[2,1,1,3,3,1],[1,1,2,2,1,4],[1,2,1,1,4,2],[1,2,1,4,1,2],[1,4,1,1,2,2],[3,1,1,2,4,1],[1,3,2,1,4,1],[2,3,1,2,3,1],[1,4,2,1,1,3],[4,1,4,1,1,2],[2,1,1,1,3,4],[3,1,4,1,2,1],[1,1,4,2,1,3],[1,4,4,1,1,2],[3,3,1,2,1,2],[3,1,1,4,2,1],[2,1,2,2,4,1],[2,1,4,2,2,1],[4,2,1,2,1,2],[2,4,2,2,1,1],[1,3,4,1,1,2],[2,3,4,1,1,1],[1,2,4,2,2,1],[3,2,4,1,1,1],[4,2,4,1,1,1],[2,2,1,1,1,5],[2,1,1,2,1,5],[3,2,1,1,1,4],[2,2,1,2,3,2],[2,2,3,2,1,2],[2,2,1,1,4,2],[2,2,3,1,2,2],[2,1,4,1,3,1],[4,2,1,1,3,1],[1,1,2,4,2,2],[1,2,2,4,2,1],[1,2,4,4,1,1],[1,4,4,2,1,1],[4,2,2,1,1,2],[4,2,2,2,1,1],[4,1,2,1,2,2],[1,2,4,1,3,1],[4,1,2,2,2,1],[1,1,1,1,4,3],[1,1,1,3,4,1],[1,3,1,1,4,1],[1,1,4,1,1,3],[1,1,4,3,1,1],[4,1,1,1,1,3],[4,1,1,3,1,1],[1,1,3,1,4,1],[1,1,4,1,3,1],[3,1,1,1,4,1],[4,1,1,1,3,1],[2,1,1,4,1,2],[2,1,1,2,1,4],[2,1,1,2,3,2]]};
+    const START_B=104,STOP=[2,3,3,1,1,1,2];let codes=[START_B];let check=START_B;
+    for(let i=0;i<text.length;i++){const idx=C128.chars.indexOf(text[i]);if(idx<0)continue;codes.push(idx);check+=(i+1)*idx;}
+    codes.push(check%103);let bars=[];codes.forEach(c=>{C128.widths[c].forEach((w,i)=>bars.push({w,dark:i%2===0}));});
+    STOP.forEach((w,i)=>bars.push({w,dark:i%2===0}));bars.push({w:2,dark:false});
+    const h=38,totalW=bars.reduce((s,b)=>s+b.w*2,0);let x=0,rects='';
+    bars.forEach(b=>{if(b.dark)rects+=`<rect x="${x}" y="0" width="${b.w*2}" height="${h}" fill="#000"/>`;x+=b.w*2;});
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${h}" viewBox="0 0 ${totalW} ${h}" style="display:block">${rects}</svg>`;
+  }
+  const barcodeSvg = _barcode128(barcodeId);
+
+  // ── حساب القيم ──
+  const total     = r.total||0;
+  const totalHalo = r.totalHalo||0;
+  const dfi       = r.dfi||0;
+  const fColor    = dfi < 15 ? '#007a00' : dfi <= 30 ? '#c47a00' : '#cc0000';
+  const fBg       = dfi < 15 ? '#e8f5e9' : dfi <= 30 ? '#fff8e1' : '#ffebee';
+  const pf = (v) => v !== undefined ? v.toFixed(2)+'%' : '—';
+
+  const row = (label, pctVal, count, ref, abnormal) => `
+    <tr style="background:${abnormal?'#fff3f3':'#fff'}">
+      <td style="padding:4px 10px;font-size:13px;font-weight:700;color:#222;border-bottom:1px solid #e0e0e0"><span style="color:#555;margin-right:6px">■</span>${label}</td>
+      <td style="padding:4px 10px;text-align:center;border-bottom:1px solid #e0e0e0">
+        <span style="display:inline-block;border:1.5px solid ${abnormal?'#cc0000':'#b0b0b0'};border-radius:4px;padding:0 10px;min-width:70px;text-align:center;background:#fff;color:${abnormal?'#cc0000':'#222'};font-weight:${abnormal?900:700};font-size:14px">${pctVal}</span>
+      </td>
+      <td style="padding:4px 10px;text-align:center;font-size:13px;color:#555;border-bottom:1px solid #e0e0e0">${count}</td>
+      <td style="padding:4px 10px;font-size:12px;color:#777;border-bottom:1px solid #e0e0e0">${ref}</td>
+    </tr>`;
+
+  const ptfs = s.ptFontSize||'15px';
+  const ptInfoSz = (()=>{ const m=String(ptfs).match(/(\d+(?:\.\d+)?)/); return m?(parseFloat(m[1])-1)+'px':ptfs; })();
+  const ptWt = s.fontWeight||'800';
+  const LBL = `font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.6px;white-space:nowrap;width:48px;flex-shrink:0`;
+  const BL  = (c,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:${ptInfoSz};font-weight:${ptWt};color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  const RL  = (lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><span style="${LBL}">${lbl}</span><span style="${BL(c,rtl)}">${val}</span></div>`;
+  const LBLR= `font-size:8px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;width:36px;flex-shrink:0`;
+  const BR  = `flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 6px;font-size:12px;font-weight:700;color:#000;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block`;
+  const RR  = (lbl,val)=>`<div style="display:flex;align-items:center;gap:4px;margin-bottom:1px"><span style="${LBLR}">${lbl}</span><span style="${BR}">${val}</span></div>`;
+
+  const ptBox = `<div style="margin:2px 0;direction:ltr"><div style="display:flex;align-items:flex-start;gap:8px">
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+      ${RL('Name', ptFullName, nameColor, true)}
+      ${RL('Sex/Age','Male / '+ageTxt,'#000',false)}
+      ${RL('Doctor', drName||'—', docColor, true)}
+    </div>
+    <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch">
+      <div style="text-align:right;margin-bottom:2px">
+        ${barcodeSvg}
+        <div style="font-size:7px;font-weight:900;color:#000;letter-spacing:2px;font-family:'Courier New',monospace;text-align:center;line-height:1">${barcodeId}</div>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        ${RR('ID', pt.id||r.patientId||'—')}
+        ${RR('Date', r.date||'—')}
+        ${RR('Print', printTime)}
+      </div>
+    </div>
+  </div></div>`;
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:Arial,sans-serif;color:#000;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .dna-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
+    .dna-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
+    @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @media print{.dna-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;}}
+  </style></head><body>
+  <div class="dna-content">
+    ${hdrHTML}
+    <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:14px;letter-spacing:1px">
+      DNA FRAGMENTATION TEST REPORT
+    </div>
+    <!-- بيانات المريض -->
+    <div style="border:1.5px solid #b8b8b8;margin:3px 0 4px;padding:4px 10px;background:#fafafa">
+      ${ptBox}
+    </div>
+    <div style="margin:0 0 4px;height:2px;background:${color}"></div>
+
+    <!-- DFI الرئيسي -->
+    <div style="border:2px solid ${fColor};border-radius:4px;background:${fBg};padding:10px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:0.5px">DNA FRAGMENTATION INDEX (DFI)</div>
+        <div style="font-size:32px;font-weight:900;color:${fColor};line-height:1.1">${dfi.toFixed(2)}%</div>
+        <div style="font-size:10px;color:#777;margin-top:2px">Reference: &lt; 15%</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:16px;font-weight:900;color:${fColor}">${r.fertility||'—'}</div>
+        <div style="font-size:10px;color:#777;margin-top:4px">&lt; 15% = Excellent &nbsp;|&nbsp; 15-30% = Good &nbsp;|&nbsp; &gt; 30% = Poor</div>
+        <div style="font-size:10px;color:#777;margin-top:2px">Total cells counted: ${total}</div>
+      </div>
+    </div>
+
+    <!-- جدول الأقسام -->
+    <div style="border:1.5px solid #b8b8b8;border-radius:2px;margin-bottom:5px;overflow:hidden">
+      <div style="background:#f0f0f0;padding:3px 10px;border-bottom:1.5px solid #b8b8b8">
+        <span style="font-size:14px;font-weight:900;color:#1a4fa0">Sperm Classification</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#f5f5f5">
+          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:left;border-bottom:1.5px solid #b8b8b8;width:40%">Parameter</th>
+          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:center;border-bottom:1.5px solid #b8b8b8;width:22%">Percentage</th>
+          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:center;border-bottom:1.5px solid #b8b8b8;width:18%">Count</th>
+          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:left;border-bottom:1.5px solid #b8b8b8;width:20%">Reference</th>
+        </tr></thead>
+        <tbody>
+          ${row('Non-Fragmented', pf(r.nonfragPct), r.nonfragN||0, '≥ 85%', false)}
+          ${row('Fragmented (DFI)', pf(r.fragPct), r.fragN||0, '< 15%', (r.dfi||0) >= 15)}
+          ${r.degradN ? row('Degraded', pf(r.degradPct), r.degradN||0, '—', false) : ''}
+        </tbody>
+      </table>
+    </div>
+
+    ${(r.totalHalo) ? `
+    <div style="border:1.5px solid #b8b8b8;border-radius:2px;margin-bottom:5px;overflow:hidden">
+      <div style="background:#f0f0f0;padding:3px 10px;border-bottom:1.5px solid #b8b8b8">
+        <span style="font-size:14px;font-weight:900;color:#1a4fa0">Halo Size Distribution</span>
+        <span style="font-size:11px;color:#777;margin-right:8px">(Total: ${r.totalHalo} cells)</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#f5f5f5">
+          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:left;border-bottom:1.5px solid #b8b8b8;width:40%">Halo Category</th>
+          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:center;border-bottom:1.5px solid #b8b8b8;width:22%">Percentage</th>
+          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:center;border-bottom:1.5px solid #b8b8b8;width:18%">Count</th>
+          <th style="padding:3px 10px;font-size:12px;font-weight:800;color:#333;text-align:left;border-bottom:1.5px solid #b8b8b8;width:20%">Interpretation</th>
+        </tr></thead>
+        <tbody>
+          ${r.noHaloN  ? row('Without Halo',  pf(r.noHaloPct),   r.noHaloN,   'Fragmented DNA',       true)  : ''}
+          ${r.smallHaloN? row('Small Halo',    pf(r.smallHaloPct),r.smallHaloN,'Fragmented DNA',       true)  : ''}
+          ${r.medHaloN ? row('Medium Halo',    pf(r.medHaloPct),  r.medHaloN,  'Intact / Borderline',  false) : ''}
+          ${r.bigHaloN ? row('Big Halo',       pf(r.bigHaloPct),  r.bigHaloN,  'Intact DNA',           false) : ''}
+        </tbody>
+      </table>
+    </div>` : ''}
+
+    ${r.note ? `<div style="border:1.5px solid #b8b8b8;padding:5px 12px;margin-top:3px"><span style="font-size:12px;font-weight:800;color:#444">Notes: </span><span style="font-size:12px;color:#333">${r.note}</span></div>` : ''}
+  </div>
+  <div class="dna-footer">${ftrHTML}</div>
+  </body></html>`;
+}
+
+function printDNAFragReport(id){
+  loadDNAFragRecords();
+  let r;
+  if(id === '_current'){
+    const ptName = (document.getElementById('dnafrag-pt-search')||{}).value.trim();
+    const ptId   = (document.getElementById('dnafrag-pt-id')||{}).value;
+    const nf = parseFloat(document.getElementById('dnafrag-nonfrag-n')?.value)||0;
+    const fr = parseFloat(document.getElementById('dnafrag-frag-n')?.value)||0;
+    const dg = parseFloat(document.getElementById('dnafrag-degrad-n')?.value)||0;
+    const nh = parseFloat(document.getElementById('dnafrag-nohalo-n')?.value)||0;
+    const sh = parseFloat(document.getElementById('dnafrag-smallhalo-n')?.value)||0;
+    const mh = parseFloat(document.getElementById('dnafrag-medhalo-n')?.value)||0;
+    const bh = parseFloat(document.getElementById('dnafrag-bighalo-n')?.value)||0;
+    const total = nf+fr; const totalHalo = nh+sh+mh+bh;
+    const pct = (n,t) => t>0 ? parseFloat((n/t*100).toFixed(2)) : 0;
+    const dfi = pct(fr,total);
+    r = { id:'_current', patientId:ptId, patientName:ptName,
+      date:(document.getElementById('dnafrag-date')||{}).value||'',
+      doctorName:_getDNAFragDoctor().name, doctorId:_getDNAFragDoctor().id,
+      nonfragN:nf,fragN:fr,degradN:dg,noHaloN:nh,smallHaloN:sh,medHaloN:mh,bigHaloN:bh,
+      total:total,totalHalo:totalHalo,
+      nonfragPct:pct(nf,total),fragPct:pct(fr,total),degradPct:pct(dg,total),
+      noHaloPct:pct(nh,totalHalo),smallHaloPct:pct(sh,totalHalo),medHaloPct:pct(mh,totalHalo),bigHaloPct:pct(bh,totalHalo),
+      dfi:dfi, fertility:dfi<15?'Excellent fertility potential':dfi<=30?'Good fertility potential':'Poor fertility potential',
+      note:(document.getElementById('dnafrag-note')||{}).value||''
+    };
+  } else {
+    r = dnaFragRecords.find(x=>x.id===id);
+  }
+  if(!r){ showNotif('تنبيه','احفظ النتيجة أولاً','warning'); return; }
+  const html = _buildDNAFragPrintHTML(r);
+  window._medlabPrinting = true;
+  setTimeout(function(){ window._medlabPrinting=false; },4000);
+  _printViaIframe(html);
+  showNotif('طباعة','تم إرسال تقرير DNA Fragmentation للطابعة 🖨️','success');
+}
+// ════════════════════════════════════════════════════════════
+
 function loadSemenRecords(){ semenRecords = load('semenRecords',[]); }
 function saveSemenRecords(){ save('semenRecords', semenRecords); }
 
@@ -22343,10 +23437,17 @@ function semenDoctorSelChanged(){
 function _getSemenDoctor(){
   const sel=document.getElementById('semen-doctor-sel');
   if(!sel) return {id:'',name:''};
-  if(sel.value==='__manual__'){
-    const nm=(document.getElementById('semen-doctor-manual')||{}).value||'';
-    return {id:'',name:nm};
+  // ⭐ تحقق أولاً من حقل الإدخال اليدوي:
+  // إذا كان مرئياً وله قيمة، استخدمه حتى لو الـ select لم يكن على __manual__
+  // (يحدث هذا عند إعادة فتح سجل محفوظ بطبيب يدوي — الـ select يكون على ""
+  // لكن حقل manual يظهر بقيمته)
+  const manualEl = document.getElementById('semen-doctor-manual');
+  const manualVal = (manualEl && manualEl.value || '').trim();
+  const manualVisible = manualEl && manualEl.style.display !== 'none';
+  if(sel.value==='__manual__' || (manualVisible && manualVal && !sel.value)){
+    return {id:'', name:manualVal};
   }
+  // طبيب من القائمة
   const opt=sel.options[sel.selectedIndex];
   return {id:sel.value, name:opt?opt.dataset.name||opt.text:''};
 }
@@ -22483,20 +23584,45 @@ function _buildSemenPrintHTML(r){
   const _smBS=(c,rtl)=>`min-width:${_smCOL_W};border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:3px 7px;font-size:12px;font-weight:700;color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block${rtl?';direction:rtl;text-align:right':''}`;
   const _smRN=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><span style="${_smLBL}">${lbl}</span><span style="${_smBN(c,rtl)}">${val}</span></div>`;
   const _smRS=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="${_smLBL}">${lbl}</span><span style="${_smBS(c,rtl)}">${val}</span></div>`;
-  const _smPtBox=`<div style="margin:3px 0;direction:ltr"><div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-    <div style="flex:0 0 auto;min-width:180px">
-      ${_smRN('Name',_smPtFullName,_smNameColor,true)}
-      ${_smRS('Sex/Age','Male / '+_smAgeTxt,'#000',false)}
-      ${_smRN('Doctor',drName||'—',_smDoctorColor,true)}
+  // ⭐ ربط بإعدادات ptFontSize/fontWeight — السائل المنوي يستخدم حجماً أقل بدرجة لضمان الورقة الواحدة
+  const _ptfs2 = s.ptFontSize || '15px';
+  const _ptInfoSize2 = (function(){
+    const m = String(_ptfs2).match(/(\d+(?:\.\d+)?)/);
+    if(!m) return _ptfs2;
+    return (parseFloat(m[1]) - 1) + 'px';  // أقل بدرجة لتوفير المساحة
+  })();
+  const _ptInfoSizeSA2 = (function(){
+    const m = String(_ptfs2).match(/(\d+(?:\.\d+)?)/);
+    if(!m) return _ptfs2;
+    return (parseFloat(m[1]) - 3) + 'px';  // أقل بدرجتين عن Name (3 درجات عن الأصل)
+  })();
+  const _ptInfoWt2 = s.fontWeight || '800';
+  // ⭐ السائل المنوي: الحجم أقل بدرجة عن الإعدادات (لضمان الورقة الواحدة)
+  // Sex/Age أصغر بدرجة إضافية
+  const _smBL=(c,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:${_ptInfoSize2};font-weight:${_ptInfoWt2};color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  const _smBLSA=(c,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:${_ptInfoSizeSA2};font-weight:${_ptInfoWt2};color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  const _smRL=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><span style="${_smLBL}">${lbl}</span><span style="${_smBL(c,rtl)}">${val}</span></div>`;
+  const _smRL_SA=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><span style="${_smLBL}">${lbl}</span><span style="${_smBLSA(c,rtl)}">${val}</span></div>`;
+  const _smLBLR=`font-size:8px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;width:36px;flex-shrink:0`;
+  const _smBR=(c)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 6px;font-size:12px;font-weight:700;color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block`;
+  const _smRR=(lbl,val)=>`<div style="display:flex;align-items:center;gap:4px;margin-bottom:1px"><span style="${_smLBLR}">${lbl}</span><span style="${_smBR('#000')}">${val}</span></div>`;
+
+  const _smPtBox=`<div style="margin:2px 0;direction:ltr"><div style="display:flex;align-items:flex-start;gap:8px">
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+      ${_smRL('Name',_smPtFullName,_smNameColor,true)}
+      ${_smRL_SA('Sex/Age','Male / '+_smAgeTxt,'#000',false)}
+      ${_smRL('Doctor',drName||'—',_smDoctorColor,true)}
     </div>
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
-      <div style="display:inline-block">${_smBarcodeSvg}</div>
-      <div style="font-size:8px;font-weight:900;color:#000;letter-spacing:2px;margin-top:2px;font-family:'Courier New',monospace">${_smBarcodeId}</div>
-    </div>
-    <div style="flex:0 0 auto;min-width:150px">
-      ${_smRS('ID',pt.id||r.patientId||'—')}
-      ${_smRS('Date',r.date||'—')}
-      ${_smRS('Print',_smPrintTime)}
+    <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch">
+      <div style="text-align:right;margin-bottom:2px">
+        ${_smBarcodeSvg}
+        <div style="font-size:7px;font-weight:900;color:#000;letter-spacing:2px;font-family:'Courier New',monospace;text-align:center;line-height:1">${_smBarcodeId}</div>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        ${_smRR('ID',pt.id||r.patientId||'—')}
+        ${_smRR('Date',r.date||'—')}
+        ${_smRR('Print',_smPrintTime)}
+      </div>
     </div>
   </div></div>`;
 
@@ -22542,22 +23668,22 @@ function _buildSemenPrintHTML(r){
       else if(fid==='s_oxidative'){ abn=val!=='Normal'; }
       const rowBg=fi%2===0?'#ffffff':'#f9f9f9';
       return `<tr style="background:${rowBg}">
-        <td style="font-size:15px;font-weight:700;color:#000000;padding:3px 10px;width:38%;border:none;border-bottom:1px solid #e0e0e0"><span style="color:#000;margin-right:6px">■</span>${secDef.fields[fid]}</td>
-        <td style="font-size:15px;font-weight:700;color:#000000;padding:3px 10px;width:32%;border:none;border-bottom:1px solid #e0e0e0;text-align:center">
-          <span style="display:inline-block;border:1.5px solid #b0b0b0;border-radius:4px;padding:1px 10px;min-width:90px;text-align:center;background:#fff;color:${abn?'#cc0000':'#000000'};font-weight:${abn?'900':'700'}">${val}</span>
+        <td style="font-size:15px;font-weight:700;color:#000000;padding:1px 8px;width:38%;border:none;border-bottom:1px solid #e0e0e0"><span style="color:#000;margin-right:5px">■</span>${secDef.fields[fid]}</td>
+        <td style="font-size:15px;font-weight:700;color:#000000;padding:1px 8px;width:32%;border:none;border-bottom:1px solid #e0e0e0;text-align:center">
+          <span style="display:inline-block;border:1.5px solid #b0b0b0;border-radius:4px;padding:0 8px;min-width:80px;text-align:center;background:#fff;color:${abn?'#cc0000':'#000000'};font-weight:${abn?'900':'700'}">${val}</span>
         </td>
-        <td style="font-size:15px;font-weight:700;color:#000000;padding:3px 10px;width:30%;border:none;border-bottom:1px solid #e0e0e0">${ref||'—'}</td>
+        <td style="font-size:15px;font-weight:700;color:#000000;padding:1px 8px;width:30%;border:none;border-bottom:1px solid #e0e0e0">${ref||'—'}</td>
       </tr>`;
     }).join('');
-    return `<div style="border:1.5px solid #b8b8b8;border-radius:0;margin-bottom:4px;overflow:hidden;page-break-inside:avoid">
-      <div style="background:#ffffff;padding:3px 12px;border-bottom:1.5px solid #b8b8b8">
+    return `<div style="border:1.5px solid #b8b8b8;border-radius:0;margin-bottom:2px;overflow:hidden;page-break-inside:avoid">
+      <div style="background:#ffffff;padding:1px 10px;border-bottom:1.5px solid #b8b8b8">
         <span style="font-size:16px;font-weight:900;color:#1a4fa0;letter-spacing:0.3px">${secDef.label}</span>
       </div>
       <table style="width:100%;border-collapse:collapse">
         <thead><tr style="background:#f0f0f0">
-          <th style="font-size:15px;font-weight:800;color:#000000;padding:3px 10px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:38%">Parameter</th>
-          <th style="font-size:15px;font-weight:800;color:#000000;padding:3px 10px;text-align:center;border:none;border-bottom:1.5px solid #b8b8b8;width:32%">Result</th>
-          <th style="font-size:15px;font-weight:800;color:#000000;padding:3px 10px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:30%">Reference (WHO 2021)</th>
+          <th style="font-size:15px;font-weight:800;color:#000000;padding:1px 8px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:38%">Parameter</th>
+          <th style="font-size:15px;font-weight:800;color:#000000;padding:1px 8px;text-align:center;border:none;border-bottom:1.5px solid #b8b8b8;width:32%">Result</th>
+          <th style="font-size:15px;font-weight:800;color:#000000;padding:1px 8px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:30%">Reference (WHO 2021)</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -22566,21 +23692,27 @@ function _buildSemenPrintHTML(r){
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
+    /* ⭐ الذيل ثابت أسفل الورقة (position:fixed) — مطابق لتقرير CBC */
     body{font-family:Arial,sans-serif;color:#000;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .sm-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
+    .sm-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @media print{ .sm-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
   </style></head><body>
-    ${hdrHTML}
-    <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:14px;letter-spacing:1px">
-      SEMEN ANALYSIS REPORT (SPERMIOGRAM)
+    <div class="sm-content">
+      ${hdrHTML}
+      <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:14px;letter-spacing:1px">
+        SEMEN ANALYSIS REPORT (SPERMIOGRAM)
+      </div>
+      <div style="border:1.5px solid #b8b8b8;margin:3px 0 4px;padding:4px 10px;background:#fafafa">
+        ${_smPtBox}
+      </div>
+      <div style="margin:0 0 3px;height:2px;background:${color}"></div>
+      <div>${['specimen','spermCount','motility','morphology','biochemistry','advanced'].map(renderSec).join('')}</div>
+      ${r.s_recommendation?`<div style="border:1.5px solid #b8b8b8;padding:5px 12px;margin-top:3px"><span style="font-size:13px;font-weight:800;color:#996600">📋 Recommendation: </span><span style="font-size:13px;color:#333">${r.s_recommendation}</span></div>`:''}
+      ${r.s_note?`<div style="border:1.5px solid #b8b8b8;padding:5px 12px;margin-top:3px"><span style="font-size:13px;font-weight:800;color:#444">Notes: </span><span style="font-size:13px;color:#333">${r.s_note}</span></div>`:''}
     </div>
-    <div style="border:1.5px solid #b8b8b8;margin:3px 0 4px;padding:4px 10px;background:#fafafa">
-      ${_smPtBox}
-    </div>
-    <div style="margin:0 0 3px;height:2px;background:${color}"></div>
-    <div>${['specimen','spermCount','motility','morphology','biochemistry','advanced'].map(renderSec).join('')}</div>
-    ${r.s_recommendation?`<div style="border:1.5px solid #b8b8b8;padding:5px 12px;margin-top:3px"><span style="font-size:13px;font-weight:800;color:#996600">📋 Recommendation: </span><span style="font-size:13px;color:#333">${r.s_recommendation}</span></div>`:''}
-    ${r.s_note?`<div style="border:1.5px solid #b8b8b8;padding:5px 12px;margin-top:3px"><span style="font-size:13px;font-weight:800;color:#444">Notes: </span><span style="font-size:13px;color:#333">${r.s_note}</span></div>`:''}
-    <div style="margin-top:2px">${ftrHTML}</div>
+    <div class="sm-footer">${ftrHTML}</div>
   </body></html>`;
 }
 function printSemenReport(id){
@@ -26217,11 +27349,8 @@ async function fsaInit(){
 
   const ready = localStorage.getItem('medlab_fsa_ready');
   if(!ready){
-    // أول تشغيل — أظهر شاشة الإعداد وأوقف التدفق
-    // checkAuth ستُستدعى لاحقاً من fsaChooseFolderFirstRun
-    document.getElementById('firstrun-screen').classList.remove('hidden');
-    // أرجع promise لا تكتمل أبداً (checkAuth ستُستدعى من زر الاختيار)
-    return new Promise(()=>{});
+    // تخطي شاشة اختيار المجلد — متابعة مباشرة
+    return;
   }
 
   // حاول استعادة الـ handle المحفوظ
@@ -28372,6 +29501,7 @@ body.light-mode .pm-note{color:rgba(10,42,37,.38)}
 }
 .rrt.green{background:linear-gradient(135deg,#00c853,#00902a);}
 .rrt.blue {background:linear-gradient(135deg,#1e90ff,#0050cc);}
+.rrt.orange{background:linear-gradient(135deg,#ff9100,#e65100);}
 .rrt:hover{transform:scale(1.12);}
 .rrt.is-open{transform:scale(0.9);opacity:0.85;}
 
@@ -28789,55 +29919,126 @@ function itp(v,t){
   const lo=parseFloat(t.minVal),hi=parseFloat(t.maxVal);
   if(!isNaN(hi)&&n>hi)return{c:'hi'};if(!isNaN(lo)&&n<lo)return{c:'lo'};if(!isNaN(lo)||!isNaN(hi))return{c:'ok'};return{c:'nd'};
 }
-async function dlPDF(i){
-  const btn=document.getElementById('pb'+i);
-  if(btn){btn.classList.add('ld');btn.disabled=true}
-  try{
-    const req=_D.requests[i],pt=_D.patient;
-    // استخدام HTML التقرير الرسمي المُضمَّن مسبقاً
-    if(req.printHTML && req.printHTML.trim()){
-      if(window.html2canvas && window.jspdf){
-        const container=document.createElement('div');
-        container.style.cssText='position:fixed;top:0;left:-9999px;width:794px;background:#fff;z-index:99999;font-family:Cairo,sans-serif;direction:ltr;';
-        container.innerHTML='<style>.print-prev,.pp-tbl,.pp-section{background:#fff!important;color:#111!important;}.pp-hdr-default{background:linear-gradient(135deg,#003d7a,#0055aa)!important;color:#fff!important;}.pp-tbl th{background:#003366!important;color:#fff!important;}.pp-tbl td{color:#111!important;background:#fff!important;}.pp-tbl tr:nth-child(even) td{background:#f5f8ff!important;}.pp-section-title{background:transparent!important;color:var(--color-section,#003366)!important;border:none!important;}.ab{color:#cc0000!important;font-weight:800!important;}.nm{color:#006600!important;}*{font-family:Cairo,sans-serif!important;}</style>'+req.printHTML;
-        document.body.appendChild(container);
-        try{
-          await document.fonts.ready;
-          await new Promise(r=>setTimeout(r,120));
-          const cv=await html2canvas(container,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,allowTaint:true,letterRendering:true});
-          document.body.removeChild(container);
-          const{jsPDF:J}=window.jspdf;
-          const doc=new J({orientation:'p',unit:'mm',format:'a4'});
-          const iw=210,pageH=297;
-          const ih=(cv.height*iw)/cv.width;
-          if(ih<=pageH){
-            doc.addImage(cv.toDataURL('image/jpeg',.95),'JPEG',0,0,iw,ih);
+function dlPDF(i){
+  var btn=document.getElementById('pb'+i);
+  if(btn){btn.classList.add('ld');btn.disabled=true;}
+  var req=_D.requests[i],pt=_D.patient;
+  if(!req||!req.printHTML||!req.printHTML.trim()){
+    toast('⚠️ هذا الطلب لا يحتوي نتائج مكتملة');
+    if(btn){btn.classList.remove('ld');btn.disabled=false;}
+    return;
+  }
+  if(!window.html2canvas||!window.jspdf){
+    toast('⚠️ افتح الملف بإنترنت لتحميل PDF');
+    if(btn){btn.classList.remove('ld');btn.disabled=false;}
+    return;
+  }
+  var printCSS='.print-prev,.pp-tbl,.pp-section{background:#fff!important;color:#111!important;}'
+    +'.pp-hdr-default{background:linear-gradient(135deg,#003d7a,#0055aa)!important;color:#fff!important;}'
+    +'.pp-tbl th{background:#003366!important;color:#fff!important;}'
+    +'.pp-tbl td{color:#111!important;background:#fff!important;}'
+    +'.pp-tbl tr:nth-child(even) td{background:#f5f8ff!important;}'
+    +'.pp-section-title{background:transparent!important;color:#003366!important;border:none!important;}'
+    +'.ab{color:#cc0000!important;font-weight:800!important;}.nm{color:#006600!important;}'
+    +'*{font-family:Cairo,sans-serif!important;}';
+  var fontLink='<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">';
+  var htmlStr=req.printHTML;
+  var fullHTML;
+  var hasHtmlTag=htmlStr.indexOf('<html')!==-1||htmlStr.indexOf('<HTML')!==-1;
+  if(hasHtmlTag){
+    fullHTML=htmlStr.replace('<head>','<head>'+fontLink).replace('<HEAD>','<HEAD>'+fontLink);
+    var hIdx=fullHTML.toLowerCase().indexOf('</head>');
+    if(hIdx!==-1){fullHTML=fullHTML.slice(0,hIdx)+'<style>'+printCSS+'</style>'+fullHTML.slice(hIdx);}
+  } else {
+    fullHTML='<!DOCTYPE html><html><head><meta charset="utf-8">'+fontLink+'<style>html,body{margin:0;padding:0;background:#fff;font-family:Cairo,sans-serif;}'+printCSS+'</style></head><body>'+htmlStr+'</body></html>';
+  }
+  var iframe=document.createElement('iframe');
+  iframe.style.cssText='position:fixed;top:0;left:-9999px;width:794px;height:1123px;border:none;background:#fff;';
+  document.body.appendChild(iframe);
+  var iDoc=iframe.contentDocument||iframe.contentWindow.document;
+  iDoc.open();iDoc.write(fullHTML);iDoc.close();
+  function _done(){try{document.body.removeChild(iframe);}catch(e){}if(btn){btn.classList.remove('ld');btn.disabled=false;}}
+  function _err(m){_done();toast('❌ خطأ: '+m);}
+  function _doCapture(){
+    var waitFonts=(iDoc.fonts&&iDoc.fonts.ready)?iDoc.fonts.ready:Promise.resolve();
+    waitFonts.then(function(){
+      setTimeout(function(){
+        var body=iDoc.body;
+        if(!body){_err('تعذر الوصول للمحتوى');return;}
+        var reportPages=iDoc.querySelectorAll('.report-page');
+        var printFooter=iDoc.getElementById('print-footer');
+        var usePageBoundaries=false;
+        var pageBoundaries=[];
+        if(reportPages.length>0&&printFooter){
+          var footerHTML=printFooter.outerHTML;
+          printFooter.style.display='none';
+          reportPages.forEach(function(pg){
+            var spacer=pg.querySelector('.page-footer-spacer');
+            if(spacer)spacer.remove();
+            var ftrDiv=iDoc.createElement('div');
+            ftrDiv.innerHTML=footerHTML;
+            var ftrEl=ftrDiv.firstElementChild;
+            if(ftrEl){ftrEl.style.position='absolute';ftrEl.style.bottom='3mm';ftrEl.style.left='0';ftrEl.style.right='0';ftrEl.style.zIndex='auto';ftrEl.style.display='block';ftrEl.id='';pg.appendChild(ftrEl);}
+            pg.style.position='relative';pg.style.height='1123px';pg.style.minHeight='1123px';pg.style.maxHeight='1123px';pg.style.boxSizing='border-box';pg.style.overflow='hidden';pg.style.margin='0';pg.style.padding=pg.style.padding||'1mm 3mm 0 3mm';
+          });
+          body.style.margin='0';body.style.padding='0';
+          usePageBoundaries=true;
+        }
+        if(usePageBoundaries){
+          void body.offsetHeight;
+          iDoc.querySelectorAll('.report-page').forEach(function(pg){pageBoundaries.push({top:pg.offsetTop,bottom:pg.offsetTop+pg.offsetHeight});});
+        }
+        var realH=Math.max(body.scrollHeight,body.offsetHeight,100);
+        iframe.style.height=realH+'px';
+        html2canvas(body,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,allowTaint:true,letterRendering:true,width:794,height:realH,windowWidth:794,windowHeight:realH}).then(function(canvas){
+          if(!canvas||!canvas.width||!canvas.height){_err('canvas فارغ');return;}
+          var J=window.jspdf.jsPDF;
+          var doc=new J({orientation:'portrait',unit:'mm',format:'a4'});
+          var pageW=210,pageH=297;
+          if(usePageBoundaries&&pageBoundaries.length>0){
+            var cScale=canvas.width/794;
+            for(var p=0;p<pageBoundaries.length;p++){
+              var pb=pageBoundaries[p];
+              var sY=Math.round(pb.top*cScale);
+              var sEnd=Math.round(pb.bottom*cScale);
+              var sH=Math.max(1,sEnd-sY);
+              if(p>0)doc.addPage();
+              var pc=document.createElement('canvas');var ctx=pc.getContext('2d');
+              pc.width=canvas.width;pc.height=sH;
+              ctx.fillStyle='#ffffff';ctx.fillRect(0,0,pc.width,pc.height);
+              ctx.drawImage(canvas,0,sY,canvas.width,sH,0,0,canvas.width,sH);
+              doc.addImage(pc.toDataURL('image/jpeg',0.95),'JPEG',0,0,pageW,pageH);
+            }
           } else {
-            const scaleFactor=cv.width/iw;
-            const pageHeightPx=pageH*scaleFactor;
-            let remainH=cv.height,srcY=0,pageNum=0;
-            while(remainH>0){
-              if(pageNum>0)doc.addPage();
-              const sliceH=Math.min(pageHeightPx,remainH);
-              const sc=document.createElement('canvas');
-              sc.width=cv.width;sc.height=sliceH;
-              const ctx=sc.getContext('2d');
-              ctx.fillStyle='#ffffff';ctx.fillRect(0,0,sc.width,sc.height);
-              ctx.drawImage(cv,0,srcY,cv.width,sliceH,0,0,cv.width,sliceH);
-              doc.addImage(sc.toDataURL('image/jpeg',.95),'JPEG',0,0,iw,sliceH/scaleFactor);
-              srcY+=sliceH;remainH-=sliceH;pageNum++;
+            var imgH=(canvas.height*pageW)/canvas.width;
+            if(!isFinite(imgH)||imgH<=0){_err('ابعاد غير صالحة');return;}
+            if(imgH<=pageH){
+              doc.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',0,0,pageW,imgH);
+            } else {
+              var sFactor=canvas.width/pageW;
+              var phPx=Math.round(pageH*sFactor);
+              var pc2=document.createElement('canvas');var ctx2=pc2.getContext('2d');
+              var sY2=0,isFirst=true;
+              while(sY2<canvas.height){
+                if(!isFirst)doc.addPage();
+                var slH=Math.min(phPx,canvas.height-sY2);
+                pc2.width=canvas.width;pc2.height=phPx;
+                ctx2.fillStyle='#ffffff';ctx2.fillRect(0,0,pc2.width,pc2.height);
+                ctx2.drawImage(canvas,0,sY2,canvas.width,slH,0,0,canvas.width,slH);
+                doc.addImage(pc2.toDataURL('image/jpeg',0.95),'JPEG',0,0,pageW,pageH);
+                sY2+=phPx;isFirst=false;
+              }
             }
           }
           doc.save((pt.name+'_'+req.id).replace(/\s+/g,'_')+'.pdf');
           toast('✅ تم تحميل PDF');
-        } catch(e2){
-          if(document.body.contains(container))document.body.removeChild(container);
-          throw e2;
-        }
-      } else { toast('⚠️ افتح الملف بإنترنت لتحميل PDF'); }
-    } else { toast('⚠️ هذا الطلب لا يحتوي نتائج مكتملة'); }
-  } catch(e){ toast('❌ خطأ: '+e.message); console.error(e); }
-  finally{ if(btn){btn.classList.remove('ld');btn.disabled=false} }
+          _done();
+        }).catch(function(err){_err(err.message);});
+      },800);
+    }).catch(function(){setTimeout(function(){if(iframe.parentNode)_doCapture();},800);});
+  }
+  if(iDoc.readyState==='complete'){_doCapture();}
+  else{iframe.onload=_doCapture;setTimeout(function(){if(iframe.parentNode)_doCapture();},3000);}
 }
 // فتح أول طلب مكتمل تلقائياً
 (function(){
