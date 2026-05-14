@@ -4064,11 +4064,66 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
           <div class="st-card-hdr" onclick="toggleStCard('stc-sync')">
             <div style="display:flex;align-items:center;gap:12px">
               <span style="font-size:22px">☁️</span>
-              <div><div class="st-card-title">مزامنة Google Drive</div><div class="st-card-sub" id="sync-card-sub">اربط حاسبتين على نفس الواي فاي أو الإنترنت</div></div>
+              <div><div class="st-card-title">مزامنة الشبكة المحلية (LAN)</div><div class="st-card-sub" id="sync-card-sub">اربط حاسبتين على نفس الشبكة — بدون إنترنت</div></div>
             </div>
             <span class="st-card-arrow" id="arr-stc-sync">▼</span>
           </div>
           <div class="st-card-body" id="body-stc-sync" style="display:none">
+            <div style="background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.2);border-radius:10px;padding:14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:2">
+              <div style="font-weight:800;color:var(--primary);margin-bottom:6px">📋 كيف تعمل؟</div>
+              <b style="color:var(--success)">الحاسبة الرئيسية (السيرفر):</b> شغّل lan-server.js ثم اختر "سيرفر"<br>
+              <b style="color:var(--warning)">الحاسبات الأخرى (كلاينت):</b> اكتب IP الحاسبة الرئيسية واضغط "اتصال"<br>
+              البيانات تتزامن فوراً بين جميع الحاسبات ✅
+            </div>
+            <div style="background:rgba(139,63,255,0.08);border:1px solid rgba(139,63,255,0.25);border-radius:10px;padding:12px;margin-bottom:14px">
+              <div style="font-size:12px;font-weight:800;color:#a78bfa;margin-bottom:8px">🖥️ الحاسبة الرئيسية (السيرفر)</div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:8px;line-height:1.8">
+                ١. حمّل الملف أدناه<br>
+                ٢. افتح CMD: <code style="background:#010409;padding:2px 6px;border-radius:4px;color:var(--success)">node lan-server.js</code><br>
+                ٣. اختر وضع السيرفر أدناه
+              </div>
+              <button onclick="lanDownloadServer()" class="btn btn-p btn-sm" style="width:100%">⬇️ تحميل lan-server.js</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+              <button onclick="lanSetMode('server')" id="lan-btn-server" class="btn btn-s" style="padding:12px;flex-direction:column;gap:4px;height:auto">
+                <span style="font-size:18px">🖥️</span><span style="font-size:12px;font-weight:800">سيرفر</span>
+                <span style="font-size:9px;color:var(--text2)">الحاسبة الرئيسية</span>
+              </button>
+              <button onclick="lanSetMode('client')" id="lan-btn-client" class="btn btn-s" style="padding:12px;flex-direction:column;gap:4px;height:auto">
+                <span style="font-size:18px">💻</span><span style="font-size:12px;font-weight:800">كلاينت</span>
+                <span style="font-size:9px;color:var(--text2)">حاسبة إضافية</span>
+              </button>
+            </div>
+            <div id="lan-server-box" style="display:none;margin-bottom:12px">
+              <div class="fg"><label class="fl">Port (افتراضي 8080)</label><input class="fc" id="lan-server-port" value="8080" type="number"></div>
+              <button onclick="lanStartServer()" class="btn btn-p" style="width:100%;margin-top:8px">🟢 تشغيل كسيرفر</button>
+            </div>
+            <div id="lan-client-box" style="display:none;margin-bottom:12px">
+              <div class="fg"><label class="fl">IP الحاسبة الرئيسية</label><input class="fc" id="lan-client-ip" placeholder="192.168.0.100"></div>
+              <div class="fg"><label class="fl">Port</label><input class="fc" id="lan-client-port" value="8080" type="number"></div>
+              <button onclick="lanStartClient()" class="btn btn-p" style="width:100%;margin-top:8px">🔗 اتصال بالسيرفر</button>
+            </div>
+            <div id="sync-status-box" style="display:none;background:rgba(0,232,122,0.08);border:1px solid rgba(0,232,122,0.25);border-radius:10px;padding:12px;margin-bottom:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+                <div>
+                  <div style="font-size:12px;font-weight:800;color:var(--success)" id="lan-status-title">🟢 متصل</div>
+                  <div style="font-size:11px;color:var(--text2);margin-top:3px" id="sync-folder-display">—</div>
+                </div>
+                <div style="text-align:left">
+                  <div style="font-size:10px;color:var(--text2)">آخر مزامنة</div>
+                  <div style="font-size:11px;font-weight:700;color:var(--text)" id="sync-last-time">—</div>
+                </div>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px">
+                <div style="flex:1;background:rgba(0,0,0,0.2);border-radius:6px;padding:6px 10px;font-size:10px;color:var(--text2)" id="lan-clients-info">الحاسبات المتصلة: —</div>
+                <button onclick="lanDisconnect()" class="btn btn-d btn-sm">🔌 قطع</button>
+              </div>
+            </div>
+            <div id="sync-setup-box" style="display:none"></div>
+            <div id="sync-active-box" style="display:none"></div>
+            <div style="display:none" id="sync-next-label"></div>
+            <!-- نهاية LAN Sync -->
+          
             <div style="background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.2);border-radius:10px;padding:14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.8">
               <div style="font-weight:800;color:var(--primary);margin-bottom:6px">📋 كيف تعمل؟</div>
               ١. اختر مجلد Google Drive المزامن على هذه الحاسبة<br>
@@ -9374,106 +9429,169 @@ function showPatientResults(){
 // ============================================================
 // TUBE LABEL — ملصق التيوب
 // ============================================================
+// ═══════════════════════════════════════════════════════════
+// BARCODE CODE 128 — مولّد باركود احترافي (مطابق Green Lab)
+// ═══════════════════════════════════════════════════════════
+function genTubeBarcode(code){
+  try{ return genBarcode128(code); }catch(e){}
+  const C128B=[
+    [2,1,2,2,2,2],[2,2,2,1,2,2],[2,2,2,2,2,1],[1,2,1,2,2,3],[1,2,1,3,2,2],
+    [1,3,1,2,2,2],[1,2,2,2,1,3],[1,2,2,3,1,2],[1,3,2,2,1,2],[2,2,1,2,1,3],
+    [2,2,1,3,1,2],[2,3,1,2,1,2],[1,1,2,2,3,2],[1,2,2,1,3,2],[1,2,2,2,3,1],
+    [1,1,3,2,2,2],[1,2,3,1,2,2],[1,2,3,2,2,1],[2,2,3,2,1,1],[2,2,1,1,3,2],
+    [2,2,1,2,3,1],[2,1,3,2,1,2],[2,2,3,1,1,2],[3,1,2,1,3,1],[3,1,1,2,2,2],
+    [3,2,1,1,2,2],[3,2,1,2,2,1],[3,1,2,2,1,2],[3,2,2,1,1,2],[3,2,2,2,1,1],
+    [2,1,2,1,2,3],[2,1,2,3,2,1],[2,3,2,1,2,1],[1,1,1,3,2,3],[1,3,1,1,3,2],
+    [1,3,1,3,3,1],[1,1,2,3,1,3],[1,3,2,1,1,3],[1,3,2,3,1,1],[2,1,1,3,1,3],
+    [2,1,3,1,1,3],[2,1,3,3,1,1],[1,1,3,1,2,3],[1,3,1,1,2,3],[1,3,1,3,2,1],
+    [2,1,1,1,3,3],[2,1,3,1,3,1],[2,3,1,1,3,1],[1,1,2,1,3,3],[1,1,2,3,3,1],
+    [1,3,2,1,3,1],[1,1,3,1,3,2],[1,1,3,3,3,1],[1,3,3,1,3,1],[3,1,3,1,3,1],
+    [2,1,1,3,3,1],[2,3,1,1,1,3],[2,3,1,3,1,1],[1,1,3,3,1,2],[1,3,3,1,1,2],
+    [3,1,3,1,1,2],[1,1,1,1,3,3],[1,1,1,3,3,1],[1,3,1,1,1,3],[1,3,1,3,1,3],
+    [3,1,3,3,1,1],[3,3,1,1,1,2],[2,1,2,1,3,3],[2,1,2,3,3,1],[2,1,1,2,3,2],
+    [2,1,3,2,1,3],[2,1,3,2,3,1],[2,3,1,2,1,3],[2,3,1,2,3,1],[3,1,2,1,2,3],
+    [3,1,2,3,2,1],[3,3,2,1,2,1],[3,1,3,1,2,2],[3,3,1,1,2,2],[3,1,1,2,1,3],
+    [3,1,1,3,2,1],[3,3,1,2,1,1],[3,1,2,2,3,1],[3,3,2,2,1,1],[1,1,2,2,1,3],
+    [1,1,2,2,3,1],[1,3,2,2,1,1],[3,1,4,1,1,1],[2,2,4,1,1,1],[4,3,1,1,1,1],
+    [1,1,1,2,2,4],[1,1,1,4,2,2],[1,2,1,1,4,2],[1,2,1,2,4,1],[1,4,1,1,2,2],
+    [1,4,1,2,2,1],[1,1,4,2,1,2],[1,2,4,1,1,2],[1,2,4,2,1,1],[4,1,1,1,1,3],
+    [4,1,1,3,1,1],[1,1,3,1,4,1],[1,1,4,1,3,1],[3,1,1,1,4,1],[4,1,1,1,3,1],
+    [2,1,1,4,1,2],[2,1,1,2,1,4],[2,1,1,2,3,2],[2,1,3,4,1,1]
+  ];
+  const START_B=104,STOP=106;
+  const str=(code||'').replace(/[^\x20-\x7E]/g,'').substring(0,20);
+  const indices=[START_B];
+  let check=START_B;
+  for(let i=0;i<str.length;i++){
+    const v=str.charCodeAt(i)-32;
+    indices.push(v);
+    check=(check+v*(i+1))%103;
+  }
+  indices.push(check);
+  indices.push(STOP);
+  const W=2,H=50;
+  let bars=[];
+  indices.forEach(idx=>{
+    const pat=C128B[idx]||[1,1,1,1,1,1];
+    pat.forEach((w,j)=>bars.push({w:w*W,black:j%2===0}));
+  });
+  bars.push({w:2,black:true});
+  const totalW=bars.reduce((s,b)=>s+b.w,0);
+  let svgParts=[`<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${H}" viewBox="0 0 ${totalW} ${H}">`];
+  svgParts.push(`<rect width="${totalW}" height="${H}" fill="white"/>`);
+  let x=0;
+  bars.forEach(b=>{
+    if(b.black) svgParts.push(`<rect x="${x}" y="0" width="${b.w}" height="${H}" fill="black"/>`);
+    x+=b.w;
+  });
+  svgParts.push('</svg>');
+  return svgParts.join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// TUBE LABEL PRINT — بطاقة أنبوب احترافية (مطابقة Green Lab)
+// ═══════════════════════════════════════════════════════════
 function printTubeLabel(reqId){
   const r=requests.find(x=>x.id===reqId);
   if(!r){showNotif('خطأ','الطلب غير موجود','error');return;}
   const pt=patients.find(p=>p.id===r.patientId)||{};
   const barcodeId=(pt.barcode||r.id).replace(/[^A-Z0-9]/gi,'').toUpperCase().substring(0,16)||r.id;
   const barcodeSvg=genTubeBarcode(barcodeId);
-
-  // نوع الأنبوبة حسب التحاليل
   const tubeColors=getTubeColors(r.tests||[]);
-
-  const win=window.open('','_blank','width=420,height=580');
-  const labName=document.getElementById('set-lab-name')?.value||'MedLab Pro';
-  const labPhone=document.getElementById('set-phone')?.value||'';
-  const today=new Date().toLocaleString('ar-IQ',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const win=window.open('','_blank','width=480,height=640');
+  const labName=(document.getElementById('st-name')||document.getElementById('set-lab-name'))?.value||'MedLab Pro';
+  const labPhone=(document.getElementById('st-phone')||document.getElementById('set-phone'))?.value||'';
+  const labAddr=(document.getElementById('st-addr')||document.getElementById('set-addr'))?.value||'';
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('ar-IQ',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const timeStr=now.toLocaleTimeString('ar-IQ',{hour:'2-digit',minute:'2-digit'});
   const age=pt.ageDisplay||calcAgeFromInput?.(pt.dob,pt.age)||'—';
   const gender=(pt.gender==='female')?'أنثى':'ذكر';
-  const tests=(r.testNames||r.tests||[]).slice(0,6).join(' · ')+(r.testNames?.length>6?'...':'');
-
+  const testList=(r.testNames||r.tests||[]);
+  const testStr=testList.slice(0,8).join(' · ')+(testList.length>8?` +${testList.length-8}`:'');
+  const tubesSvg=tubeColors.map(t=>`
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+      <svg width="16" height="34" viewBox="0 0 16 34">
+        <rect x="1" y="0" width="14" height="4" rx="2" fill="${t.color}" stroke="#555" stroke-width="1"/>
+        <rect x="1" y="4" width="14" height="22" fill="${t.color}" stroke="#555" stroke-width="1"/>
+        <ellipse cx="8" cy="26" rx="7" ry="4" fill="${t.color}" stroke="#555" stroke-width="1"/>
+      </svg>
+      <span style="font-size:7px;font-weight:700;color:#333">${t.label}</span>
+    </div>`).join('');
   win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-  <title>ملصق التيوب</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Arial',sans-serif;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:16px;gap:12px}
-    .label{width:90mm;border:2px solid #222;border-radius:6px;overflow:hidden;background:#fff;page-break-inside:avoid}
-    .label-hdr{background:#003366;color:#fff;padding:5px 10px;display:flex;justify-content:space-between;align-items:center}
-    .label-hdr .lab{font-size:11px;font-weight:900;letter-spacing:0.5px}
-    .label-hdr .phone{font-size:9px;opacity:0.85}
-    .label-body{padding:8px 10px}
-    .pt-name{font-size:15px;font-weight:900;color:#cc0011;direction:rtl;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .pt-info{font-size:10px;color:#333;margin-top:3px;display:flex;gap:8px}
-    .barcode-row{display:flex;flex-direction:column;align-items:center;margin:8px 0 4px}
-    .barcode-num{font-family:'Courier New',monospace;font-size:9px;font-weight:900;letter-spacing:2px;margin-top:3px;color:#000}
-    .tests-row{font-size:9px;color:#444;border-top:1px dashed #ccc;padding-top:5px;margin-top:4px;word-break:break-word;direction:rtl;text-align:right}
-    .tubes-row{display:flex;gap:5px;margin-top:6px;align-items:center}
-    .tube{width:14px;height:28px;border-radius:3px 3px 50% 50%;border:1.5px solid #555;display:flex;align-items:center;justify-content:center}
-    .tube-lbl{font-size:7px;color:#444;font-weight:700}
-    .date-row{font-size:8px;color:#888;margin-top:4px;direction:ltr;text-align:left}
-    .btn-print{margin-top:12px;padding:10px 30px;background:#003366;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Arial',sans-serif}
-    .btn-print:hover{background:#004488}
-    @media print{.btn-print{display:none}body{padding:0}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  </style></head><body>
-  <div class="label">
-    <div class="label-hdr">
-      <span class="lab">🏥 ${labName}</span>
-      <span class="phone">${labPhone}</span>
+<title>بطاقة عينة</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Arial','Tahoma',sans-serif;background:#f0f0f0;display:flex;flex-direction:column;align-items:center;padding:20px;gap:14px}
+  .page-title{font-size:13px;color:#555;font-weight:700;margin-bottom:4px}
+  .label{width:95mm;background:#fff;border:1.5px solid #222;border-radius:0;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.18);page-break-inside:avoid}
+  .lbl-head{background:#1a3a6b;color:#fff;padding:5px 9px 4px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #c8a800}
+  .lbl-labname{font-size:12px;font-weight:900;letter-spacing:0.3px}
+  .lbl-labsub{font-size:8px;opacity:0.8;margin-top:1px}
+  .lbl-logo{font-size:22px;line-height:1}
+  .lbl-body{padding:7px 9px 5px}
+  .pt-name{font-size:16px;font-weight:900;color:#c00;direction:rtl;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid #eee;padding-bottom:4px;margin-bottom:4px}
+  .pt-meta{display:flex;gap:10px;font-size:9.5px;color:#333;margin-bottom:5px;flex-wrap:wrap}
+  .bc-wrap{background:#fff;border:1px solid #ddd;border-radius:3px;padding:5px 4px 3px;display:flex;flex-direction:column;align-items:center;margin:4px 0}
+  .bc-wrap svg{width:100%!important;height:52px!important}
+  .bc-num{font-family:'Courier New',Courier,monospace;font-size:10px;font-weight:900;letter-spacing:3px;color:#000;margin-top:2px;text-align:center}
+  .tests-row{font-size:8.5px;color:#333;border-top:1px dashed #ccc;padding-top:4px;margin-top:2px;direction:rtl;text-align:right;line-height:1.5;word-break:break-word}
+  .lbl-foot{display:flex;justify-content:space-between;align-items:flex-end;padding:5px 9px 5px;border-top:1px solid #eee;background:#fafafa}
+  .tubes-row{display:flex;gap:5px;align-items:flex-end}
+  .foot-info{text-align:left;font-size:8px;color:#666;line-height:1.6}
+  .req-badge{background:#1a3a6b;color:#fff;font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;display:inline-block;margin-bottom:2px;direction:ltr}
+  .btn-print{margin-top:4px;padding:9px 36px;background:#1a3a6b;color:#fff;border:none;border-radius:5px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Arial',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.2)}
+  .btn-print:hover{background:#244e9e}
+  @media print{body{background:#fff;padding:0}.btn-print,.page-title{display:none}.label{box-shadow:none;border:1.5px solid #222}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body>
+<div class="page-title">بطاقة عينة / Specimen Label</div>
+<div class="label">
+  <div class="lbl-head">
+    <div>
+      <div class="lbl-labname">${labName}</div>
+      ${labAddr?`<div class="lbl-labsub">${labAddr}</div>`:''}
+      ${labPhone?`<div class="lbl-labsub">☎ ${labPhone}</div>`:''}
     </div>
-    <div class="label-body">
-      <div class="pt-name">${r.patientName||'—'}</div>
-      <div class="pt-info">
-        <span>${gender}</span>
-        <span>العمر: ${age}</span>
-        <span>طبيب: ${r.doctorName||'—'}</span>
-      </div>
-      <div class="barcode-row">
-        ${barcodeSvg}
-        <div class="barcode-num">${barcodeId}</div>
-      </div>
-      <div class="tests-row">🧪 ${tests||'—'}</div>
-      ${tubeColors.length?`<div class="tubes-row">${tubeColors.map(t=>`<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><div class="tube" style="background:${t.color}"></div><span class="tube-lbl">${t.label}</span></div>`).join('')}</div>`:''}
-      <div class="date-row">${today} · #${r.id}</div>
+    <div class="lbl-logo">🧪</div>
+  </div>
+  <div class="lbl-body">
+    <div class="pt-name">${r.patientName||'— مريض غير معروف —'}</div>
+    <div class="pt-meta">
+      <span>👤 ${gender}</span>
+      <span>🎂 ${age}</span>
+      <span>👨‍⚕️ ${r.doctorName||'—'}</span>
+      <span>📅 ${dateStr}</span>
+      <span>🕐 ${timeStr}</span>
+    </div>
+    <div class="bc-wrap">
+      ${barcodeSvg}
+      <div class="bc-num">${barcodeId}</div>
+    </div>
+    ${testStr?`<div class="tests-row">🔬 ${testStr}</div>`:''}
+  </div>
+  <div class="lbl-foot">
+    <div class="tubes-row">${tubesSvg||'<span style="font-size:9px;color:#aaa">لا أنابيب</span>'}</div>
+    <div class="foot-info">
+      <div class="req-badge">#${r.id}</div>
+      <div>${dateStr} — ${timeStr}</div>
     </div>
   </div>
-  <button class="btn-print" onclick="window.print()">🖨️ طباعة الملصق</button>
-  </body></html>`);
+</div>
+<button class="btn-print" onclick="window.print()">🖨️ طباعة البطاقة</button>
+</body></html>`);
   win.document.close();
 }
 
-function genTubeBarcode(code){
-  // Code 128 minimal generator (reuse existing genBarcode128 if available)
-  try{return genBarcode128(code);}catch(e){}
-  // Fallback simple barcode SVG
-  let svg='<svg xmlns="http://www.w3.org/2000/svg" width="160" height="36" viewBox="0 0 160 36">';
-  const seed=code.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
-  let x=4;
-  for(let i=0;i<code.length;i++){
-    const c=code.charCodeAt(i);
-    const bars=[1,2,1,3,2,1,3,2,1,1];
-    for(let j=0;j<bars.length;j++){
-      const w=bars[(c+j)%bars.length];
-      if(j%2===0) svg+=`<rect x="${x}" y="0" width="${w*2}" height="36" fill="#000"/>`;
-      x+=w*2;
-    }
-  }
-  svg+='</svg>';
-  return svg;
-}
-
 function getTubeColors(testIds){
-  // أنواع التيوبات الشائعة حسب نوع التحليل
   const map={
-    // أحمر/ذهبي — Chemistry
     chemistry:  {color:'#FFD700',label:'كيمياء'},
-    // أرجواني — CBC
     hematology: {color:'#9B59B6',label:'CBC'},
-    // أزرق — تخثر
     coagulation:{color:'#3498DB',label:'تخثر'},
-    // أخضر — هرمونات / فيتامين
     immunology: {color:'#27AE60',label:'هرمون'},
-    // رمادي — سكر
     glucose:    {color:'#95A5A6',label:'سكر'},
+    urine:      {color:'#F39C12',label:'بول'},
+    microbio:   {color:'#E74C3C',label:'زرع'},
+    crossmatch: {color:'#E74C3C',label:'تطابق'},
   };
   const tubes=new Set();
   const result=[];
@@ -9482,12 +9600,15 @@ function getTubeColors(testIds){
     const t=tests_db_local.find(x=>x.id===tid);
     const cat=(t?.category||t?.cat||'').toLowerCase();
     if((cat.includes('chem')||cat.includes('كيمياء')||cat.includes('وظ'))&&!tubes.has('chemistry')){tubes.add('chemistry');result.push(map.chemistry);}
-    else if((cat.includes('hema')||cat.includes('دم')||cat.includes('cbc'))&&!tubes.has('hematology')){tubes.add('hematology');result.push(map.hematology);}
-    else if((cat.includes('coag')||cat.includes('تخثر'))&&!tubes.has('coagulation')){tubes.add('coagulation');result.push(map.coagulation);}
-    else if((cat.includes('immun')||cat.includes('هرمون')||cat.includes('endo'))&&!tubes.has('immunology')){tubes.add('immunology');result.push(map.immunology);}
-    else if((cat.includes('gluc')||cat.includes('سكر'))&&!tubes.has('glucose')){tubes.add('glucose');result.push(map.glucose);}
+    if((cat.includes('hema')||cat.includes('دم')||cat.includes('cbc'))&&!tubes.has('hematology')){tubes.add('hematology');result.push(map.hematology);}
+    if((cat.includes('coag')||cat.includes('تخثر'))&&!tubes.has('coagulation')){tubes.add('coagulation');result.push(map.coagulation);}
+    if((cat.includes('immun')||cat.includes('هرمون')||cat.includes('endo'))&&!tubes.has('immunology')){tubes.add('immunology');result.push(map.immunology);}
+    if((cat.includes('urin')||cat.includes('بول'))&&!tubes.has('urine')){tubes.add('urine');result.push(map.urine);}
+    if((cat.includes('micro')||cat.includes('زرع')||cat.includes('cultur'))&&!tubes.has('microbio')){tubes.add('microbio');result.push(map.microbio);}
+    if((cat.includes('cross')||cat.includes('تطابق'))&&!tubes.has('crossmatch')){tubes.add('crossmatch');result.push(map.crossmatch);}
+    if((cat.includes('gluc')||cat.includes('سكر'))&&!tubes.has('glucose')){tubes.add('glucose');result.push(map.glucose);}
   });
-  return result.slice(0,4);
+  return result.slice(0,5);
 }
 
 // ============================================================
@@ -26556,6 +26677,202 @@ window.save = function(k,v){
   }
 };
 
+
+// ═══════════════════════════════════════════════════════════════
+// LAN SYNC — مزامنة الشبكة المحلية (مثل Green Lab)
+// ═══════════════════════════════════════════════════════════════
+const LAN_SYNC_KEYS = ['patients','requests','invoices','packages','inventory','doctors','billing','testGroups','qc','cultureRecords','uaRecords','stoolExamRecords','semenRecords','phoneBook'];
+const LAN_DEVICE_ID = (()=>{ let id=localStorage.getItem('_lan_device_id'); if(!id){id='pc_'+Math.random().toString(36).slice(2,8); localStorage.setItem('_lan_device_id',id);} return id; })();
+
+let _lanWS         = null;
+let _lanMode       = null;
+let _lanConnected  = false;
+let _lanReconnTimer= null;
+let _lanClientIP   = '';
+let _lanClientPort = '8080';
+
+function lanDownloadServer(){
+  const code = `// lan-server.js — MedLab Pro LAN Sync Server
+// شغّله بـ: node lan-server.js
+const WebSocket = require('ws');
+const PORT = process.argv[2] || 8080;
+const wss = new WebSocket.Server({ port: PORT });
+let lastData = null;
+let clients  = new Set();
+console.log('[MedLab LAN] السيرفر شغّال على port ' + PORT);
+wss.on('connection', (ws) => {
+  clients.add(ws);
+  console.log('[MedLab LAN] حاسبة اتصلت — المتصلون: ' + clients.size);
+  if(lastData) ws.send(JSON.stringify({ type:'full_sync', data: lastData, from:'server' }));
+  broadcast({ type:'clients_count', count: clients.size });
+  ws.on('message', (msg) => {
+    try{
+      const parsed = JSON.parse(msg);
+      if(parsed.type === 'push_data'){
+        lastData = parsed.data;
+        clients.forEach(c => {
+          if(c !== ws && c.readyState === WebSocket.OPEN)
+            c.send(JSON.stringify({ type:'full_sync', data: lastData, from: parsed.deviceId||'?' }));
+        });
+      } else if(parsed.type === 'ping') ws.send(JSON.stringify({ type:'pong' }));
+    }catch(e){}
+  });
+  ws.on('close', () => { clients.delete(ws); broadcast({ type:'clients_count', count: clients.size }); });
+  ws.on('error', (e) => console.error('[MedLab LAN]', e.message));
+});
+function broadcast(msg){ const s=JSON.stringify(msg); clients.forEach(c=>{ if(c.readyState===WebSocket.OPEN) c.send(s); }); }
+`;
+  const blob = new Blob([code], {type:'text/javascript'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'lan-server.js';
+  a.click();
+  showNotif('تم التحميل','شغّل: node lan-server.js','success');
+}
+
+function lanSetMode(mode){
+  _lanMode = mode;
+  const sb=document.getElementById('lan-server-box');
+  const cb=document.getElementById('lan-client-box');
+  if(sb) sb.style.display = mode==='server'?'block':'none';
+  if(cb) cb.style.display = mode==='client'?'block':'none';
+  localStorage.setItem('_lan_mode', mode);
+}
+
+function lanStartServer(){
+  const port = document.getElementById('lan-server-port')?.value||'8080';
+  _lanClientIP='localhost'; _lanClientPort=port;
+  localStorage.setItem('_lan_client_ip','localhost');
+  localStorage.setItem('_lan_client_port',port);
+  _lanConnect('ws://localhost:'+port,'server');
+}
+
+function lanStartClient(){
+  const ip=document.getElementById('lan-client-ip')?.value?.trim();
+  const port=document.getElementById('lan-client-port')?.value||'8080';
+  if(!ip){showNotif('تنبيه','أدخل IP الحاسبة الرئيسية','warning');return;}
+  _lanClientIP=ip; _lanClientPort=port;
+  localStorage.setItem('_lan_client_ip',ip);
+  localStorage.setItem('_lan_client_port',port);
+  _lanConnect('ws://'+ip+':'+port,'client');
+}
+
+function _lanConnect(url,mode){
+  if(_lanWS){try{_lanWS.close();}catch(e){}}
+  showNotif('LAN','جاري الاتصال...','info');
+  try{
+    _lanWS=new WebSocket(url);
+    _lanWS.onopen=()=>{
+      _lanConnected=true;
+      if(_lanReconnTimer){clearTimeout(_lanReconnTimer);_lanReconnTimer=null;}
+      _syncUpdateIndicator('active');
+      const statusBox=document.getElementById('sync-status-box');
+      if(statusBox) statusBox.style.display='block';
+      const titleEl=document.getElementById('lan-status-title');
+      if(titleEl) titleEl.textContent=mode==='server'?'🖥️ سيرفر — متصل':'💻 كلاينت — متصل';
+      const folderEl=document.getElementById('sync-folder-display');
+      if(folderEl) folderEl.textContent='IP: '+_lanClientIP+':'+_lanClientPort+' | '+LAN_DEVICE_ID;
+      _syncSetLastTime();
+      showNotif('LAN ✅',mode==='server'?'متصل كسيرفر':'متصل بالحاسبة الرئيسية','success');
+      _lanPushData();
+      setInterval(()=>{if(_lanWS?.readyState===WebSocket.OPEN) _lanWS.send(JSON.stringify({type:'ping'}));},30000);
+    };
+    _lanWS.onmessage=(e)=>{
+      try{
+        const msg=JSON.parse(e.data);
+        if(msg.type==='full_sync'&&msg.from!==LAN_DEVICE_ID){
+          _lanApplyData(msg.data);
+          _syncSetLastTime();
+          showNotif('مزامنة 🔄','بيانات جديدة من: '+msg.from,'info');
+        } else if(msg.type==='clients_count'){
+          const el=document.getElementById('lan-clients-info');
+          if(el) el.textContent='الحاسبات المتصلة: '+msg.count;
+        }
+      }catch(e){}
+    };
+    _lanWS.onerror=()=>{showNotif('خطأ LAN','تعذر الاتصال — تأكد من تشغيل lan-server.js','error');_syncUpdateIndicator('error');};
+    _lanWS.onclose=()=>{
+      _lanConnected=false;
+      _syncUpdateIndicator('error');
+      if(!_lanReconnTimer){
+        _lanReconnTimer=setTimeout(()=>{
+          _lanReconnTimer=null;
+          if(_lanClientIP) _lanConnect('ws://'+_lanClientIP+':'+_lanClientPort,_lanMode||'client');
+        },10000);
+      }
+    };
+  }catch(e){showNotif('خطأ','فشل: '+e.message,'error');}
+}
+
+function _lanPushData(){
+  if(!_lanWS||_lanWS.readyState!==WebSocket.OPEN) return;
+  const data={};
+  LAN_SYNC_KEYS.forEach(k=>{
+    try{ data[k]=JSON.parse(localStorage.getItem('mlab2_'+k)||localStorage.getItem(k)||'null'); }catch(e){}
+  });
+  try{ data['settings']=JSON.parse(localStorage.getItem('mlab2_settings')||localStorage.getItem('settings')||'null'); }catch(e){}
+  _lanWS.send(JSON.stringify({type:'push_data',deviceId:LAN_DEVICE_ID,data}));
+}
+
+function _lanApplyData(data){
+  if(!data) return;
+  LAN_SYNC_KEYS.forEach(k=>{
+    if(data[k]!==undefined&&data[k]!==null){
+      const key=localStorage.getItem('mlab2_'+k)!==null?'mlab2_'+k:k;
+      localStorage.setItem(key,JSON.stringify(data[k]));
+    }
+  });
+  try{
+    if(data.patients){window.patients=data.patients; typeof renderPatients==='function'&&renderPatients();}
+    if(data.requests){window.requests=data.requests; typeof renderRequestsFiltered==='function'&&renderRequestsFiltered();}
+    if(data.doctors){window.doctors=data.doctors;}
+    if(data.invoices){window.invoices=data.invoices;}
+  }catch(e){}
+}
+
+function lanDisconnect(){
+  if(_lanReconnTimer){clearTimeout(_lanReconnTimer);_lanReconnTimer=null;}
+  if(_lanWS){try{_lanWS.close();}catch(e){}_lanWS=null;}
+  _lanConnected=false; _lanMode=null; _lanClientIP='';
+  localStorage.removeItem('_lan_client_ip');
+  localStorage.removeItem('_lan_client_port');
+  localStorage.removeItem('_lan_mode');
+  _syncUpdateIndicator('off');
+  const statusBox=document.getElementById('sync-status-box');
+  if(statusBox) statusBox.style.display='none';
+  showNotif('LAN','تم قطع الاتصال','info');
+}
+
+// ربط save() بالإرسال الفوري
+const _lanOrigSave=window.save;
+window.save=function(k,v){
+  _lanOrigSave(k,v);
+  if(_lanConnected&&LAN_SYNC_KEYS.includes(k)){
+    clearTimeout(window._lanDebounce);
+    window._lanDebounce=setTimeout(_lanPushData,800);
+  }
+};
+
+// استعادة الاتصال عند فتح البرنامج
+window.addEventListener('load',function(){
+  const savedIP=localStorage.getItem('_lan_client_ip');
+  const savedPort=localStorage.getItem('_lan_client_port')||'8080';
+  const savedMode=localStorage.getItem('_lan_mode');
+  if(savedIP&&savedMode){
+    _lanMode=savedMode; _lanClientIP=savedIP; _lanClientPort=savedPort;
+    setTimeout(()=>{ lanSetMode(savedMode); _lanConnect('ws://'+savedIP+':'+savedPort,savedMode); },2000);
+  }
+});
+
+// إخفاء Google Drive القديم
+function syncPickFolder(){showNotif('تنبيه','استخدم نظام LAN الجديد','info');}
+function syncNow(){_lanPushData();showNotif('LAN','تم الإرسال','success');}
+function syncDisconnect(){lanDisconnect();}
+function syncRenderCard(){
+  const subEl=document.getElementById('sync-card-sub');
+  if(subEl) subEl.textContent=_lanConnected?'🟢 متصل بالشبكة المحلية':'اربط حاسبتين على نفس الشبكة — بدون إنترنت';
+}
+
 // IndexedDB لحفظ FileSystemDirectoryHandle بين الجلسات
 function _idbOpen(){
   return new Promise((res,rej)=>{
@@ -27297,26 +27614,44 @@ async function lisConnectFileDevice(dev){
     lisSaveState();
     lisAddLog('ok','مراقبة مجلد: '+dir.name+' للجهاز: '+dev.name);
     showNotif('مراقبة ✓','بدأت مراقبة المجلد: '+dir.name,'success');
-    // Poll every 3 seconds
-    const seen=new Set();
+
+    // ── نظام مراقبة كامل (مثل Green Lab) ──
+    // يتتبع: الملفات الجديدة + الملفات المحدّثة (lastModified)
+    const WATCH_EXTS=['txt','astm','hl7','csv','res','dat','lis','xml'];
+    const fileSnapshots=new Map(); // name → lastModified
+
     _lisFileInterval=setInterval(async()=>{
       try{
         for await(const entry of dir.values()){
-          if(entry.kind==='file'&&!seen.has(entry.name)){
-            const ext=(entry.name.split('.').pop()||'').toLowerCase();
-            if(['txt','astm','hl7','csv','res','dat'].includes(ext)){
-              seen.add(entry.name);
-              const fh=await dir.getFileHandle(entry.name);
-              const file=await fh.getFile();
-              const text=await file.text();
-              lisAddLog('data','ملف جديد: '+entry.name+' ('+text.length+' حرف)');
-              lisRawMessages.unshift(text);
-              lisParseByProtocol(text,dev);
+          if(entry.kind!=='file') continue;
+          const ext=(entry.name.split('.').pop()||'').toLowerCase();
+          if(!WATCH_EXTS.includes(ext)) continue;
+
+          const fh=await dir.getFileHandle(entry.name);
+          const file=await fh.getFile();
+          const lm=file.lastModified;
+          const prev=fileSnapshots.get(entry.name);
+
+          // جديد أو محدَّث منذ آخر فحص
+          if(prev===undefined || prev!==lm){
+            fileSnapshots.set(entry.name,lm);
+            if(file.size===0) continue; // ملف فارغ، تجاهل
+
+            const text=await file.text();
+            if(!text.trim()) continue;
+
+            if(prev===undefined){
+              lisAddLog('data','📄 ملف جديد: '+entry.name+' ('+file.size+' بايت)');
+            } else {
+              lisAddLog('data','🔄 ملف محدَّث: '+entry.name+' ('+file.size+' بايت)');
             }
+            lisRawMessages.unshift(text);
+            lisParseByProtocol(text,dev);
           }
         }
       }catch(e){ lisAddLog('err','خطأ مراقبة: '+e.message); }
-    },3000);
+    },3000); // كل 3 ثواني — نفس طريقة Green Lab
+
   }catch(e){
     if(e.name!=='AbortError'){
       lisAddLog('err','File Watch خطأ: '+e.message);
