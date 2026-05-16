@@ -22922,21 +22922,22 @@ const SEMEN_FIELDS = {
   motility: {
     label: '🏃 الحركة (WHO 2021)',
     fields: [
-      {id:'s_pr',           label:'حركة تقدمية PR (%)',   type:'number', normal:'', placeholder:'≥ 30%', min:'0',max:'100',step:'0.1', ref:'≥ 30%'},
-      {id:'s_np',           label:'حركة غير تقدمية NP (%)',type:'number',normal:'', placeholder:'',      min:'0',max:'100',step:'0.1'},
-      {id:'s_im',           label:'بلا حركة IM (%)',      type:'number', normal:'', placeholder:'',      min:'0',max:'100',step:'0.1'},
-      {id:'s_total_motile', label:'إجمالي المتحرك PR+NP (%)',type:'number',normal:'',placeholder:'≥ 42%',min:'0',max:'100',step:'0.1', ref:'≥ 42%'},
-      {id:'s_vitality',     label:'حيوية الحيوانات (%)',  type:'number', normal:'', placeholder:'≥ 54%', min:'0',max:'100',step:'0.1', ref:'≥ 54%'},
+      {id:'s_grade_a',      label:'Grade A — Rapid Progressive (%)', type:'number', normal:'', placeholder:'>=25%', min:'0',max:'100',step:'0.1', ref:'>= 25%'},
+      {id:'s_grade_b',      label:'Grade B — Slow Progressive (%)',  type:'number', normal:'', placeholder:'',       min:'0',max:'100',step:'0.1'},
+      {id:'s_pr',           label:'PR = A+B  Total Progressive (%)', type:'number', normal:'', placeholder:'>=30%',  min:'0',max:'100',step:'0.1', ref:'>= 30%'},
+      {id:'s_grade_c',      label:'Grade C — Non-Progressive NP (%)',type:'number', normal:'', placeholder:'',       min:'0',max:'100',step:'0.1'},
+      {id:'s_grade_d',      label:'Grade D — Immotile IM (%)',       type:'number', normal:'', placeholder:'',       min:'0',max:'100',step:'0.1'},
+      {id:'s_total_motile', label:'Total Motile  PR+NP (%)',         type:'number', normal:'', placeholder:'>=42%',  min:'0',max:'100',step:'0.1', ref:'>= 42%'},
+      {id:'s_vitality',     label:'Vitality — Live Spermatozoa (%)',type:'number', normal:'', placeholder:'>=54%',   min:'0',max:'100',step:'0.1', ref:'>= 54%'},
     ]
   },
   morphology: {
     label: '🔬 المورفولوجيا (Kruger)',
     fields: [
-      {id:'s_normal_forms', label:'الأشكال الطبيعية (%)', type:'number', normal:'', placeholder:'≥ 4%', min:'0',max:'100',step:'0.1', ref:'≥ 4%'},
-      {id:'s_head_defect',  label:'عيوب الرأس (%)',        type:'number', normal:'', placeholder:'',     min:'0',max:'100',step:'0.1'},
-      {id:'s_mid_defect',   label:'عيوب المنطقة الوسطى (%)',type:'number',normal:'', placeholder:'',     min:'0',max:'100',step:'0.1'},
-      {id:'s_tail_defect',  label:'عيوب الذيل (%)',        type:'number', normal:'', placeholder:'',     min:'0',max:'100',step:'0.1'},
-      {id:'s_teratozoospermia',label:'مؤشر التشوه (TZI)',  type:'number', normal:'', placeholder:'1.0-1.5',min:'0',max:'3',step:'0.01'},
+      {id:'s_normal_forms', label:'Normal Morphology (%)', type:'number', normal:'', placeholder:'>= 14%', min:'0',max:'100',step:'0.1', ref:'>= 14%'},
+      {id:'s_normal_shapes',label:'Normal Sperm Shapes Observed', type:'multiselect', normal:'',
+        options:['Oval head (standard normal form)','Smooth oval head','Acrosome 40-70% head coverage','Normal midpiece (slim, axially attached)','Straight flagellum (tail)','Slightly curved tail','Tapered head (borderline normal)','Pyriform head (pear-shaped, borderline)','Normal cytoplasmic droplet (< 1/3 midpiece)']
+      },
     ]
   },
   biochemistry: {
@@ -24298,9 +24299,19 @@ function _buildSemenModalBody(r, req){
             <option value="${EMPTY_VAL}" ${val===EMPTY_VAL?'selected':''}>${EMPTY_LABEL}</option>
             ${f.options.map(o=>`<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('')}
           </select></div>`;
+      } else if(f.type==='multiselect'){
+        const savedVals=(val||'').split('||').filter(Boolean);
+        html+=`<div class="fg" style="margin-bottom:0;grid-column:1/-1">
+          <label class="fl" style="font-size:11px">${f.label}</label>
+          <div id="semenf-${f.id}-wrap" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px">
+          ${f.options.map(o=>`<label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:${savedVals.includes(o)?'rgba(0,212,255,0.15)':'transparent'};color:var(--text)">
+            <input type="checkbox" value="${o}" ${savedVals.includes(o)?'checked':''} onchange="_semenMultiUpdate('${f.id}')" style="accent-color:var(--primary)"> ${o}</label>`).join('')}
+          </div>
+          <input type="hidden" id="semenf-${f.id}" value="${savedVals.join('||')}">
+        </div>`;
       } else if(f.type==='number'){
         html+=`<div class="fg" style="margin-bottom:0">
-          <label class="fl" style="font-size:11px">${f.label}${f.ref?`<span style="color:var(--text2);font-weight:500;font-size:10px"> — طبيعي: ${f.ref}</span>`:''}</label>
+          <label class="fl" style="font-size:11px">${f.label}${f.ref?`<span style="color:var(--text2);font-weight:500;font-size:10px"> — Normal: ${f.ref}</span>`:''}</label>
           <input class="fc" type="number" id="semenf-${f.id}" value="${val}" placeholder="${f.placeholder||''}" min="${f.min||0}" max="${f.max||9999}" step="${f.step||'any'}" style="font-size:12px"></div>`;
       } else if(f.type==='textarea'){
         html+=`<div class="fg" style="margin-bottom:0;grid-column:1/-1">
@@ -24360,6 +24371,19 @@ function _getSemenDoctor(){
   // طبيب من القائمة
   const opt=sel.options[sel.selectedIndex];
   return {id:sel.value, name:opt?opt.dataset.name||opt.text:''};
+}
+
+function _semenMultiUpdate(fid){
+  const wrap=document.getElementById('semenf-'+fid+'-wrap');
+  const hidden=document.getElementById('semenf-'+fid);
+  if(!wrap||!hidden) return;
+  const checked=[...wrap.querySelectorAll('input[type=checkbox]:checked')].map(cb=>cb.value);
+  hidden.value=checked.join('||');
+  // update highlight
+  wrap.querySelectorAll('label').forEach(lbl=>{
+    const cb=lbl.querySelector('input');
+    lbl.style.background=cb&&cb.checked?'rgba(0,212,255,0.15)':'transparent';
+  });
 }
 
 function saveSemenEntry(){
@@ -24539,15 +24563,16 @@ function _buildSemenPrintHTML(r){
   const SEMEN_EN={
     specimen:    {label:'Specimen Information',fields:{s_abstinence:'Abstinence Period',s_collection:'Collection Method',s_volume:'Volume (mL)',s_appearance:'Appearance',s_liquefaction:'Liquefaction Time',s_viscosity:'Viscosity',s_ph:'pH'}},
     spermCount:  {label:'Sperm Count',fields:{s_conc:'Concentration (M/mL)',s_total_count:'Total Count (Million)',s_azoospermia:'Azoospermia'}},
-    motility:    {label:'Motility (WHO 2021)',fields:{s_pr:'Progressive Motility PR (%)',s_np:'Non-Progressive NP (%)',s_im:'Immotile IM (%)',s_total_motile:'Total Motile PR+NP (%)',s_vitality:'Vitality (%)'}},
-    morphology:  {label:'Morphology (Kruger)',fields:{s_normal_forms:'Normal Forms (%)',s_head_defect:'Head Defects (%)',s_mid_defect:'Mid-piece Defects (%)',s_tail_defect:'Tail Defects (%)',s_teratozoospermia:'Teratozoospermia Index (TZI)'}},
+    motility:    {label:'Motility (WHO 2021)',fields:{s_grade_a:'Grade A — Rapid Progressive (%)',s_grade_b:'Grade B — Slow Progressive (%)',s_pr:'PR = A+B  Total Progressive (%)',s_grade_c:'Grade C — Non-Progressive NP (%)',s_grade_d:'Grade D — Immotile IM (%)',s_total_motile:'Total Motile  PR+NP (%)',s_vitality:'Vitality — Live Spermatozoa (%)'}},
+    morphology:  {label:'Morphology (Kruger Strict)',fields:{s_normal_forms:'Normal Morphology (%)',s_normal_shapes:'Normal Sperm Shapes Observed'}},
     biochemistry:{label:'Seminal Biochemistry',fields:{s_fructose:'Fructose',s_zinc:'Zinc (µmol/ejac)',s_citric_acid:'Citric Acid (µmol/ejac)',s_wbc:'Pus Cells (/mL)',s_rbc:'RBC',s_bacteria:'Bacteria',s_agglutination:'Agglutination'}},
     advanced:    {label:'Advanced Markers',fields:{s_dna_frag:'DNA Fragmentation (%)',s_oxidative:'Oxidative Stress',s_antisperm_ab:'Antisperm Antibodies',s_round_cells:'Round Cells (/mL)'}}
   };
   const SEMEN_REFS={
-    s_volume:'≥ 1.4 mL',s_ph:'7.2 – 8.0',s_conc:'≥ 16 M/mL',s_total_count:'≥ 39 million',
-    s_pr:'≥ 30%',s_total_motile:'≥ 42%',s_vitality:'≥ 54%',s_normal_forms:'≥ 4%',
-    s_teratozoospermia:'1.0 – 1.5',s_fructose:'Positive',s_zinc:'≥ 2.4',s_citric_acid:'≥ 52',
+    s_volume:'>= 1.4 mL',s_ph:'7.2 – 8.0',s_conc:'>= 16 M/mL',s_total_count:'>= 39 million',
+    s_grade_a:'>= 25%',s_grade_b:'',s_grade_c:'',s_grade_d:'',
+    s_pr:'>= 30%',s_total_motile:'>= 42%',s_vitality:'>= 54%',s_normal_forms:'>= 14%',s_normal_shapes:'',
+    s_fructose:'Positive',s_zinc:'>= 2.4',s_citric_acid:'>= 52',
     s_wbc:'< 1 M/mL',s_rbc:'Absent',s_bacteria:'Absent',s_agglutination:'Nil',
     s_dna_frag:'< 15%',s_oxidative:'Normal',s_antisperm_ab:'Negative',s_round_cells:'< 5 M/mL',
     s_azoospermia:'No',s_liquefaction:'< 60 min',s_viscosity:'Nil',s_appearance:'Opaque-White',s_collection:'',s_abstinence:'3-5 days'
@@ -24562,21 +24587,27 @@ function _buildSemenPrintHTML(r){
     return all[0]||null;
   })();
 
+  // ── رأس واحد مشترك لكل الجدول ──
+  const _globalThead=`<thead><tr style="background:#e8edf5">
+    <th style="font-size:12px;font-weight:800;color:#000;padding:2px 6px;text-align:left;border-bottom:2px solid #888;width:34%">Parameter</th>
+    <th style="font-size:12px;font-weight:800;color:#000;padding:2px 6px;text-align:center;border-bottom:2px solid #888;width:20%">Result</th>
+    <th style="font-size:12px;font-weight:800;color:#555;padding:2px 6px;text-align:left;border-bottom:2px solid #888;width:22%">Reference (WHO 2021)</th>
+    <th style="font-size:12px;font-weight:800;color:#1a4fa0;padding:2px 6px;text-align:center;border-bottom:2px solid #888;width:24%;border-left:2px solid #b0c4e8;background:#eef3ff">${_prevRec?`Last Result<br><span style="font-size:9px;font-weight:600;color:#555">${_prevRec.date||''}</span>`:'Last Result'}</th>
+  </tr></thead>`;
+
   const renderSec=(secKey)=>{
     const secDef=SEMEN_EN[secKey]; if(!secDef) return '';
     const fieldKeys=Object.keys(secDef.fields);
     const validKeys=fieldKeys.filter(fid=>r[fid]&&r[fid]!=='');
     if(!validKeys.length) return '';
     const rows=validKeys.map((fid,fi)=>{
-      // ── EMPTY_VAL ("فارغ"): مربع نتيجة فارغ بدون تلوين أحمر ──
       const isEmpty=r[fid]===EMPTY_VAL;
       const val=isEmpty?'':r[fid];
       const ref=SEMEN_REFS[fid]||'';
       const numVal=parseFloat(val);
       let abn=false;
-      if(isEmpty){
-        abn=false;
-      } else if(['s_volume','s_conc','s_total_count','s_pr','s_total_motile','s_vitality','s_normal_forms'].includes(fid)){
+      if(isEmpty){ abn=false; }
+      else if(['s_volume','s_conc','s_total_count','s_grade_a','s_pr','s_total_motile','s_vitality','s_normal_forms'].includes(fid)){
         const refNum=parseFloat(ref); if(!isNaN(numVal)&&!isNaN(refNum)) abn=numVal<refNum;
       } else if(fid==='s_dna_frag'){ if(!isNaN(numVal)) abn=numVal>15; }
       else if(fid==='s_azoospermia'){ abn=val==='Yes'; }
@@ -24584,40 +24615,40 @@ function _buildSemenPrintHTML(r){
       else if(['s_rbc','s_bacteria','s_antisperm_ab'].includes(fid)){ abn=val!=='Absent'&&val!=='Negative'; }
       else if(['s_agglutination','s_viscosity'].includes(fid)){ abn=val!=='Nil'; }
       else if(fid==='s_oxidative'){ abn=val!=='Normal'; }
-      // ── آخر نتيجة للمريض لهذا الحقل ──
-      const prevVal=_prevRec?(_prevRec[fid]||'—'):'—';
-      const rowBg=fi%2===0?'#ffffff':'#f9f9f9';
+      const prevRaw=_prevRec?(_prevRec[fid]||'—'):'—';
+      // multiselect: display as comma-separated pills
+      const isMulti=fid==='s_normal_shapes';
+      const displayVal=isMulti?(val||'').split('||').filter(Boolean).join(', ')||val:val;
+      const displayPrev=isMulti?(prevRaw||'').split('||').filter(Boolean).join(', ')||prevRaw:prevRaw;
+      const rowBg=fi%2===0?'#ffffff':'#f7f9fc';
+      if(isMulti){
+        return `<tr style="background:${rowBg}">
+          <td style="font-size:12px;font-weight:700;color:#000;padding:2px 6px;border-bottom:1px solid #e0e0e0"><span style="color:#666;margin-right:3px">■</span>${secDef.fields[fid]}</td>
+          <td colspan="2" style="font-size:11px;font-weight:600;color:#000;padding:2px 6px;border-bottom:1px solid #e0e0e0">${displayVal||'—'}</td>
+          <td style="font-size:11px;font-weight:600;color:#1a4fa0;padding:2px 6px;border-bottom:1px solid #e0e0e0;text-align:center;border-left:2px solid #d0d8ea;background:#f4f8ff">${displayPrev}</td>
+        </tr>`;
+      }
       return `<tr style="background:${rowBg}">
-        <td style="font-size:13px;font-weight:700;color:#555;padding:1px 6px;width:20%;border:none;border-bottom:1px solid #e0e0e0;text-align:left">${ref||'—'}</td>
-        <td style="font-size:15px;font-weight:700;color:#000000;padding:1px 6px;width:22%;border:none;border-bottom:1px solid #e0e0e0;text-align:center">
-          <span style="display:inline-block;border:1.5px solid #b0b0b0;border-radius:4px;padding:0 6px;min-width:70px;text-align:center;background:#fff;color:${abn?'#cc0000':'#000000'};font-weight:${abn?'900':'700'}">${val}</span>
+        <td style="font-size:12px;font-weight:700;color:#000;padding:2px 6px;border-bottom:1px solid #e0e0e0"><span style="color:#666;margin-right:3px">■</span>${secDef.fields[fid]}</td>
+        <td style="font-size:13px;font-weight:700;padding:2px 6px;border-bottom:1px solid #e0e0e0;text-align:center">
+          <span style="display:inline-block;border:1px solid #b0b0b0;border-radius:3px;padding:0 5px;min-width:55px;text-align:center;background:#fff;color:${abn?'#cc0000':'#000'};font-weight:${abn?'900':'700'}">${displayVal}</span>
         </td>
-        <td style="font-size:15px;font-weight:700;color:#000000;padding:1px 6px;width:36%;border:none;border-bottom:1px solid #e0e0e0"><span style="color:#000;margin-right:4px">■</span>${secDef.fields[fid]}</td>
-        <td style="font-size:13px;font-weight:700;color:#1a4fa0;padding:1px 6px;width:22%;border:none;border-bottom:1px solid #e0e0e0;text-align:center;border-left:2px solid #d0d8ea">
-          <span style="display:inline-block;border:1.5px solid #b0c4e8;border-radius:4px;padding:0 6px;min-width:70px;text-align:center;background:#f4f8ff;color:#1a4fa0;font-weight:700">${prevVal}</span>
+        <td style="font-size:11px;font-weight:600;color:#555;padding:2px 6px;border-bottom:1px solid #e0e0e0">${ref||'—'}</td>
+        <td style="font-size:12px;font-weight:700;color:#1a4fa0;padding:2px 6px;border-bottom:1px solid #e0e0e0;text-align:center;border-left:2px solid #d0d8ea;background:#f4f8ff">
+          <span style="display:inline-block;border:1px solid #b0c4e8;border-radius:3px;padding:0 5px;min-width:55px;text-align:center;background:#fff;color:#1a4fa0;font-weight:700">${displayPrev}</span>
         </td>
       </tr>`;
     }).join('');
-    return `<div style="border:1.5px solid #b8b8b8;border-radius:0;margin-bottom:2px;overflow:hidden;page-break-inside:avoid">
-      <div style="background:#ffffff;padding:1px 10px;border-bottom:1.5px solid #b8b8b8">
-        <span style="font-size:16px;font-weight:900;color:#1a4fa0;letter-spacing:0.3px">${secDef.label}</span>
-      </div>
-      <table style="width:100%;border-collapse:collapse">
-        <thead><tr style="background:#f0f0f0">
-          <th style="font-size:13px;font-weight:800;color:#000000;padding:1px 6px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:20%">Reference (WHO 2021)</th>
-          <th style="font-size:13px;font-weight:800;color:#000000;padding:1px 6px;text-align:center;border:none;border-bottom:1.5px solid #b8b8b8;width:22%">Result</th>
-          <th style="font-size:13px;font-weight:800;color:#000000;padding:1px 6px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:36%">Parameter</th>
-          <th style="font-size:13px;font-weight:800;color:#1a4fa0;padding:1px 6px;text-align:center;border:none;border-bottom:1.5px solid #b8b8b8;width:22%;border-left:2px solid #b0c4e8;background:#eef3ff">${_prevRec?`Last Result<br><span style="font-size:10px;font-weight:600;color:#555">${_prevRec.date||''}</span>`:'Last Result'}</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
+    return `<tr><td colspan="4" style="background:#f0f4fa;padding:2px 8px;border-bottom:1px solid #ccd0d8;border-top:2px solid #b0bcd8">
+      <span style="font-size:12px;font-weight:900;color:#1a4fa0;letter-spacing:0.3px">${secDef.label}</span>
+    </td></tr>${rows}`;
   };
+
+  const allSectionRows=['specimen','spermCount','motility','morphology','biochemistry','advanced'].map(renderSec).join('');
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    /* ⭐ الذيل ثابت أسفل الورقة (position:fixed) — مطابق لتقرير CBC */
-    body{font-family:Arial,sans-serif;color:#000;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body{font-family:Arial,sans-serif;color:#000;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     .sm-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
     .sm-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -24625,16 +24656,21 @@ function _buildSemenPrintHTML(r){
   </style></head><body>
     <div class="sm-content">
       ${hdrHTML}
-      <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:14px;letter-spacing:1px">
+      <div style="background:${color};color:#fff;padding:2px 12px;text-align:center;font-weight:900;font-size:13px;letter-spacing:1px">
         SEMEN ANALYSIS REPORT (SPERMIOGRAM)
       </div>
-      <div style="border:1.5px solid #b8b8b8;margin:3px 0 4px;padding:4px 10px;background:#fafafa">
+      <div style="border:1.5px solid #b8b8b8;margin:2px 0 3px;padding:3px 10px;background:#fafafa">
         ${_smPtBox}
       </div>
-      <div style="margin:0 0 3px;height:2px;background:${color}"></div>
-      <div>${['specimen','spermCount','motility','morphology','biochemistry','advanced'].map(renderSec).join('')}</div>
-      ${r.s_recommendation?`<div style="border:1.5px solid #b8b8b8;padding:5px 12px;margin-top:3px"><span style="font-size:13px;font-weight:800;color:#996600">📋 Recommendation: </span><span style="font-size:13px;color:#333">${r.s_recommendation}</span></div>`:''}
-      ${r.s_note?`<div style="border:1.5px solid #b8b8b8;padding:5px 12px;margin-top:3px"><span style="font-size:13px;font-weight:800;color:#444">Notes: </span><span style="font-size:13px;color:#333">${r.s_note}</span></div>`:''}
+      <div style="margin:0 0 2px;height:2px;background:${color}"></div>
+      <div style="border:1.5px solid #b8b8b8;border-radius:0;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse">
+          ${_globalThead}
+          <tbody>${allSectionRows}</tbody>
+        </table>
+      </div>
+      ${r.s_recommendation?`<div style="border:1.5px solid #b8b8b8;padding:4px 10px;margin-top:2px"><span style="font-size:12px;font-weight:800;color:#996600">Recommendation: </span><span style="font-size:12px;color:#333">${r.s_recommendation}</span></div>`:''}
+      ${r.s_note?`<div style="border:1.5px solid #b8b8b8;padding:4px 10px;margin-top:2px"><span style="font-size:12px;font-weight:800;color:#444">Notes: </span><span style="font-size:12px;color:#333">${r.s_note}</span></div>`:''}
     </div>
     <div class="sm-footer">${ftrHTML}</div>
   </body></html>`;
