@@ -3523,7 +3523,7 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
                   <div style="background:rgba(255,204,0,0.06);border:1px solid rgba(255,204,0,0.25);border-radius:10px;padding:14px;margin-bottom:14px">
                     <div style="font-size:12px;font-weight:800;color:var(--warning);margin-bottom:8px">⚠️ المتصفح لا يستطيع فتح اتصال TCP مباشرة</div>
                     <div style="font-size:11px;color:var(--text2);line-height:2">
-
+                      لأجهزة الشبكة (LAN/WiFi) تحتاج برنامج وسيط صغير على نفس الكمبيوتر يحوّل TCP إلى WebSocket.
                     </div>
                   </div>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -4806,7 +4806,7 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
               <div style="display:flex;align-items:center;gap:14px">
                 <div style="font-size:28px">🌐</div>
                 <div style="flex:1">
-
+                  <div style="font-weight:800;font-size:13px">شبكة (LAN/WiFi)</div>
                   <div style="font-size:11px;color:var(--text2);margin-top:3px">الجهاز متصل بالشبكة وعنده IP خاص به</div>
                 </div>
                 <div id="wiz-conn-network-check" style="width:20px;height:20px;border-radius:50%;border:2px solid var(--border);flex-shrink:0"></div>
@@ -23868,157 +23868,34 @@ function renderDNAFragList(){
   </tr>`).join('')}</tbody></table>`;
 }
 
-// ── بناء قسم Last Result لتقرير DNA Fragmentation ──
-function _buildDNAFragMainTables(r, dnaFragRecords, fColor, fBg, dfi, total, haloChartSVG, fragChartSVG, patientImg){
-  // جلب آخر نتيجة سابقة للمريض
-  const prev = (()=>{
-    if(!r.patientId) return null;
-    const all = (dnaFragRecords||[])
-      .filter(x=>x.patientId===r.patientId && x.id!==r.id)
-      .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    return all[0]||null;
-  })();
-  const p   = (field, dec=2) => prev ? ((prev[field]||0).toFixed(dec)) : '—';
-  const pN  = (field)        => prev ? (prev[field]||0) : '—';
-  const prevDFI     = prev ? (prev.dfi||0) : null;
-  const prevFC      = prevDFI!==null ? (prevDFI<15?'#007a00':prevDFI<=30?'#c47a00':'#cc0000') : '#888';
-  const prevComment = prev ? (prev.dfi<15?'Excellent':prev.dfi<=30?'Good':'Poor') : '—';
-  const prevDate    = prev ? (prev.date||'') : '';
-
-  const lrThStyle  = 'padding:3px 8px;font-size:11px;font-weight:800;color:#1a4fa0;text-align:center;border:1px solid #b8b8b8;background:#eef3ff;border-left:2px solid #b0c4e8';
-  const lrTdStyle  = 'padding:3px 8px;font-size:12px;font-weight:700;color:#1a4fa0;text-align:center;border:1px solid #ddd;background:#f4f8ff;border-left:2px solid #d0d8ea';
-  const lrTdRed    = 'padding:3px 8px;font-size:12px;font-weight:700;color:#cc0000;text-align:center;border:1px solid #ddd;background:#f4f8ff;border-left:2px solid #d0d8ea';
-
-  const lrHeaderLabel = prev
-    ? ('Last Result<br><span style="font-size:9px;font-weight:600;color:#777">' + prevDate + '</span>')
-    : 'Last Result';
-
-  const lrHeader2 = '<th colspan="2" style="' + lrThStyle + '">' + lrHeaderLabel + '</th>';
-  const lrSubPct  = '<th style="padding:2px 6px;font-size:10px;font-weight:700;color:#1a4fa0;text-align:center;border:1px solid #b8b8b8;border-left:2px solid #b0c4e8">%</th>';
-  const lrSubNo   = '<th style="padding:2px 6px;font-size:10px;font-weight:700;color:#1a4fa0;text-align:center;border:1px solid #b8b8b8">No.</th>';
-
-  function lrTd(val, red){ return '<td style="' + (red?lrTdRed:lrTdStyle) + '">' + val + '</td>'; }
-
-  // ─── الجدول الأول ───────────────────────────────────────────
-  var tbl1 = '<table style="width:100%;border-collapse:collapse;border:1px solid #b8b8b8">'
-    + '<thead>'
-    + '<tr style="background:#cce0f5">'
-    +   '<th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:left;border:1px solid #b8b8b8;width:34%"></th>'
-    +   '<th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8;width:14%">%</th>'
-    +   '<th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8;width:12%">No.</th>'
-    +   lrHeader2
-    + '</tr>'
-    + '<tr style="background:#eef3ff">'
-    +   '<th style="border:1px solid #b8b8b8"></th>'
-    +   '<th style="border:1px solid #b8b8b8"></th>'
-    +   '<th style="border:1px solid #b8b8b8"></th>'
-    +   lrSubPct + lrSubNo
-    + '</tr>'
-    + '</thead>'
-    + '<tbody>'
-    + '<tr style="background:#fff">'
-    +   '<td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Non-fragmented</td>'
-    +   '<td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">' + (r.nonfragPct||0).toFixed(2) + '</td>'
-    +   '<td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">' + (r.nonfragN||0) + '</td>'
-    +   lrTd(p('nonfragPct')) + lrTd(pN('nonfragN'))
-    + '</tr>'
-    + '<tr style="background:#fff3f3">'
-    +   '<td style="padding:3px 8px;font-size:12px;font-weight:700;color:#cc0000;border:1px solid #ddd">Fragmented</td>'
-    +   '<td style="padding:3px 8px;font-size:12px;font-weight:700;color:#cc0000;text-align:center;border:1px solid #ddd">' + (r.fragPct||0).toFixed(2) + '</td>'
-    +   '<td style="padding:3px 8px;font-size:12px;font-weight:700;color:#cc0000;text-align:center;border:1px solid #ddd">' + (r.fragN||0) + '</td>'
-    +   lrTd(p('fragPct'),true) + lrTd(pN('fragN'),true)
-    + '</tr>'
-    + '<tr style="background:#e8f0fb">'
-    +   '<td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;border:1px solid #ddd">Total Sperm</td>'
-    +   '<td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">100.00</td>'
-    +   '<td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">' + total + '</td>'
-    +   lrTd(prev?'100.00':'—') + lrTd(prev?(prev.total||0):'—')
-    + '</tr>'
-    + '</tbody></table>';
-
-  // ─── الجدول الثاني: Halo/Degraded ───────────────────────────
-  var tbl2 = '';
-  if(r.degradN || r.totalHalo){
-    tbl2 = '<table style="width:100%;border-collapse:collapse;border:1px solid #b8b8b8;margin-top:4px">'
-      + '<thead><tr style="background:#cce0f5">'
-      +   '<th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:left;border:1px solid #b8b8b8;width:34%"></th>'
-      +   '<th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8;width:14%">%</th>'
-      +   '<th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8;width:12%">No.</th>'
-      +   lrHeader2
-      + '</tr></thead><tbody>';
-    var haloRows = [
-      ['Degraded',    r.degradN,    r.degradPct,    'degradPct',    'degradN'],
-      ['Without Halo',r.noHaloN,    r.noHaloPct,    'noHaloPct',    'noHaloN'],
-      ['Small Halo',  r.smallHaloN, r.smallHaloPct, 'smallHaloPct', 'smallHaloN'],
-      ['Medium Halo', r.medHaloN,   r.medHaloPct,   'medHaloPct',   'medHaloN'],
-      ['Big Halo',    r.bigHaloN,   r.bigHaloPct,   'bigHaloPct',   'bigHaloN'],
-    ];
-    haloRows.forEach(function(row){
-      if(!row[1]) return;
-      tbl2 += '<tr style="background:#fff">'
-        + '<td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">' + row[0] + '</td>'
-        + '<td style="padding:3px 8px;font-size:12px;text-align:center;border:1px solid #ddd">' + (row[2]||0).toFixed(2) + '</td>'
-        + '<td style="padding:3px 8px;font-size:12px;text-align:center;border:1px solid #ddd">' + row[1] + '</td>'
-        + lrTd(p(row[3])) + lrTd(pN(row[4]))
-        + '</tr>';
-    });
-    tbl2 += '</tbody></table>';
-  }
-
-  // ─── صندوق Last Result للـ DFI ──────────────────────────────
-  var prevDFIBox = '';
-  if(prev){
-    prevDFIBox = '<div style="border:1px solid #b0c4e8;border-radius:5px;background:#eef3ff;padding:6px 8px;margin-top:6px">'
-      + '<div style="font-size:10px;font-weight:800;color:#1a4fa0;text-align:center;border-bottom:1px solid #c8d8f0;padding-bottom:4px;margin-bottom:6px">'
-      +   '⟵ Last Result &nbsp;<span style="font-size:9px;font-weight:600;color:#777">' + prevDate + '</span>'
-      + '</div>'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
-      +   '<span style="font-size:11px;font-weight:700;color:#333">DFI</span>'
-      +   '<span style="font-size:13px;font-weight:900;color:' + prevFC + '">' + (prevDFI!==null?prevDFI.toFixed(2)+'%':'—') + '</span>'
-      + '</div>'
-      + '<div style="border-top:1px solid #c8d8f0;padding-top:4px;margin-top:2px">'
-      +   '<div style="font-size:9px;font-weight:700;color:#666;text-align:center;margin-bottom:2px">Comment</div>'
-      +   '<div style="font-size:11px;font-weight:700;color:' + prevFC + ';text-align:center">' + prevComment + ' fertility potential</div>'
-      + '</div>'
-      + '</div>';
-  }
-
-  // ─── المخططات والصورة ────────────────────────────────────────
-  var charts = '<div style="display:flex;gap:8px;margin-top:8px;margin-bottom:5px;align-items:flex-start">'
-    + (haloChartSVG ? '<div style="flex:1;border:1px solid #ddd;border-radius:3px;padding:6px;background:#fff"><div style="font-size:10px;font-weight:700;color:#333;margin-bottom:4px;text-align:center">Halo & Degraded Distribution (%)</div>' + haloChartSVG + '</div>' : '')
-    + '<div style="flex:0 0 230px;border:1px solid #ddd;border-radius:3px;padding:6px;background:#fff"><div style="font-size:10px;font-weight:700;color:#333;margin-bottom:4px;text-align:center">Sperm Count Distribution (%)</div>' + fragChartSVG + '</div>'
-    + '</div>';
-
-  var imgNote = '<div style="display:flex;gap:8px;align-items:flex-start;margin-top:3px">'
-    + '<div style="width:210px;height:180px;border:1px solid #b8b8b8;border-radius:4px;overflow:hidden;background:#f9f9f9;flex-shrink:0;display:flex;align-items:center;justify-content:center">'
-    +   (patientImg || '<div style="font-size:10px;color:#aaa;text-align:center;padding:8px"></div>')
+// ── Last Result box لتقرير DNA Fragmentation (DFI + Comment فقط) ──
+function _buildDNALastResult(r){
+  if(!r.patientId) return '';
+  loadDNAFragRecords();
+  var prev = dnaFragRecords
+    .filter(function(x){ return x.patientId===r.patientId && x.id!==r.id; })
+    .sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); })[0] || null;
+  if(!prev) return '';
+  var prevDFI = prev.dfi || 0;
+  var prevFC  = prevDFI < 15 ? '#007a00' : prevDFI <= 30 ? '#c47a00' : '#cc0000';
+  var prevFB  = prevDFI < 15 ? '#e8f5e9' : prevDFI <= 30 ? '#fff8e1' : '#ffebee';
+  var prevCmt = prevDFI < 15 ? 'Excellent' : prevDFI <= 30 ? 'Good' : 'Poor';
+  var prevDate = prev.date || '';
+  return '<div style="margin-top:8px;border:1.5px solid #b0c4e8;border-radius:6px;overflow:hidden">'
+    + '<div style="background:#cce0f5;text-align:center;padding:3px 6px;font-size:11px;font-weight:800;color:#1a4fa0">'
+    +   'Last Result'
+    +   (prevDate ? ' <span style="font-size:9px;font-weight:600;color:#555">(' + prevDate + ')</span>' : '')
     + '</div>'
-    + '<div style="flex:1">'
-    +   (r.note ? '<div style="border:1.5px solid #b8b8b8;padding:5px 10px;border-radius:3px"><span style="font-size:12px;font-weight:800;color:#444">Notes: </span><span style="font-size:12px;color:#333">' + r.note + '</span></div>' : '')
+    + '<div style="padding:6px 8px;background:#f4f8ff">'
+    +   '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
+    +     '<span style="font-size:12px;font-weight:700;color:#333">DFI</span>'
+    +     '<span style="font-size:14px;font-weight:900;color:' + prevFC + '">' + prevDFI.toFixed(2) + '&nbsp;%</span>'
+    +   '</div>'
+    +   '<div style="border:1.5px solid ' + prevFC + ';background:' + prevFB + ';text-align:center;padding:5px 6px;font-size:11px;font-weight:700;color:' + prevFC + ';border-radius:4px">'
+    +     'The Sample has a <b>' + prevCmt + '</b> fertility potential'
+    +   '</div>'
     + '</div>'
     + '</div>';
-
-  // ─── التجميع ──────────────────────────────────────────────────
-  return '<div style="display:flex;gap:6px;margin-bottom:5px;align-items:flex-start">'
-    + '<div style="flex:1;min-width:0">' + tbl1 + tbl2 + '</div>'
-    + '<div style="width:210px;flex-shrink:0">'
-    +   '<table style="width:100%;border-collapse:collapse;border:1px solid #b8b8b8;margin-bottom:4px">'
-    +     '<thead><tr style="background:#cce0f5"><th colspan="2" style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">DNA Fragmentation Index</th></tr></thead>'
-    +     '<tbody>'
-    +       '<tr><td style="padding:3px 8px;font-size:13px;font-weight:700;color:#000;border:1px solid #ddd">DFI</td><td style="padding:3px 8px;font-size:14px;font-weight:900;color:' + fColor + ';text-align:center;border:1px solid #ddd">' + dfi.toFixed(2) + '&nbsp;%</td></tr>'
-    +       '<tr><td style="padding:3px 8px;font-size:12px;color:#000;border:1px solid #ddd">&lt; 15</td><td style="padding:3px 8px;font-size:12px;font-style:italic;color:#000;border:1px solid #ddd">Excellent fertility potential</td></tr>'
-    +       '<tr><td style="padding:3px 8px;font-size:12px;color:#000;border:1px solid #ddd">15 - 30</td><td style="padding:3px 8px;font-size:12px;font-style:italic;color:#000;border:1px solid #ddd">Good fertility potential</td></tr>'
-    +       '<tr><td style="padding:3px 8px;font-size:12px;color:#000;border:1px solid #ddd">&gt; 30</td><td style="padding:3px 8px;font-size:12px;font-style:italic;color:#000;border:1px solid #ddd">Poor fertility potential</td></tr>'
-    +     '</tbody>'
-    +   '</table>'
-    +   '<div style="border:1px solid #b8b8b8;background:#cce0f5;text-align:center;padding:3px 6px;font-size:12px;font-weight:800;color:#000;margin-bottom:3px">Comment</div>'
-    +   '<div style="border:1.5px solid ' + fColor + ';background:' + fBg + ';text-align:center;padding:6px 8px;font-size:12px;font-weight:700;color:' + fColor + ';margin-bottom:3px">The Sample has a <b>' + (dfi<15?'Excellent':dfi<=30?'Good':'Poor') + '</b> fertility potential</div>'
-    +   '<div style="text-align:center;font-size:11px;font-style:italic;color:#555;margin-bottom:3px">according to WHO strict criteria</div>'
-    +   prevDFIBox
-    + '</div>'
-    + '</div>'
-    + charts
-    + imgNote;
 }
 
 // ── بناء التقرير المطبوع ──
@@ -24178,8 +24055,105 @@ function _buildDNAFragPrintHTML(r){
     </div>
     <div style="margin:0 0 4px;height:2px;background:${color}"></div>
 
-    <!-- الجدول الرئيسي + Last Result -->
-    ${_buildDNAFragMainTables(r, dnaFragRecords, fColor, fBg, dfi, total, haloChartSVG, fragChartSVG, patientImg)}
+    <!-- الجدول الرئيسي (القسم الأول: Non-frag, Frag, Total + DFI) -->
+    <div style="display:flex;gap:6px;margin-bottom:5px;align-items:flex-start">
+      <!-- جدول البيانات الكامل -->
+      <div style="flex:1;min-width:0">
+        <table style="width:100%;border-collapse:collapse;border:1px solid #b8b8b8">
+          <thead>
+            <tr style="background:#cce0f5">
+              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:left;border:1px solid #b8b8b8"></th>
+              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">%</th>
+              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">No.</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background:#fff">
+              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Non-fragmented</td>
+              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.nonfragPct||0).toFixed(2)}</td>
+              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.nonfragN||0}</td>
+            </tr>
+            <tr style="background:#fff3f3">
+              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#cc0000;border:1px solid #ddd">Fragmented</td>
+              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#cc0000;text-align:center;border:1px solid #ddd">${(r.fragPct||0).toFixed(2)}</td>
+              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#cc0000;text-align:center;border:1px solid #ddd">${r.fragN||0}</td>
+            </tr>
+            <tr style="background:#e8f0fb">
+              <td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;border:1px solid #ddd">Total Sperm</td>
+              <td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">100.00</td>
+              <td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">${total}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- الجدول الثاني: Halo + Degraded -->
+        ${(r.degradN||r.totalHalo) ? `
+        <table style="width:100%;border-collapse:collapse;border:1px solid #b8b8b8;margin-top:4px">
+          <thead>
+            <tr style="background:#cce0f5">
+              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:left;border:1px solid #b8b8b8"></th>
+              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">%</th>
+              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">No.</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${r.degradN ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Degraded</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.degradPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.degradN}</td></tr>` : ''}
+            ${r.noHaloN   ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Without Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.noHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.noHaloN}</td></tr>` : ''}
+            ${r.smallHaloN? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Small Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.smallHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.smallHaloN}</td></tr>` : ''}
+            ${r.medHaloN  ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Medium Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.medHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.medHaloN}</td></tr>` : ''}
+            ${r.bigHaloN  ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Big Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.bigHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.bigHaloN}</td></tr>` : ''}
+            ${r.totalHalo ? `<tr style="background:#e8f0fb"><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;border:1px solid #ddd"></td><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">100.00</td><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">${r.total}</td></tr>` : ''}
+          </tbody>
+        </table>` : ''}
+      </div>
+
+      <!-- DFI box على اليمين -->
+      <div style="width:210px;flex-shrink:0">
+        <table style="width:100%;border-collapse:collapse;border:1px solid #b8b8b8;margin-bottom:4px">
+          <thead><tr style="background:#cce0f5"><th colspan="2" style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">DNA Fragmentation Index</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:3px 8px;font-size:13px;font-weight:700;color:#000;border:1px solid #ddd">DFI</td>
+                <td style="padding:3px 8px;font-size:14px;font-weight:900;color:${fColor};text-align:center;border:1px solid #ddd">${dfi.toFixed(2)}&nbsp;%</td></tr>
+            <tr><td style="padding:3px 8px;font-size:12px;color:#000;border:1px solid #ddd">&lt; 15</td>
+                <td style="padding:3px 8px;font-size:12px;font-style:italic;color:#000;border:1px solid #ddd">Excellent fertility potential</td></tr>
+            <tr><td style="padding:3px 8px;font-size:12px;color:#000;border:1px solid #ddd">15 - 30</td>
+                <td style="padding:3px 8px;font-size:12px;font-style:italic;color:#000;border:1px solid #ddd">Good fertility potential</td></tr>
+            <tr><td style="padding:3px 8px;font-size:12px;color:#000;border:1px solid #ddd">&gt; 30</td>
+                <td style="padding:3px 8px;font-size:12px;font-style:italic;color:#000;border:1px solid #ddd">Poor fertility potential</td></tr>
+          </tbody>
+        </table>
+        <!-- Comment box -->
+        <div style="border:1px solid #b8b8b8;background:#cce0f5;text-align:center;padding:3px 6px;font-size:12px;font-weight:800;color:#000;margin-bottom:3px">Comment</div>
+        <div style="border:1.5px solid ${fColor};background:${fBg};text-align:center;padding:6px 8px;font-size:12px;font-weight:700;color:${fColor};margin-bottom:3px">The Sample has a <b>${dfi<15?'Excellent':dfi<=30?'Good':'Poor'}</b> fertility potential</div>
+        <div style="text-align:center;font-size:11px;font-style:italic;color:#333;margin-top:2px">according to WHO strict criteria</div>
+        ${_buildDNALastResult(r)}
+      </div>
+    </div>
+
+    <!-- المخططات البيانية -->
+    <div style="display:flex;gap:8px;margin-bottom:5px;align-items:flex-start">
+      ${haloChartSVG ? `
+      <div style="flex:1;border:1px solid #ddd;border-radius:3px;padding:6px;background:#fff">
+        <div style="font-size:10px;font-weight:700;color:#333;margin-bottom:4px;text-align:center">Halo & Degraded Distribution (%)</div>
+        ${haloChartSVG}
+      </div>` : ''}
+      <div style="flex:0 0 230px;border:1px solid #ddd;border-radius:3px;padding:6px;background:#fff">
+        <div style="font-size:10px;font-weight:700;color:#333;margin-bottom:4px;text-align:center">Sperm Count Distribution (%)</div>
+        ${fragChartSVG}
+      </div>
+    </div>
+
+    <!-- صف أسفل: الصورة + الملاحظات -->
+    <div style="display:flex;gap:8px;align-items:flex-start;margin-top:3px">
+      <!-- صورة المريض أسفل اليسار -->
+      <div style="width:210px;height:180px;border:1px solid #b8b8b8;border-radius:4px;overflow:hidden;background:#f9f9f9;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+        ${patientImg || '<div style="font-size:10px;color:#aaa;text-align:center;padding:8px"></div>'}
+      </div>
+      <!-- ملاحظات -->
+      <div style="flex:1">
+        ${r.note ? `<div style="border:1.5px solid #b8b8b8;padding:5px 10px;border-radius:3px"><span style="font-size:12px;font-weight:800;color:#444">Notes: </span><span style="font-size:12px;color:#333">${r.note}</span></div>` : ''}
+      </div>
+    </div>
   </div>
   <div class="dna-footer">${ftrHTML}</div>
   </body></html>`;
@@ -26803,6 +26777,193 @@ window.save = function(k,v){
 
 
 // ═══════════════════════════════════════════════════════════════
+// LAN SYNC — مزامنة الشبكة المحلية (مثل Green Lab)
+// ═══════════════════════════════════════════════════════════════
+const LAN_SYNC_KEYS = ['patients','requests','invoices','packages','inventory','doctors','billing','testGroups','qc','cultureRecords','uaRecords','stoolExamRecords','semenRecords','phoneBook'];
+const LAN_DEVICE_ID = (()=>{ let id=localStorage.getItem('_lan_device_id'); if(!id){id='pc_'+Math.random().toString(36).slice(2,8); localStorage.setItem('_lan_device_id',id);} return id; })();
+
+let _lanWS         = null;
+let _lanMode       = null;
+let _lanConnected  = false;
+let _lanReconnTimer= null;
+let _lanClientIP   = '';
+let _lanClientPort = '8080';
+
+function lanDownloadServer(){
+  const code = `// lan-server.js — MedLab Pro LAN Sync Server
+// شغّله بـ: node lan-server.js
+const WebSocket = require('ws');
+const PORT = process.argv[2] || 8080;
+const wss = new WebSocket.Server({ port: PORT });
+let lastData = null;
+let clients  = new Set();
+console.log('[MedLab LAN] السيرفر شغّال على port ' + PORT);
+wss.on('connection', (ws) => {
+  clients.add(ws);
+  console.log('[MedLab LAN] حاسبة اتصلت — المتصلون: ' + clients.size);
+  if(lastData) ws.send(JSON.stringify({ type:'full_sync', data: lastData, from:'server' }));
+  broadcast({ type:'clients_count', count: clients.size });
+  ws.on('message', (msg) => {
+    try{
+      const parsed = JSON.parse(msg);
+      if(parsed.type === 'push_data'){
+        lastData = parsed.data;
+        clients.forEach(c => {
+          if(c !== ws && c.readyState === WebSocket.OPEN)
+            c.send(JSON.stringify({ type:'full_sync', data: lastData, from: parsed.deviceId||'?' }));
+        });
+      } else if(parsed.type === 'ping') ws.send(JSON.stringify({ type:'pong' }));
+    }catch(e){}
+  });
+  ws.on('close', () => { clients.delete(ws); broadcast({ type:'clients_count', count: clients.size }); });
+  ws.on('error', (e) => console.error('[MedLab LAN]', e.message));
+});
+function broadcast(msg){ const s=JSON.stringify(msg); clients.forEach(c=>{ if(c.readyState===WebSocket.OPEN) c.send(s); }); }
+`;
+  const blob = new Blob([code], {type:'text/javascript'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'lan-server.js';
+  a.click();
+  showNotif('تم التحميل','شغّل: node lan-server.js','success');
+}
+
+function lanSetMode(mode){
+  _lanMode = mode;
+  const sb=document.getElementById('lan-server-box');
+  const cb=document.getElementById('lan-client-box');
+  if(sb) sb.style.display = mode==='server'?'block':'none';
+  if(cb) cb.style.display = mode==='client'?'block':'none';
+  localStorage.setItem('_lan_mode', mode);
+}
+
+function lanStartServer(){
+  const port = document.getElementById('lan-server-port')?.value||'8080';
+  _lanClientIP='localhost'; _lanClientPort=port;
+  localStorage.setItem('_lan_client_ip','localhost');
+  localStorage.setItem('_lan_client_port',port);
+  _lanConnect('ws://localhost:'+port,'server');
+}
+
+function lanStartClient(){
+  const ip=document.getElementById('lan-client-ip')?.value?.trim();
+  const port=document.getElementById('lan-client-port')?.value||'8080';
+  if(!ip){showNotif('تنبيه','أدخل IP الحاسبة الرئيسية','warning');return;}
+  _lanClientIP=ip; _lanClientPort=port;
+  localStorage.setItem('_lan_client_ip',ip);
+  localStorage.setItem('_lan_client_port',port);
+  _lanConnect('ws://'+ip+':'+port,'client');
+}
+
+function _lanConnect(url,mode){
+  if(_lanWS){try{_lanWS.close();}catch(e){}}
+  showNotif('LAN','جاري الاتصال...','info');
+  try{
+    _lanWS=new WebSocket(url);
+    _lanWS.onopen=()=>{
+      _lanConnected=true;
+      if(_lanReconnTimer){clearTimeout(_lanReconnTimer);_lanReconnTimer=null;}
+      _syncUpdateIndicator('active');
+      const statusBox=document.getElementById('sync-status-box');
+      if(statusBox) statusBox.style.display='block';
+      const titleEl=document.getElementById('lan-status-title');
+      if(titleEl) titleEl.textContent=mode==='server'?'🖥️ سيرفر — متصل':'💻 كلاينت — متصل';
+      const folderEl=document.getElementById('sync-folder-display');
+      if(folderEl) folderEl.textContent='IP: '+_lanClientIP+':'+_lanClientPort+' | '+LAN_DEVICE_ID;
+      _syncSetLastTime();
+      showNotif('LAN ✅',mode==='server'?'متصل كسيرفر':'متصل بالحاسبة الرئيسية','success');
+      _lanPushData();
+      setInterval(()=>{if(_lanWS?.readyState===WebSocket.OPEN) _lanWS.send(JSON.stringify({type:'ping'}));},30000);
+    };
+    _lanWS.onmessage=(e)=>{
+      try{
+        const msg=JSON.parse(e.data);
+        if(msg.type==='full_sync'&&msg.from!==LAN_DEVICE_ID){
+          _lanApplyData(msg.data);
+          _syncSetLastTime();
+          showNotif('مزامنة 🔄','بيانات جديدة من: '+msg.from,'info');
+        } else if(msg.type==='clients_count'){
+          const el=document.getElementById('lan-clients-info');
+          if(el) el.textContent='الحاسبات المتصلة: '+msg.count;
+        }
+      }catch(e){}
+    };
+    _lanWS.onerror=()=>{showNotif('خطأ LAN','تعذر الاتصال — تأكد من تشغيل lan-server.js','error');_syncUpdateIndicator('error');};
+    _lanWS.onclose=()=>{
+      _lanConnected=false;
+      _syncUpdateIndicator('error');
+      if(!_lanReconnTimer){
+        _lanReconnTimer=setTimeout(()=>{
+          _lanReconnTimer=null;
+          if(_lanClientIP) _lanConnect('ws://'+_lanClientIP+':'+_lanClientPort,_lanMode||'client');
+        },10000);
+      }
+    };
+  }catch(e){showNotif('خطأ','فشل: '+e.message,'error');}
+}
+
+function _lanPushData(){
+  if(!_lanWS||_lanWS.readyState!==WebSocket.OPEN) return;
+  const data={};
+  LAN_SYNC_KEYS.forEach(k=>{
+    try{ data[k]=JSON.parse(localStorage.getItem('mlab2_'+k)||localStorage.getItem(k)||'null'); }catch(e){}
+  });
+  try{ data['settings']=JSON.parse(localStorage.getItem('mlab2_settings')||localStorage.getItem('settings')||'null'); }catch(e){}
+  _lanWS.send(JSON.stringify({type:'push_data',deviceId:LAN_DEVICE_ID,data}));
+}
+
+function _lanApplyData(data){
+  if(!data) return;
+  LAN_SYNC_KEYS.forEach(k=>{
+    if(data[k]!==undefined&&data[k]!==null){
+      const key=localStorage.getItem('mlab2_'+k)!==null?'mlab2_'+k:k;
+      localStorage.setItem(key,JSON.stringify(data[k]));
+    }
+  });
+  try{
+    if(data.patients){window.patients=data.patients; typeof renderPatients==='function'&&renderPatients();}
+    if(data.requests){window.requests=data.requests; typeof renderRequestsFiltered==='function'&&renderRequestsFiltered();}
+    if(data.doctors){window.doctors=data.doctors;}
+    if(data.invoices){window.invoices=data.invoices;}
+  }catch(e){}
+}
+
+function lanDisconnect(){
+  if(_lanReconnTimer){clearTimeout(_lanReconnTimer);_lanReconnTimer=null;}
+  if(_lanWS){try{_lanWS.close();}catch(e){}_lanWS=null;}
+  _lanConnected=false; _lanMode=null; _lanClientIP='';
+  localStorage.removeItem('_lan_client_ip');
+  localStorage.removeItem('_lan_client_port');
+  localStorage.removeItem('_lan_mode');
+  _syncUpdateIndicator('off');
+  const statusBox=document.getElementById('sync-status-box');
+  if(statusBox) statusBox.style.display='none';
+  showNotif('LAN','تم قطع الاتصال','info');
+}
+
+// ربط save() بالإرسال الفوري
+const _lanOrigSave=window.save;
+window.save=function(k,v){
+  _lanOrigSave(k,v);
+  if(_lanConnected&&LAN_SYNC_KEYS.includes(k)){
+    clearTimeout(window._lanDebounce);
+    window._lanDebounce=setTimeout(_lanPushData,800);
+  }
+};
+
+// استعادة الاتصال عند فتح البرنامج
+window.addEventListener('load',function(){
+  const savedIP=localStorage.getItem('_lan_client_ip');
+  const savedPort=localStorage.getItem('_lan_client_port')||'8080';
+  const savedMode=localStorage.getItem('_lan_mode');
+  if(savedIP&&savedMode){
+    _lanMode=savedMode; _lanClientIP=savedIP; _lanClientPort=savedPort;
+    setTimeout(()=>{ lanSetMode(savedMode); _lanConnect('ws://'+savedIP+':'+savedPort,savedMode); },2000);
+  }
+});
+
+// إخفاء Google Drive القديم
+function syncPickFolder(){showNotif('تنبيه','استخدم نظام LAN الجديد','info');}
 function syncNow(){_lanPushData();showNotif('LAN','تم الإرسال','success');}
 function syncDisconnect(){lanDisconnect();}
 function syncRenderCard(){
