@@ -22510,7 +22510,29 @@ function applyCustomExamFields(){
     const sm = getBigCached('semenFieldsCustom') || settings._semenFieldsCustom;
     if(sm){
       const saved = (typeof sm==='string') ? JSON.parse(sm) : sm;
-      Object.keys(saved).forEach(k=>{ if(SEMEN_FIELDS[k]) SEMEN_FIELDS[k].fields=saved[k].fields; });
+      // ── فحص الإصدار: إذا كانت النسخة المحفوظة قديمة (لا تحتوي على Grade A/B/C/D) نمسحها ──
+      const savedMotilityIds = (saved.motility?.fields||[]).map(f=>f.id);
+      const savedMorphIds    = (saved.morphology?.fields||[]).map(f=>f.id);
+      const isOldVersion = !savedMotilityIds.includes('s_grade_a') || !savedMorphIds.includes('s_normal_shapes');
+      if(isOldVersion){
+        // احذف النسخة القديمة واترك SEMEN_FIELDS الجديد كما هو
+        setBig('semenFieldsCustom', JSON.stringify(SEMEN_FIELDS));
+        delete settings._semenFieldsCustom;
+      } else {
+        // merge ذكي: نحافظ على الحقول الجديدة غير الموجودة في النسخة المحفوظة
+        const CURRENT_IDS = {
+          motility:   ['s_grade_a','s_grade_b','s_pr','s_grade_c','s_grade_d','s_total_motile','s_vitality'],
+          morphology: ['s_normal_forms','s_normal_shapes']
+        };
+        Object.keys(saved).forEach(k=>{
+          if(!SEMEN_FIELDS[k]) return;
+          const savedFields = saved[k].fields || [];
+          const currentRequired = CURRENT_IDS[k] || [];
+          const savedIds = savedFields.map(f=>f.id);
+          const missing = SEMEN_FIELDS[k].fields.filter(f=> currentRequired.includes(f.id) && !savedIds.includes(f.id));
+          SEMEN_FIELDS[k].fields = [...missing, ...savedFields];
+        });
+      }
     }
   }catch(e){}
 }
