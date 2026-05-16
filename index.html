@@ -24553,6 +24553,15 @@ function _buildSemenPrintHTML(r){
     s_azoospermia:'No',s_liquefaction:'< 60 min',s_viscosity:'Nil',s_appearance:'Opaque-White',s_collection:'',s_abstinence:'3-5 days'
   };
 
+  // ── جلب آخر نتيجة سابقة للمريض (أقدم تسجيل مختلف عن الحالي) ──
+  const _prevRec=(()=>{
+    if(!r.patientId) return null;
+    const all=semenRecords
+      .filter(x=>x.patientId===r.patientId && x.id!==r.id)
+      .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    return all[0]||null;
+  })();
+
   const renderSec=(secKey)=>{
     const secDef=SEMEN_EN[secKey]; if(!secDef) return '';
     const fieldKeys=Object.keys(secDef.fields);
@@ -24566,7 +24575,6 @@ function _buildSemenPrintHTML(r){
       const numVal=parseFloat(val);
       let abn=false;
       if(isEmpty){
-        // فارغ: لا يُحسب كحالة غير طبيعية إطلاقاً
         abn=false;
       } else if(['s_volume','s_conc','s_total_count','s_pr','s_total_motile','s_vitality','s_normal_forms'].includes(fid)){
         const refNum=parseFloat(ref); if(!isNaN(numVal)&&!isNaN(refNum)) abn=numVal<refNum;
@@ -24576,13 +24584,18 @@ function _buildSemenPrintHTML(r){
       else if(['s_rbc','s_bacteria','s_antisperm_ab'].includes(fid)){ abn=val!=='Absent'&&val!=='Negative'; }
       else if(['s_agglutination','s_viscosity'].includes(fid)){ abn=val!=='Nil'; }
       else if(fid==='s_oxidative'){ abn=val!=='Normal'; }
+      // ── آخر نتيجة للمريض لهذا الحقل ──
+      const prevVal=_prevRec?(_prevRec[fid]||'—'):'—';
       const rowBg=fi%2===0?'#ffffff':'#f9f9f9';
       return `<tr style="background:${rowBg}">
-        <td style="font-size:15px;font-weight:700;color:#000000;padding:1px 8px;width:38%;border:none;border-bottom:1px solid #e0e0e0"><span style="color:#000;margin-right:5px">■</span>${secDef.fields[fid]}</td>
-        <td style="font-size:15px;font-weight:700;color:#000000;padding:1px 8px;width:32%;border:none;border-bottom:1px solid #e0e0e0;text-align:center">
-          <span style="display:inline-block;border:1.5px solid #b0b0b0;border-radius:4px;padding:0 8px;min-width:80px;text-align:center;background:#fff;color:${abn?'#cc0000':'#000000'};font-weight:${abn?'900':'700'}">${val}</span>
+        <td style="font-size:13px;font-weight:700;color:#555;padding:1px 6px;width:20%;border:none;border-bottom:1px solid #e0e0e0;text-align:left">${ref||'—'}</td>
+        <td style="font-size:15px;font-weight:700;color:#000000;padding:1px 6px;width:22%;border:none;border-bottom:1px solid #e0e0e0;text-align:center">
+          <span style="display:inline-block;border:1.5px solid #b0b0b0;border-radius:4px;padding:0 6px;min-width:70px;text-align:center;background:#fff;color:${abn?'#cc0000':'#000000'};font-weight:${abn?'900':'700'}">${val}</span>
         </td>
-        <td style="font-size:15px;font-weight:700;color:#000000;padding:1px 8px;width:30%;border:none;border-bottom:1px solid #e0e0e0">${ref||'—'}</td>
+        <td style="font-size:15px;font-weight:700;color:#000000;padding:1px 6px;width:36%;border:none;border-bottom:1px solid #e0e0e0"><span style="color:#000;margin-right:4px">■</span>${secDef.fields[fid]}</td>
+        <td style="font-size:13px;font-weight:700;color:#1a4fa0;padding:1px 6px;width:22%;border:none;border-bottom:1px solid #e0e0e0;text-align:center;border-left:2px solid #d0d8ea">
+          <span style="display:inline-block;border:1.5px solid #b0c4e8;border-radius:4px;padding:0 6px;min-width:70px;text-align:center;background:#f4f8ff;color:#1a4fa0;font-weight:700">${prevVal}</span>
+        </td>
       </tr>`;
     }).join('');
     return `<div style="border:1.5px solid #b8b8b8;border-radius:0;margin-bottom:2px;overflow:hidden;page-break-inside:avoid">
@@ -24591,9 +24604,10 @@ function _buildSemenPrintHTML(r){
       </div>
       <table style="width:100%;border-collapse:collapse">
         <thead><tr style="background:#f0f0f0">
-          <th style="font-size:15px;font-weight:800;color:#000000;padding:1px 8px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:38%">Parameter</th>
-          <th style="font-size:15px;font-weight:800;color:#000000;padding:1px 8px;text-align:center;border:none;border-bottom:1.5px solid #b8b8b8;width:32%">Result</th>
-          <th style="font-size:15px;font-weight:800;color:#000000;padding:1px 8px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:30%">Reference (WHO 2021)</th>
+          <th style="font-size:13px;font-weight:800;color:#000000;padding:1px 6px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:20%">Reference (WHO 2021)</th>
+          <th style="font-size:13px;font-weight:800;color:#000000;padding:1px 6px;text-align:center;border:none;border-bottom:1.5px solid #b8b8b8;width:22%">Result</th>
+          <th style="font-size:13px;font-weight:800;color:#000000;padding:1px 6px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:36%">Parameter</th>
+          <th style="font-size:13px;font-weight:800;color:#1a4fa0;padding:1px 6px;text-align:center;border:none;border-bottom:1.5px solid #b8b8b8;width:22%;border-left:2px solid #b0c4e8;background:#eef3ff">${_prevRec?`Last Result<br><span style="font-size:10px;font-weight:600;color:#555">${_prevRec.date||''}</span>`:'Last Result'}</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
