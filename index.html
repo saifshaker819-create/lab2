@@ -2623,11 +2623,7 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
       </div>
       <button class="hbtn" onclick="nav('settings')">⚙️</button>
       <button class="theme-toggle-btn" id="theme-btn" onclick="toggleTheme()" title="تبديل الوضع"></button>
-      <!-- مؤشر المزامنة -->
-      <button id="sync-indicator-btn" onclick="syncNow()" title="مزامنة Google Drive" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:5px;font-family:'Cairo',sans-serif;transition:all 0.2s">
-        <span id="sync-dot" style="width:8px;height:8px;border-radius:50%;background:#555;display:inline-block;flex-shrink:0"></span>
-        <span id="sync-label">غير مفعّل</span>
-      </button>
+
       <div class="uavatar">👨‍⚕️</div>
     </div>
   </div>
@@ -26779,197 +26775,13 @@ window.save = function(k,v){
 // ═══════════════════════════════════════════════════════════════
 // LAN SYNC — مزامنة الشبكة المحلية (مثل Green Lab)
 // ═══════════════════════════════════════════════════════════════
-const LAN_SYNC_KEYS = ['patients','requests','invoices','packages','inventory','doctors','billing','testGroups','qc','cultureRecords','uaRecords','stoolExamRecords','semenRecords','phoneBook'];
-const LAN_DEVICE_ID = (()=>{ let id=localStorage.getItem('_lan_device_id'); if(!id){id='pc_'+Math.random().toString(36).slice(2,8); localStorage.setItem('_lan_device_id',id);} return id; })();
 
-let _lanWS         = null;
-let _lanMode       = null;
-let _lanConnected  = false;
-let _lanReconnTimer= null;
-let _lanClientIP   = '';
-let _lanClientPort = '8080';
 
-function lanDownloadServer(){
-  const code = `// lan-server.js — MedLab Pro LAN Sync Server
-// شغّله بـ: node lan-server.js
-const WebSocket = require('ws');
-const PORT = process.argv[2] || 8080;
-const wss = new WebSocket.Server({ port: PORT });
-let lastData = null;
-let clients  = new Set();
-console.log('[MedLab LAN] السيرفر شغّال على port ' + PORT);
-wss.on('connection', (ws) => {
-  clients.add(ws);
-  console.log('[MedLab LAN] حاسبة اتصلت — المتصلون: ' + clients.size);
-  if(lastData) ws.send(JSON.stringify({ type:'full_sync', data: lastData, from:'server' }));
-  broadcast({ type:'clients_count', count: clients.size });
-  ws.on('message', (msg) => {
-    try{
-      const parsed = JSON.parse(msg);
-      if(parsed.type === 'push_data'){
-        lastData = parsed.data;
-        clients.forEach(c => {
-          if(c !== ws && c.readyState === WebSocket.OPEN)
-            c.send(JSON.stringify({ type:'full_sync', data: lastData, from: parsed.deviceId||'?' }));
-        });
-      } else if(parsed.type === 'ping') ws.send(JSON.stringify({ type:'pong' }));
-    }catch(e){}
-  });
-  ws.on('close', () => { clients.delete(ws); broadcast({ type:'clients_count', count: clients.size }); });
-  ws.on('error', (e) => console.error('[MedLab LAN]', e.message));
-});
-function broadcast(msg){ const s=JSON.stringify(msg); clients.forEach(c=>{ if(c.readyState===WebSocket.OPEN) c.send(s); }); }
-`;
-  const blob = new Blob([code], {type:'text/javascript'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'lan-server.js';
-  a.click();
-  showNotif('تم التحميل','شغّل: node lan-server.js','success');
-}
-
-function lanSetMode(mode){
-  _lanMode = mode;
-  const sb=document.getElementById('lan-server-box');
-  const cb=document.getElementById('lan-client-box');
-  if(sb) sb.style.display = mode==='server'?'block':'none';
-  if(cb) cb.style.display = mode==='client'?'block':'none';
-  localStorage.setItem('_lan_mode', mode);
-}
-
-function lanStartServer(){
-  const port = document.getElementById('lan-server-port')?.value||'8080';
-  _lanClientIP='localhost'; _lanClientPort=port;
-  localStorage.setItem('_lan_client_ip','localhost');
-  localStorage.setItem('_lan_client_port',port);
-  _lanConnect('ws://localhost:'+port,'server');
-}
-
-function lanStartClient(){
-  const ip=document.getElementById('lan-client-ip')?.value?.trim();
-  const port=document.getElementById('lan-client-port')?.value||'8080';
-  if(!ip){showNotif('تنبيه','أدخل IP الحاسبة الرئيسية','warning');return;}
-  _lanClientIP=ip; _lanClientPort=port;
-  localStorage.setItem('_lan_client_ip',ip);
-  localStorage.setItem('_lan_client_port',port);
-  _lanConnect('ws://'+ip+':'+port,'client');
-}
-
-function _lanConnect(url,mode){
-  if(_lanWS){try{_lanWS.close();}catch(e){}}
-  showNotif('LAN','جاري الاتصال...','info');
-  try{
-    _lanWS=new WebSocket(url);
-    _lanWS.onopen=()=>{
-      _lanConnected=true;
-      if(_lanReconnTimer){clearTimeout(_lanReconnTimer);_lanReconnTimer=null;}
-      _syncUpdateIndicator('active');
-      const statusBox=document.getElementById('sync-status-box');
-      if(statusBox) statusBox.style.display='block';
-      const titleEl=document.getElementById('lan-status-title');
-      if(titleEl) titleEl.textContent=mode==='server'?'🖥️ سيرفر — متصل':'💻 كلاينت — متصل';
-      const folderEl=document.getElementById('sync-folder-display');
-      if(folderEl) folderEl.textContent='IP: '+_lanClientIP+':'+_lanClientPort+' | '+LAN_DEVICE_ID;
-      _syncSetLastTime();
-      showNotif('LAN ✅',mode==='server'?'متصل كسيرفر':'متصل بالحاسبة الرئيسية','success');
-      _lanPushData();
-      setInterval(()=>{if(_lanWS?.readyState===WebSocket.OPEN) _lanWS.send(JSON.stringify({type:'ping'}));},30000);
-    };
-    _lanWS.onmessage=(e)=>{
-      try{
-        const msg=JSON.parse(e.data);
-        if(msg.type==='full_sync'&&msg.from!==LAN_DEVICE_ID){
-          _lanApplyData(msg.data);
-          _syncSetLastTime();
-          showNotif('مزامنة 🔄','بيانات جديدة من: '+msg.from,'info');
-        } else if(msg.type==='clients_count'){
-          const el=document.getElementById('lan-clients-info');
-          if(el) el.textContent='الحاسبات المتصلة: '+msg.count;
-        }
-      }catch(e){}
-    };
-    _lanWS.onerror=()=>{showNotif('خطأ LAN','تعذر الاتصال — تأكد من تشغيل lan-server.js','error');_syncUpdateIndicator('error');};
-    _lanWS.onclose=()=>{
-      _lanConnected=false;
-      _syncUpdateIndicator('error');
-      if(!_lanReconnTimer){
-        _lanReconnTimer=setTimeout(()=>{
-          _lanReconnTimer=null;
-          if(_lanClientIP) _lanConnect('ws://'+_lanClientIP+':'+_lanClientPort,_lanMode||'client');
-        },10000);
-      }
-    };
-  }catch(e){showNotif('خطأ','فشل: '+e.message,'error');}
-}
-
-function _lanPushData(){
-  if(!_lanWS||_lanWS.readyState!==WebSocket.OPEN) return;
-  const data={};
-  LAN_SYNC_KEYS.forEach(k=>{
-    try{ data[k]=JSON.parse(localStorage.getItem('mlab2_'+k)||localStorage.getItem(k)||'null'); }catch(e){}
-  });
-  try{ data['settings']=JSON.parse(localStorage.getItem('mlab2_settings')||localStorage.getItem('settings')||'null'); }catch(e){}
-  _lanWS.send(JSON.stringify({type:'push_data',deviceId:LAN_DEVICE_ID,data}));
-}
-
-function _lanApplyData(data){
-  if(!data) return;
-  LAN_SYNC_KEYS.forEach(k=>{
-    if(data[k]!==undefined&&data[k]!==null){
-      const key=localStorage.getItem('mlab2_'+k)!==null?'mlab2_'+k:k;
-      localStorage.setItem(key,JSON.stringify(data[k]));
-    }
-  });
-  try{
-    if(data.patients){window.patients=data.patients; typeof renderPatients==='function'&&renderPatients();}
-    if(data.requests){window.requests=data.requests; typeof renderRequestsFiltered==='function'&&renderRequestsFiltered();}
-    if(data.doctors){window.doctors=data.doctors;}
-    if(data.invoices){window.invoices=data.invoices;}
-  }catch(e){}
-}
-
-function lanDisconnect(){
-  if(_lanReconnTimer){clearTimeout(_lanReconnTimer);_lanReconnTimer=null;}
-  if(_lanWS){try{_lanWS.close();}catch(e){}_lanWS=null;}
-  _lanConnected=false; _lanMode=null; _lanClientIP='';
-  localStorage.removeItem('_lan_client_ip');
-  localStorage.removeItem('_lan_client_port');
-  localStorage.removeItem('_lan_mode');
-  _syncUpdateIndicator('off');
-  const statusBox=document.getElementById('sync-status-box');
-  if(statusBox) statusBox.style.display='none';
-  showNotif('LAN','تم قطع الاتصال','info');
-}
-
-// ربط save() بالإرسال الفوري
-const _lanOrigSave=window.save;
-window.save=function(k,v){
-  _lanOrigSave(k,v);
-  if(_lanConnected&&LAN_SYNC_KEYS.includes(k)){
-    clearTimeout(window._lanDebounce);
-    window._lanDebounce=setTimeout(_lanPushData,800);
-  }
-};
-
-// استعادة الاتصال عند فتح البرنامج
-window.addEventListener('load',function(){
-  const savedIP=localStorage.getItem('_lan_client_ip');
-  const savedPort=localStorage.getItem('_lan_client_port')||'8080';
-  const savedMode=localStorage.getItem('_lan_mode');
-  if(savedIP&&savedMode){
-    _lanMode=savedMode; _lanClientIP=savedIP; _lanClientPort=savedPort;
-    setTimeout(()=>{ lanSetMode(savedMode); _lanConnect('ws://'+savedIP+':'+savedPort,savedMode); },2000);
-  }
-});
-
-// إخفاء Google Drive القديم
-function syncPickFolder(){showNotif('تنبيه','استخدم نظام LAN الجديد','info');}
-function syncNow(){_lanPushData();showNotif('LAN','تم الإرسال','success');}
-function syncDisconnect(){lanDisconnect();}
-function syncRenderCard(){
-  const subEl=document.getElementById('sync-card-sub');
-  if(subEl) subEl.textContent=_lanConnected?'🟢 متصل بالشبكة المحلية':'اربط حاسبتين على نفس الشبكة — بدون إنترنت';
-}
+function syncPickFolder(){ showNotif('تنبيه','ميزة المزامنة غير متاحة حالياً','info'); }
+function syncNow(){ }
+function syncDisconnect(){ }
+function syncRenderCard(){ }
+function _syncUpdateIndicator(state){ }
 
 // IndexedDB لحفظ FileSystemDirectoryHandle بين الجلسات
 function _idbOpen(){
