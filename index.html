@@ -22513,7 +22513,7 @@ function applyCustomExamFields(){
       // ── فحص الإصدار: إذا كانت النسخة المحفوظة قديمة (لا تحتوي على Grade A/B/C/D) نمسحها ──
       const savedMotilityIds = (saved.motility?.fields||[]).map(f=>f.id);
       const savedMorphIds    = (saved.morphology?.fields||[]).map(f=>f.id);
-      const isOldVersion = !savedMotilityIds.includes('s_grade_a') || !savedMorphIds.includes('s_normal_shapes');
+      const isOldVersion = !savedMotilityIds.includes('s_grade_a') || !savedMorphIds.includes('s_normal_shapes') || !savedMorphIds.includes('s_abnormal_forms');
       if(isOldVersion){
         // احذف النسخة القديمة واترك SEMEN_FIELDS الجديد كما هو
         setBig('semenFieldsCustom', JSON.stringify(SEMEN_FIELDS));
@@ -22522,7 +22522,7 @@ function applyCustomExamFields(){
         // merge ذكي: نحافظ على الحقول الجديدة غير الموجودة في النسخة المحفوظة
         const CURRENT_IDS = {
           motility:   ['s_grade_a','s_grade_b','s_pr','s_grade_c','s_grade_d','s_total_motile','s_vitality'],
-          morphology: ['s_normal_forms','s_normal_shapes']
+          morphology: ['s_normal_forms','s_normal_shapes','s_abnormal_forms']
         };
         Object.keys(saved).forEach(k=>{
           if(!SEMEN_FIELDS[k]) return;
@@ -22946,7 +22946,7 @@ const SEMEN_FIELDS = {
     fields: [
       {id:'s_grade_a',      label:'Grade A — Rapid Progressive (%)', type:'number', normal:'', placeholder:'>=25%', min:'0',max:'100',step:'0.1', ref:'>= 25%'},
       {id:'s_grade_b',      label:'Grade B — Slow Progressive (%)',  type:'number', normal:'', placeholder:'',       min:'0',max:'100',step:'0.1'},
-      {id:'s_pr',           label:'PR = A+B  Total Progressive (%)', type:'number', normal:'', placeholder:'>=30%',  min:'0',max:'100',step:'0.1', ref:'>= 30%'},
+      {id:'s_pr',           label:'PR = A+B  Total Progressive (%)', type:'number-auto', normal:'', placeholder:'>=30%', min:'0',max:'100',step:'0.1', ref:'>= 30%', autoFrom:['s_grade_a','s_grade_b']},
       {id:'s_grade_c',      label:'Grade C — Non-Progressive NP (%)',type:'number', normal:'', placeholder:'',       min:'0',max:'100',step:'0.1'},
       {id:'s_grade_d',      label:'Grade D — Immotile IM (%)',       type:'number', normal:'', placeholder:'',       min:'0',max:'100',step:'0.1'},
       {id:'s_total_motile', label:'Total Motile  PR+NP (%)',         type:'number', normal:'', placeholder:'>=42%',  min:'0',max:'100',step:'0.1', ref:'>= 42%'},
@@ -22954,11 +22954,28 @@ const SEMEN_FIELDS = {
     ]
   },
   morphology: {
-    label: '🔬 المورفولوجيا (Kruger)',
+    label: '🔬 المورفولوجيا (Kruger Strict)',
     fields: [
       {id:'s_normal_forms', label:'Normal Morphology (%)', type:'number', normal:'', placeholder:'>= 14%', min:'0',max:'100',step:'0.1', ref:'>= 14%'},
-      {id:'s_normal_shapes',label:'Normal Sperm Shapes Observed', type:'multiselect', normal:'',
-        options:['Oval head (standard normal form)','Smooth oval head','Acrosome 40-70% head coverage','Normal midpiece (slim, axially attached)','Straight flagellum (tail)','Slightly curved tail','Tapered head (borderline normal)','Pyriform head (pear-shaped, borderline)','Normal cytoplasmic droplet (< 1/3 midpiece)']
+      {id:'s_normal_shapes',label:'Normal Sperm Shapes Observed', type:'multiselect-dropdown', normal:'',
+        options:['Oval head (standard normal form)','Smooth oval head — uniform contour','Acrosome covers 40–70% of head','Normal midpiece — slim, axially attached','Straight flagellum (tail)','Slightly curved tail (< 90°)','Normal cytoplasmic droplet (< 1/3 midpiece)']
+      },
+      {id:'s_abnormal_forms',label:'Abnormal Forms Observed', type:'multiselect-dropdown', normal:'',
+        options:[
+          '── Head Defects ──',
+          'Macrocytic (Large head)','Microcytic (Small head)','Tapered / Elongated head',
+          'Pyriform head (pear-shaped)','Round head (no acrosome)','Globozoospermia (round + no acrosome)',
+          'Amorphous head','Vacuolated head (> 20% vacuoles)','Asymmetrical acrosome',
+          'Double / Multiple heads',
+          '── Neck & Midpiece Defects ──',
+          'Asymmetrical insertion (Bent neck)','Thick midpiece (> 1 µm)',
+          'Thin midpiece','Irregular midpiece','Abnormally bent midpiece',
+          '── Tail Defects ──',
+          'Short tail (< 45 µm)','Bent tail (> 90°)','Coiled tail',
+          'Double / Multiple tails','Broken tail','Irregular tail width',
+          '── Cytoplasmic Defects ──',
+          'Excess cytoplasmic droplet (> 1/3 midpiece)'
+        ]
       },
     ]
   },
@@ -24321,20 +24338,42 @@ function _buildSemenModalBody(r, req){
             <option value="${EMPTY_VAL}" ${val===EMPTY_VAL?'selected':''}>${EMPTY_LABEL}</option>
             ${f.options.map(o=>`<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('')}
           </select></div>`;
-      } else if(f.type==='multiselect'){
+      } else if(f.type==='multiselect-dropdown'){
+        // قائمة منسدلة متعددة الاختيار مع بحث
         const savedVals=(val||'').split('||').filter(Boolean);
+        const isOpen=false;
+        const sepOpts=f.options.filter(o=>o.startsWith('──'));
+        const realOpts=f.options.filter(o=>!o.startsWith('──'));
         html+=`<div class="fg" style="margin-bottom:0;grid-column:1/-1">
           <label class="fl" style="font-size:11px">${f.label}</label>
-          <div id="semenf-${f.id}-wrap" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px">
-          ${f.options.map(o=>`<label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:${savedVals.includes(o)?'rgba(0,212,255,0.15)':'transparent'};color:var(--text)">
-            <input type="checkbox" value="${o}" ${savedVals.includes(o)?'checked':''} onchange="_semenMultiUpdate('${f.id}')" style="accent-color:var(--primary)"> ${o}</label>`).join('')}
+          <div style="position:relative">
+            <div id="semenf-${f.id}-display" onclick="_semenDropToggle('${f.id}')"
+              style="min-height:32px;padding:4px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:11px;color:var(--text);display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+              ${savedVals.length?savedVals.map(v=>`<span style="background:rgba(0,212,255,0.18);border:1px solid rgba(0,212,255,0.4);border-radius:5px;padding:1px 7px;font-size:10px;color:var(--primary);display:flex;align-items:center;gap:3px">${v}<span onclick="event.stopPropagation();_semenDropRemove('${f.id}','${encodeURIComponent(v)}')" style="cursor:pointer;opacity:0.7;font-size:12px;line-height:1">×</span></span>`).join(''):'<span style="color:var(--text2)">اختر...</span>'}
+            </div>
+            <div id="semenf-${f.id}-menu" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999;background:var(--bg-modal,#080f20);border:1px solid var(--border);border-radius:9px;max-height:200px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.8);margin-top:2px">
+              ${f.options.map(o=>o.startsWith('──')?
+                `<div style="padding:5px 10px;font-size:10px;font-weight:800;color:var(--primary);border-top:1px solid var(--border);letter-spacing:0.5px">${o}</div>`:
+                `<div onclick="_semenDropSelect('${f.id}','${encodeURIComponent(o)}')"
+                  style="padding:7px 12px;cursor:pointer;font-size:11px;color:var(--text);transition:background 0.15s"
+                  onmouseover="this.style.background='rgba(0,212,255,0.1)'" onmouseout="this.style.background=''"
+                  id="semenf-${f.id}-opt-${encodeURIComponent(o)}">
+                  <span id="semenf-${f.id}-chk-${encodeURIComponent(o)}" style="margin-right:6px;color:var(--primary)">${savedVals.includes(o)?'✓':' '}</span>${o}
+                </div>`
+              ).join('')}
+            </div>
           </div>
           <input type="hidden" id="semenf-${f.id}" value="${savedVals.join('||')}">
         </div>`;
+      } else if(f.type==='number-auto'){
+        // حقل يُحسب تلقائياً من مجموع حقلين
+        html+=`<div class="fg" style="margin-bottom:0">
+          <label class="fl" style="font-size:11px">${f.label}${f.ref?`<span style="color:var(--accent,#00ff9d);font-weight:700;font-size:10px"> ★ Auto — Normal: ${f.ref}</span>`:''}</label>
+          <input class="fc" type="number" id="semenf-${f.id}" value="${val}" placeholder="يُحسب تلقائياً" min="${f.min||0}" max="${f.max||9999}" step="${f.step||'any'}" style="font-size:12px;background:rgba(0,255,157,0.06);border-color:rgba(0,255,157,0.3)" readonly></div>`;
       } else if(f.type==='number'){
         html+=`<div class="fg" style="margin-bottom:0">
           <label class="fl" style="font-size:11px">${f.label}${f.ref?`<span style="color:var(--text2);font-weight:500;font-size:10px"> — Normal: ${f.ref}</span>`:''}</label>
-          <input class="fc" type="number" id="semenf-${f.id}" value="${val}" placeholder="${f.placeholder||''}" min="${f.min||0}" max="${f.max||9999}" step="${f.step||'any'}" style="font-size:12px"></div>`;
+          <input class="fc" type="number" id="semenf-${f.id}" value="${val}" placeholder="${f.placeholder||''}" min="${f.min||0}" max="${f.max||9999}" step="${f.step||'any'}" style="font-size:12px" oninput="_semenAutoCalc()"></div>`;
       } else if(f.type==='textarea'){
         html+=`<div class="fg" style="margin-bottom:0;grid-column:1/-1">
           <label class="fl" style="font-size:11px">${f.label}</label>
@@ -24393,6 +24432,64 @@ function _getSemenDoctor(){
   // طبيب من القائمة
   const opt=sel.options[sel.selectedIndex];
   return {id:sel.value, name:opt?opt.dataset.name||opt.text:''};
+}
+
+function _semenAutoCalc(){
+  // يحسب PR = Grade A + Grade B تلقائياً
+  const aEl=document.getElementById('semenf-s_grade_a');
+  const bEl=document.getElementById('semenf-s_grade_b');
+  const prEl=document.getElementById('semenf-s_pr');
+  if(!prEl) return;
+  const a=parseFloat(aEl&&aEl.value)||0;
+  const b=parseFloat(bEl&&bEl.value)||0;
+  if(a||b) prEl.value=(a+b).toFixed(1);
+}
+
+function _semenDropToggle(fid){
+  const menu=document.getElementById('semenf-'+fid+'-menu');
+  if(!menu) return;
+  const isVisible=menu.style.display!=='none';
+  // إغلاق كل القوائم المفتوحة
+  document.querySelectorAll('[id$="-menu"]').forEach(m=>{ if(m.id.startsWith('semenf-')) m.style.display='none'; });
+  menu.style.display=isVisible?'none':'block';
+  if(!isVisible){
+    // إغلاق عند الضغط خارجها
+    setTimeout(()=>{
+      function closeMenu(e){ if(!menu.contains(e.target)){menu.style.display='none';document.removeEventListener('click',closeMenu);} }
+      document.addEventListener('click',closeMenu);
+    },10);
+  }
+}
+
+function _semenDropSelect(fid, encVal){
+  const val=decodeURIComponent(encVal);
+  const hidden=document.getElementById('semenf-'+fid);
+  const display=document.getElementById('semenf-'+fid+'-display');
+  const chk=document.getElementById('semenf-'+fid+'-chk-'+encVal);
+  if(!hidden||!display) return;
+  let vals=(hidden.value||'').split('||').filter(Boolean);
+  if(vals.includes(val)){
+    vals=vals.filter(v=>v!==val);
+    if(chk) chk.textContent=' ';
+  } else {
+    vals.push(val);
+    if(chk) chk.textContent='✓';
+  }
+  hidden.value=vals.join('||');
+  // تحديث الـ display
+  display.innerHTML=vals.length?vals.map(v=>`<span style="background:rgba(0,212,255,0.18);border:1px solid rgba(0,212,255,0.4);border-radius:5px;padding:1px 7px;font-size:10px;color:var(--primary);display:flex;align-items:center;gap:3px">${v}<span onclick="event.stopPropagation();_semenDropRemove('${fid}','${encodeURIComponent(v)}')" style="cursor:pointer;opacity:0.7;font-size:12px;line-height:1">×</span></span>`).join(''):'<span style="color:var(--text2)">اختر...</span>';
+}
+
+function _semenDropRemove(fid, encVal){
+  const val=decodeURIComponent(encVal);
+  const hidden=document.getElementById('semenf-'+fid);
+  const display=document.getElementById('semenf-'+fid+'-display');
+  const chk=document.getElementById('semenf-'+fid+'-chk-'+encVal);
+  if(!hidden) return;
+  let vals=(hidden.value||'').split('||').filter(v=>v&&v!==val);
+  hidden.value=vals.join('||');
+  if(chk) chk.textContent=' ';
+  if(display) display.innerHTML=vals.length?vals.map(v=>`<span style="background:rgba(0,212,255,0.18);border:1px solid rgba(0,212,255,0.4);border-radius:5px;padding:1px 7px;font-size:10px;color:var(--primary);display:flex;align-items:center;gap:3px">${v}<span onclick="event.stopPropagation();_semenDropRemove('${fid}','${encodeURIComponent(v)}')" style="cursor:pointer;opacity:0.7;font-size:12px;line-height:1">×</span></span>`).join(''):'<span style="color:var(--text2)">اختر...</span>';
 }
 
 function _semenMultiUpdate(fid){
@@ -24586,14 +24683,14 @@ function _buildSemenPrintHTML(r){
     specimen:    {label:'Specimen Information',fields:{s_abstinence:'Abstinence Period',s_collection:'Collection Method',s_volume:'Volume (mL)',s_appearance:'Appearance',s_liquefaction:'Liquefaction Time',s_viscosity:'Viscosity',s_ph:'pH'}},
     spermCount:  {label:'Sperm Count',fields:{s_conc:'Concentration (M/mL)',s_total_count:'Total Count (Million)',s_azoospermia:'Azoospermia'}},
     motility:    {label:'Motility (WHO 2021)',fields:{s_grade_a:'Grade A — Rapid Progressive (%)',s_grade_b:'Grade B — Slow Progressive (%)',s_pr:'PR = A+B  Total Progressive (%)',s_grade_c:'Grade C — Non-Progressive NP (%)',s_grade_d:'Grade D — Immotile IM (%)',s_total_motile:'Total Motile  PR+NP (%)',s_vitality:'Vitality — Live Spermatozoa (%)'}},
-    morphology:  {label:'Morphology (Kruger Strict)',fields:{s_normal_forms:'Normal Morphology (%)',s_normal_shapes:'Normal Sperm Shapes Observed'}},
+    morphology:  {label:'Morphology (Kruger Strict)',fields:{s_normal_forms:'Normal Morphology (%)',s_normal_shapes:'Normal Sperm Shapes',s_abnormal_forms:'Abnormal Forms Observed'}},
     biochemistry:{label:'Seminal Biochemistry',fields:{s_fructose:'Fructose',s_zinc:'Zinc (µmol/ejac)',s_citric_acid:'Citric Acid (µmol/ejac)',s_wbc:'Pus Cells (/mL)',s_rbc:'RBC',s_bacteria:'Bacteria',s_agglutination:'Agglutination'}},
     advanced:    {label:'Advanced Markers',fields:{s_dna_frag:'DNA Fragmentation (%)',s_oxidative:'Oxidative Stress',s_antisperm_ab:'Antisperm Antibodies',s_round_cells:'Round Cells (/mL)'}}
   };
   const SEMEN_REFS={
     s_volume:'>= 1.4 mL',s_ph:'7.2 – 8.0',s_conc:'>= 16 M/mL',s_total_count:'>= 39 million',
     s_grade_a:'>= 25%',s_grade_b:'',s_grade_c:'',s_grade_d:'',
-    s_pr:'>= 30%',s_total_motile:'>= 42%',s_vitality:'>= 54%',s_normal_forms:'>= 14%',s_normal_shapes:'',
+    s_pr:'>= 30%',s_total_motile:'>= 42%',s_vitality:'>= 54%',s_normal_forms:'>= 14%',s_normal_shapes:'',s_abnormal_forms:'',
     s_fructose:'Positive',s_zinc:'>= 2.4',s_citric_acid:'>= 52',
     s_wbc:'< 1 M/mL',s_rbc:'Absent',s_bacteria:'Absent',s_agglutination:'Nil',
     s_dna_frag:'< 15%',s_oxidative:'Normal',s_antisperm_ab:'Negative',s_round_cells:'< 5 M/mL',
@@ -24629,9 +24726,10 @@ function _buildSemenPrintHTML(r){
       const numVal=parseFloat(val);
       let abn=false;
       if(isEmpty){ abn=false; }
-      else if(['s_volume','s_conc','s_total_count','s_grade_a','s_pr','s_total_motile','s_vitality','s_normal_forms'].includes(fid)){
+      else if(['s_volume','s_conc','s_total_count','s_grade_a','s_pr','s_total_motile','s_vitality'].includes(fid)){
         const refNum=parseFloat(ref); if(!isNaN(numVal)&&!isNaN(refNum)) abn=numVal<refNum;
-      } else if(fid==='s_dna_frag'){ if(!isNaN(numVal)) abn=numVal>15; }
+      } else if(fid==='s_normal_forms'){ if(!isNaN(numVal)) abn=numVal<14; }
+      else if(fid==='s_dna_frag'){ if(!isNaN(numVal)) abn=numVal>15; }
       else if(fid==='s_azoospermia'){ abn=val==='Yes'; }
       else if(fid==='s_wbc'){ abn=val!=='< 1 M/mL'; }
       else if(['s_rbc','s_bacteria','s_antisperm_ab'].includes(fid)){ abn=val!=='Absent'&&val!=='Negative'; }
@@ -24639,7 +24737,7 @@ function _buildSemenPrintHTML(r){
       else if(fid==='s_oxidative'){ abn=val!=='Normal'; }
       const prevRaw=_prevRec?(_prevRec[fid]||'—'):'—';
       // multiselect: display as comma-separated pills
-      const isMulti=fid==='s_normal_shapes';
+      const isMulti=(fid==='s_normal_shapes'||fid==='s_abnormal_forms');
       const displayVal=isMulti?(val||'').split('||').filter(Boolean).join(', ')||val:val;
       const displayPrev=isMulti?(prevRaw||'').split('||').filter(Boolean).join(', ')||prevRaw:prevRaw;
       const rowBg=fi%2===0?'#ffffff':'#f7f9fc';
