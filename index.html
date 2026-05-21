@@ -16175,13 +16175,12 @@ function _buildWatermarkHTML(fixedPos){
   var op=(typeof settings.wmOpacity==='number'?settings.wmOpacity:15)/100;
   var ww=(typeof settings.wmW==='number'&&settings.wmW>=100?settings.wmW:794);
   var wh=(typeof settings.wmH==='number'&&settings.wmH>=100?settings.wmH:620);
-  // العلامة المائية: تتمركز في وسط صفحة A4 الكاملة (297mm ≈ 1122px @ 96dpi)
-  // نستخدم position:fixed حتى تتمركز في وسط الورقة بغض النظر عن حجم المحتوى
-  var style='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:'+ww+'px;height:'+wh+'px;'
-    +'z-index:0;pointer-events:none;'
-    +'-webkit-print-color-adjust:exact;print-color-adjust:exact;'
-    +'mix-blend-mode:multiply;';
-  var imgStyle='width:100%;height:100%;object-fit:contain;opacity:'+op.toFixed(2)+';display:block;mix-blend-mode:multiply;';
+  // العلامة المائية: position:absolute داخل الـ container الذي له position:relative
+  // z-index:-1 يضمن ظهورها خلف جميع النصوص والمحتوى بدون أي تداخل
+  var style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:'+ww+'px;height:'+wh+'px;'
+    +'z-index:-1;pointer-events:none;'
+    +'-webkit-print-color-adjust:exact;print-color-adjust:exact;';
+  var imgStyle='width:100%;height:100%;object-fit:contain;opacity:'+op.toFixed(2)+';display:block;';
   return '<div style="'+style+'"><img src="'+img+'" style="'+imgStyle+'"></div>';
 }
 
