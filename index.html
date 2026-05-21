@@ -1084,6 +1084,10 @@ body.light-mode #m-view-results .mftr{
 /* ── محتوى داخل مودالات التحاليل الخاصة ── */
 body.light-mode #ua-modal-body *,
 body.light-mode #stool-modal-body *,
+#semen-modal-body label.fl{color:#000 !important;font-weight:700 !important;}
+#semen-modal-body .semen-field-label{color:#000 !important;font-weight:700 !important;}
+#semen-modal-body .fl{color:#000 !important;}
+#semen-modal-body label{color:#000 !important;}
 body.light-mode #semen-modal-body *{
   color:#000000;
 }
@@ -4119,6 +4123,7 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
               <button id="exam-tab-ua" onclick="switchExamSettingsTab('ua')" style="flex:1;padding:8px;border-radius:8px;border:none;background:var(--primary);color:#000;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:800">💧 Urine Examination</button>
               <button id="exam-tab-stool" onclick="switchExamSettingsTab('stool')" style="flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700">🧫 Stool Examination</button>
               <button id="exam-tab-semen" onclick="switchExamSettingsTab('semen')" style="flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700">🔬 Semen Analysis</button>
+              <button id="exam-tab-iui" onclick="switchExamSettingsTab('iui')" style="flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700">💉 IUI Activation</button>
             </div>
             <div id="exam-settings-ua">
               <div id="ua-fields-editor"></div>
@@ -4157,6 +4162,13 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
                   <div class="fg" style="margin-bottom:0"><label class="fl">الخيارات (مفصولة بـ |)</label><input class="fc" id="stool-new-opts" placeholder="None|Present"></div>
                   <button class="btn btn-p btn-sm" onclick="addStoolField()" style="height:38px">➕ إضافة</button>
                 </div>
+              </div>
+            </div>
+            <div id="exam-settings-iui" style="display:none">
+              <div style="padding:16px;text-align:center;color:var(--text2);">
+                <div style="font-size:14px;font-weight:700;margin-bottom:8px">💉 IUI Activation Report Settings</div>
+                <div style="font-size:12px">تقرير IUI يحتوي على حقول ثابتة. لا تحتاج إلى إضافة حقول مخصصة.</div>
+                <div style="margin-top:12px;font-size:12px;color:var(--primary);font-weight:700">✅ التقرير يشمل: البيانات الكلية + جدول Pre/Post Activation مع Grades A, B, C, D والنتائج بالمليون</div>
               </div>
             </div>
             <div id="exam-settings-semen" style="display:none">
@@ -7180,6 +7192,8 @@ const ALL_TESTS=[
 // SEMEN
 // ══════════════════════════════════════════════════════════════
 {id:'semen001',code:'SEMEN',nameEn:'Semen Analysis',nameShort:'Semen Analysis',cat:'Semen',subCat:'Miscellaneous',unit:'qualitative',minVal:null,maxVal:null,minF:null,maxF:null,ref:'See report',time:'1 hour',price:25,notes:'Spermiogram with morphology and motility',isSpecialExam:'semen'},
+{id:'dnafrag001',code:'DNA-FRAG',nameEn:'DNA Fragmentation Test',nameShort:'DNA Fragmentation',cat:'Semen',subCat:'Miscellaneous',unit:'qualitative',minVal:null,maxVal:null,minF:null,maxF:null,ref:'See report',time:'1 day',price:50,notes:'Sperm DNA Fragmentation Index (DFI)',isSpecialExam:'dnafrag'},
+{id:'iui001',code:'IUI-ACT',nameEn:'IUI Activation',nameShort:'IUI Activation',cat:'Semen',subCat:'Miscellaneous',unit:'qualitative',minVal:null,maxVal:null,minF:null,maxF:null,ref:'See report',time:'2 hours',price:35,notes:'In vitro Sperm Activation for IUI',isSpecialExam:'iui'},
 // ══════════════════════════════════════════════════════════════
 // SPECIAL
 // ══════════════════════════════════════════════════════════════
@@ -8221,6 +8235,14 @@ function openPrintModal(rid){
     } else if(st.isSpecialExam==='semen'){
       const rec=semenRecords.find(r=>r.reqId===req.id);
       if(rec) pages.push(_buildSemenPrintHTML(rec));
+    } else if(st.isSpecialExam==='dnafrag'){
+      loadDNAFragRecords();
+      const rec=dnaFragRecords.find(r=>r.reqId===req.id);
+      if(rec) pages.push(_buildDNAFragPrintHTML(rec));
+    } else if(st.isSpecialExam==='iui'){
+      loadIUIRecords();
+      const rec=iuiRecords.find(r=>r.reqId===req.id);
+      if(rec) pages.push(_buildIUIPrintHTML(rec));
     }
   });
 
@@ -22259,14 +22281,18 @@ function switchExamSettingsTab(tab){
   document.getElementById('exam-settings-ua').style.display=tab==='ua'?'':'none';
   document.getElementById('exam-settings-stool').style.display=tab==='stool'?'':'none';
   document.getElementById('exam-settings-semen').style.display=tab==='semen'?'':'none';
+  document.getElementById('exam-settings-iui').style.display=tab==='iui'?'':'none';
   document.getElementById('exam-tab-ua').style.background=tab==='ua'?'var(--primary)':'transparent';
   document.getElementById('exam-tab-ua').style.color=tab==='ua'?'#000':'var(--text2)';
   document.getElementById('exam-tab-stool').style.background=tab==='stool'?'var(--primary)':'transparent';
   document.getElementById('exam-tab-stool').style.color=tab==='stool'?'#000':'var(--text2)';
   document.getElementById('exam-tab-semen').style.background=tab==='semen'?'var(--primary)':'transparent';
   document.getElementById('exam-tab-semen').style.color=tab==='semen'?'#000':'var(--text2)';
+  document.getElementById('exam-tab-iui').style.background=tab==='iui'?'var(--primary)':'transparent';
+  document.getElementById('exam-tab-iui').style.color=tab==='iui'?'#000':'var(--text2)';
   if(tab==='ua') renderUAFieldsEditor();
   else if(tab==='stool') renderStoolFieldsEditor();
+  else if(tab==='iui') {} // IUI has static fields only
   else renderSemenFieldsEditor();
 }
 
@@ -22914,8 +22940,9 @@ let iuiRecords = [];
 function loadIUIRecords(){ iuiRecords = load('iuiRecords',[]); }
 function saveIUIRecords(){ save('iuiRecords', iuiRecords); }
 
-function openNewIUIModal(){
+function openNewIUIModal(reqId){
   window._iuiEditId = null;
+  window._iuiReqId = reqId||null;
   document.getElementById('iui-modal-title').textContent = '💉 IUI — New Entry';
   _buildIUIModalBody(null);
   openModal('m-iui-exam');
@@ -23168,6 +23195,7 @@ function saveIUIEntry(){
   const f2=(n)=>parseFloat(n.toFixed(2));
   const rec = {
     id: window._iuiEditId||('iui-'+Date.now()),
+    reqId: window._iuiReqId||null,
     patientId:ptId, patientName:ptName,
     patientAge:ptObj.ageDisplay||'', patientGender:ptObj.gender||'male',
     patientPhone:_getIUIField('pt-phone'),
@@ -23324,7 +23352,7 @@ function _buildIUIPrintHTML(r){
       <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#222;border:1px solid #ddd">${label}</td>
       <td style="padding:3px 8px;font-size:12px;font-weight:${abnPre?900:700};color:${abnPre?'#cc0000':'#222'};text-align:center;border:1px solid #ddd">${pre||'—'}</td>
       <td style="padding:3px 8px;font-size:12px;font-weight:${abnPost?900:700};color:${abnPost?'#cc0000':'#00700a'};text-align:center;border:1px solid #ddd">${post||'—'}</td>
-      <td style="padding:3px 8px;font-size:11px;color:#777;border:1px solid #ddd">${ref||''}</td>
+      <td style="padding:3px 8px;font-size:11px;color:#000;font-weight:700;border:1px solid #ddd">${ref||''}</td>
     </tr>`;
 
   const pc=r.preConc?parseFloat(r.preConc):0;
@@ -23340,6 +23368,14 @@ function _buildIUIPrintHTML(r){
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{.iui-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;}}
     table{border-collapse:collapse;width:100%}
+    body{font-size:15px !important;}
+    span,td,th,div,b{font-size:inherit;}
+    td[style*="font-size:12px"]{font-size:14px !important;}
+    td[style*="font-size:13px"]{font-size:15px !important;}
+    span[style*="font-size:12px"]{font-size:14px !important;}
+    span[style*="font-size:13px"]{font-size:15px !important;}
+    div[style*="font-size:12px"]{font-size:14px !important;}
+    div[style*="font-size:11px"]{font-size:13px !important;}
   </style></head><body>
   <div class="iui-content">
     ${hdrHTML}
@@ -23399,13 +23435,13 @@ function _buildIUIPrintHTML(r){
           <th style="padding:4px 8px;font-size:12px;text-align:left;border:1px solid #b8b8b8;width:38%"></th>
           <th style="padding:4px 8px;font-size:12px;text-align:center;border:1px solid #b8b8b8;width:20%">Pre Activation</th>
           <th style="padding:4px 8px;font-size:12px;text-align:center;border:1px solid #b8b8b8;width:20%">Post Activation</th>
-          <th style="padding:4px 8px;font-size:12px;text-align:left;border:1px solid #b8b8b8;width:22%">Reference (WHO)</th>
+          <th style="padding:4px 8px;font-size:12px;text-align:left;border:1px solid #b8b8b8;width:22%;color:#000;font-weight:800">Reference (WHO)</th>
         </tr>
         <tr style="background:#e8e8e8">
           <td style="padding:2px 8px;font-size:11px;font-style:italic;border:1px solid #ddd">Sperm Concentration</td>
           <td style="padding:2px 8px;font-size:12px;font-weight:700;text-align:center;border:1px solid #ddd">${r.preConc||'—'} million/ml</td>
           <td style="padding:2px 8px;font-size:12px;font-weight:700;text-align:center;border:1px solid #ddd">${r.postConc||'—'} million/ml</td>
-          <td style="padding:2px 8px;font-size:11px;color:#777;border:1px solid #ddd">≥ 16 M/mL</td>
+          <td style="padding:2px 8px;font-size:11px;color:#000;font-weight:700;border:1px solid #ddd">≥ 16 M/mL</td>
         </tr>
       </thead>
       <tbody>
@@ -23441,7 +23477,7 @@ function _buildIUIPrintHTML(r){
           <td style="padding:3px 8px;font-size:12px;font-weight:900;color:#004400;border:1px solid #ddd">Total Motile Sperm</td>
           <td style="padding:3px 8px;font-size:13px;font-weight:900;color:#c45000;text-align:center;border:1px solid #ddd">${fmt(r.preTotalMotileM)} M/ml &nbsp;|&nbsp; ${pct(r.preTotalMotile)}</td>
           <td style="padding:3px 8px;font-size:13px;font-weight:900;color:#006600;text-align:center;border:1px solid #ddd">${fmt(r.postTotalMotileM)} M/ml &nbsp;|&nbsp; ${pct(r.postTotalMotile)}</td>
-          <td style="padding:3px 8px;font-size:11px;color:#777;border:1px solid #ddd">≥ 42%</td>
+          <td style="padding:3px 8px;font-size:11px;color:#000;font-weight:700;border:1px solid #ddd">≥ 42%</td>
         </tr>
         ${tr(
           'Normal Morphology',
@@ -23526,8 +23562,9 @@ let dnaFragRecords = [];
 function loadDNAFragRecords(){ dnaFragRecords = load('dnaFragRecords',[]); }
 function saveDNAFragRecords(){ save('dnaFragRecords', dnaFragRecords); }
 
-function openNewDNAFragModal(){
+function openNewDNAFragModal(reqId){
   window._dnafragEditId = null;
+  window._dnafragReqId = reqId||null;
   document.getElementById('dnafrag-modal-title').textContent = '🧬 DNA Fragmentation Test — New Entry';
   _buildDNAFragModalBody(null);
   openModal('m-dnafrag-exam');
@@ -23807,6 +23844,7 @@ function saveDNAFragEntry(){
   let fertility = dfi < 15 ? 'Excellent fertility potential' : dfi <= 30 ? 'Good fertility potential' : 'Poor fertility potential';
   const rec = {
     id: window._dnafragEditId || ('dnafrag-'+Date.now()),
+    reqId: window._dnafragReqId||null,
     patientId: ptId, patientName: ptName,
     patientAge: ptObj.ageDisplay||'',
     patientGender: ptObj.gender||'male',
@@ -23868,8 +23906,15 @@ function renderDNAFragList(){
 function _buildDNALastResult(r){
   if(!r.patientId) return '';
   loadDNAFragRecords();
+  // فقط إذا مرت 24 ساعة على آخر نتيجة
+  var now = Date.now();
   var prev = dnaFragRecords
-    .filter(function(x){ return x.patientId===r.patientId && x.id!==r.id; })
+    .filter(function(x){
+      if(x.patientId!==r.patientId || x.id===r.id) return false;
+      var recTime = x.createdAt || (x.date ? new Date(x.date).getTime() : 0);
+      var currentTime = r.createdAt || now;
+      return (currentTime - recTime) >= 24*60*60*1000;
+    })
     .sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); })[0] || null;
   if(!prev) return '';
   var prevDFI = prev.dfi || 0;
@@ -24033,7 +24078,12 @@ function _buildDNAFragPrintHTML(r){
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:Arial,sans-serif;color:#000;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body{font-family:Arial,sans-serif;color:#000;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    td[style*="font-size:12px"]{font-size:14px !important;}
+    td[style*="font-size:13px"]{font-size:15px !important;}
+    td[style*="font-size:11px"]{font-size:13px !important;}
+    span[style*="font-size:12px"]{font-size:14px !important;}
+    span[style*="font-size:14px"]{font-size:16px !important;}
     .dna-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
     .dna-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -24142,7 +24192,7 @@ function _buildDNAFragPrintHTML(r){
     <!-- صف أسفل: الصورة + الملاحظات -->
     <div style="display:flex;gap:8px;align-items:flex-start;margin-top:3px">
       <!-- صورة المريض أسفل اليسار -->
-      <div style="width:210px;height:180px;border:1px solid #b8b8b8;border-radius:4px;overflow:hidden;background:#f9f9f9;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+      <div style="width:45%;height:180px;border:1px solid #b8b8b8;border-radius:4px;overflow:hidden;background:#f9f9f9;flex-shrink:0;display:flex;align-items:center;justify-content:center">
         ${patientImg || '<div style="font-size:10px;color:#aaa;text-align:center;padding:8px"></div>'}
       </div>
       <!-- ملاحظات -->
@@ -24624,18 +24674,29 @@ function _buildSemenPrintHTML(r){
   // ── جلب آخر نتيجة سابقة للمريض (أقدم تسجيل مختلف عن الحالي) ──
   const _prevRec=(()=>{
     if(!r.patientId) return null;
+    const now=Date.now();
     const all=semenRecords
-      .filter(x=>x.patientId===r.patientId && x.id!==r.id)
+      .filter(x=>{
+        if(x.patientId!==r.patientId || x.id===r.id) return false;
+        const recTime = x.createdAt || (x.date ? new Date(x.date).getTime() : 0);
+        const currentTime = r.createdAt || now;
+        return (currentTime - recTime) >= 24*60*60*1000;
+      })
       .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
     return all[0]||null;
   })();
 
   // ── رأس واحد مشترك لكل الجدول ──
+  // حساب العدد الكلي للخلايا (Concentration * Volume للحصول على الكلي بالمليون)
+  const _totalCountM = parseFloat(r.s_total_count)||0; // إجمالي بالمليون
+  const _concM = parseFloat(r.s_conc)||0; // التركيز M/mL
+
   const _globalThead=`<thead><tr style="background:#e8edf5">
-    <th style="font-size:12px;font-weight:800;color:#000;padding:2px 6px;text-align:left;border-bottom:2px solid #888;width:34%">Parameter</th>
-    <th style="font-size:12px;font-weight:800;color:#000;padding:2px 6px;text-align:center;border-bottom:2px solid #888;width:20%">Result</th>
-    <th style="font-size:12px;font-weight:800;color:#555;padding:2px 6px;text-align:left;border-bottom:2px solid #888;width:22%">Reference (WHO 2021)</th>
-    <th style="font-size:12px;font-weight:800;color:#1a4fa0;padding:2px 6px;text-align:center;border-bottom:2px solid #888;width:24%;border-left:2px solid #b0c4e8;background:#eef3ff">${_prevRec?`Last Result<br><span style="font-size:9px;font-weight:600;color:#555">${_prevRec.date||''}</span>`:'Last Result'}</th>
+    <th style="font-size:12px;font-weight:800;color:#000;padding:2px 6px;text-align:left;border-bottom:2px solid #888;width:32%">Parameter</th>
+    <th style="font-size:12px;font-weight:800;color:#000;padding:2px 6px;text-align:center;border-bottom:2px solid #888;width:10%">%</th>
+    <th style="font-size:12px;font-weight:800;color:#1565c0;padding:2px 6px;text-align:center;border-bottom:2px solid #888;width:10%;border-left:2px solid #90caf9;background:#e3f2fd">M/mL</th>
+    <th style="font-size:12px;font-weight:800;color:#555;padding:2px 6px;text-align:left;border-bottom:2px solid #888;width:24%">Reference (WHO 2021)</th>
+    <th style="font-size:12px;font-weight:800;color:#1a4fa0;padding:2px 6px;text-align:center;border-bottom:2px solid #888;width:24%;border-left:2px solid #b0c4e8;background:#eef3ff">\${_prevRec?\`Last Result<br><span style="font-size:9px;font-weight:600;color:#555">\${_prevRec.date||''}</span>\`:'Last Result'}</th>
   </tr></thead>`;
 
   const renderSec=(secKey)=>{
@@ -24643,6 +24704,9 @@ function _buildSemenPrintHTML(r){
     const fieldKeys=Object.keys(secDef.fields);
     const validKeys=fieldKeys.filter(fid=>r[fid]&&r[fid]!=='');
     if(!validKeys.length) return '';
+    // حقول قسم الحركة WHO 2021 التي تحسب قيمتها بالمليون من التركيز
+    const _motilityFields=['s_grade_a','s_grade_b','s_pr','s_grade_c','s_grade_d','s_total_motile'];
+    const isMotility = secKey==='motility';
     const rows=validKeys.map((fid,fi)=>{
       const isEmpty=r[fid]===EMPTY_VAL;
       const val=isEmpty?'':r[fid];
@@ -24660,30 +24724,41 @@ function _buildSemenPrintHTML(r){
       else if(['s_agglutination','s_viscosity'].includes(fid)){ abn=val!=='Nil'; }
       else if(fid==='s_oxidative'){ abn=val!=='Normal'; }
       const prevRaw=_prevRec?(_prevRec[fid]||'—'):'—';
-      // multiselect: display as comma-separated pills
       const isMulti=(fid==='s_normal_shapes'||fid==='s_abnormal_forms');
       const displayVal=isMulti?(val||'').split('||').filter(Boolean).join(', ')||val:val;
       const displayPrev=isMulti?(prevRaw||'').split('||').filter(Boolean).join(', ')||prevRaw:prevRaw;
       const rowBg=fi%2===0?'#ffffff':'#f7f9fc';
+
+      // حساب القيمة بالمليون لحقول الحركة
+      let millionVal = '';
+      if(isMotility && _motilityFields.includes(fid) && !isNaN(numVal) && _concM > 0){
+        millionVal = (_concM * numVal / 100).toFixed(2) + ' M';
+      }
+
       if(isMulti){
         return `<tr style="background:${rowBg}">
           <td style="font-size:12px;font-weight:700;color:#000;padding:2px 6px;border-bottom:1px solid #e0e0e0"><span style="color:#666;margin-right:3px">■</span>${secDef.fields[fid]}</td>
-          <td colspan="2" style="font-size:11px;font-weight:600;color:#000;padding:2px 6px;border-bottom:1px solid #e0e0e0">${displayVal||'—'}</td>
+          <td colspan="${isMotility?'1':'2'}" style="font-size:11px;font-weight:600;color:#000;padding:2px 6px;border-bottom:1px solid #e0e0e0">${displayVal||'—'}</td>
+          ${isMotility?`<td style="font-size:11px;font-weight:700;color:#1565c0;padding:2px 6px;border-bottom:1px solid #e0e0e0;text-align:center;border-left:2px solid #90caf9;background:#e3f2fd">—</td>`:''}
           <td style="font-size:11px;font-weight:600;color:#1a4fa0;padding:2px 6px;border-bottom:1px solid #e0e0e0;text-align:center;border-left:2px solid #d0d8ea;background:#f4f8ff">${displayPrev}</td>
         </tr>`;
       }
       return `<tr style="background:${rowBg}">
         <td style="font-size:12px;font-weight:700;color:#000;padding:2px 6px;border-bottom:1px solid #e0e0e0"><span style="color:#666;margin-right:3px">■</span>${secDef.fields[fid]}</td>
-        <td style="font-size:13px;font-weight:700;padding:2px 6px;border-bottom:1px solid #e0e0e0;text-align:center">
-          <span style="display:inline-block;border:1px solid #b0b0b0;border-radius:3px;padding:0 5px;min-width:55px;text-align:center;background:#fff;color:${abn?'#cc0000':'#000'};font-weight:${abn?'900':'700'}">${displayVal}</span>
+        <td style="font-size:13px;font-weight:700;padding:2px 6px;border-bottom:1px solid #e0e0e0;text-align:center;${isMotility?'border-right:2px solid #90caf9;':''}">
+          <span style="display:inline-block;border:1px solid #b0b0b0;border-radius:3px;padding:0 5px;min-width:45px;text-align:center;background:#fff;color:${abn?'#cc0000':'#000'};font-weight:${abn?'900':'700'}">${displayVal}</span>
         </td>
+        ${isMotility?`<td style="font-size:12px;font-weight:800;color:#1565c0;padding:2px 6px;border-bottom:1px solid #e0e0e0;text-align:center;border-left:2px solid #90caf9;background:#e3f2fd;min-width:50px">
+          ${millionVal?`<span style="display:inline-block;border:1px solid #90caf9;border-radius:3px;padding:0 5px;min-width:45px;text-align:center;background:#fff;color:#1565c0;font-weight:800">${millionVal}</span>`:'—'}
+        </td>`:''}
         <td style="font-size:11px;font-weight:600;color:#555;padding:2px 6px;border-bottom:1px solid #e0e0e0">${ref||'—'}</td>
         <td style="font-size:12px;font-weight:700;color:#1a4fa0;padding:2px 6px;border-bottom:1px solid #e0e0e0;text-align:center;border-left:2px solid #d0d8ea;background:#f4f8ff">
-          <span style="display:inline-block;border:1px solid #b0c4e8;border-radius:3px;padding:0 5px;min-width:55px;text-align:center;background:#fff;color:#1a4fa0;font-weight:700">${displayPrev}</span>
+          <span style="display:inline-block;border:1px solid #b0c4e8;border-radius:3px;padding:0 5px;min-width:45px;text-align:center;background:#fff;color:#1a4fa0;font-weight:700">${displayPrev}</span>
         </td>
       </tr>`;
     }).join('');
-    return `<tr><td colspan="4" style="background:#f0f4fa;padding:2px 8px;border-bottom:1px solid #ccd0d8;border-top:2px solid #b0bcd8">
+    const sColspan = isMotility ? '5' : '4';
+    return `<tr><td colspan="${sColspan}" style="background:#f0f4fa;padding:2px 8px;border-bottom:1px solid #ccd0d8;border-top:2px solid #b0bcd8">
       <span style="font-size:12px;font-weight:900;color:#1a4fa0;letter-spacing:0.3px">${secDef.label}</span>
     </td></tr>${rows}`;
   };
