@@ -12550,9 +12550,10 @@ function buildPrintHTML(req, opts){
   // هذا للتوافق مع buildCalcTestPrintHTML الذي يستبدل BLANK_BODY_PLACEHOLDER
   if(blankBody){
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <style>${css}${_buildWatermarkCSS("#print-content")}</style></head>
+    <style>${css}</style></head>
     <body>
     <div id="print-content" style="background:#ffffff;font-family:'Inter',Arial,sans-serif;direction:ltr;width:100%;padding:1mm 3mm 0 3mm;position:relative;">
+      ${_buildWatermarkHTML(false)}
       ${hdr}${ptBox}<!--BLANK_BODY_PLACEHOLDER-->
       <div id="print-spacer" style="height:${totalFooterH+12}px"></div>
     </div>
@@ -12593,7 +12594,6 @@ function buildPrintHTML(req, opts){
   // CSS الإضافي للصفحات المتعددة
   const multiPageCss = `
     .report-page{background:#ffffff;width:100%;position:relative;box-sizing:border-box;}
-    .report-page::before{content:"";position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;background-image:${_buildWatermarkCSSValue()};background-size:contain;background-repeat:no-repeat;background-position:center;width:${_buildWatermarkW()}px;height:${_buildWatermarkH()}px;opacity:${_buildWatermarkOp()};}
     .report-page+.report-page{page-break-before:always;break-before:page;}
     .page-footer-spacer{display:block;}
     @media print{
@@ -16175,15 +16175,27 @@ function _buildWatermarkHTML(fixedPos){
   var op=(typeof settings.wmOpacity==='number'?settings.wmOpacity:15)/100;
   var ww=(typeof settings.wmW==='number'&&settings.wmW>=100?settings.wmW:794);
   var wh=(typeof settings.wmH==='number'&&settings.wmH>=100?settings.wmH:620);
-  // العلامة المائية: فوق الخلفية البيضاء وتحت النصوص بصرياً
-  // mix-blend-mode:multiply تجعلها شفافة على الأبيض وتظهر فوق الألوان
-  // z-index عالٍ + pointer-events:none حتى لا تعيق التفاعل
-  var style='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:'+ww+'px;height:'+wh+'px;'
-    +'z-index:9000;pointer-events:none;'
+  // الحل الصحيح: نُرجع <style> tag يضيف body::before
+  // body::before هو pseudo-element يظهر خلف كل محتوى body تلقائياً
+  // بدون أي z-index أو mix-blend-mode
+  return '<style>'
+    +'body::before{'
+    +'content:"";'
+    +'display:block;'
+    +'position:fixed;'
+    +'top:50%;left:50%;'
+    +'transform:translate(-50%,-50%);'
+    +'width:'+ww+'px;height:'+wh+'px;'
+    +'background-image:url("'+img.replace(/"/g,'\\"')+'");'
+    +'background-size:contain;'
+    +'background-repeat:no-repeat;'
+    +'background-position:center;'
+    +'opacity:'+op.toFixed(2)+';'
+    +'pointer-events:none;'
+    +'z-index:0;'
     +'-webkit-print-color-adjust:exact;print-color-adjust:exact;'
-    +'mix-blend-mode:multiply;';
-  var imgStyle='width:100%;height:100%;object-fit:contain;opacity:'+op.toFixed(2)+';display:block;mix-blend-mode:multiply;';
-  return '<div style="'+style+'"><img src="'+img+'" style="'+imgStyle+'"></div>';
+    +'}'
+    +'</style>';
 }
 
 function clearHeaderImg(){
@@ -21095,8 +21107,9 @@ function _buildCultureHTML(cid){
     .footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:0 !important;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{ .footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
-  ${_buildWatermarkCSS(".content")}</style></head><body>
+  </style></head><body>
   <div class="content">
+    ${_buildWatermarkHTML(false)}
     ${hdrHTML}
     ${ptBox}
     ${separator}
@@ -21627,8 +21640,9 @@ function _buildUAPrintHTML(r){
       th,td{font-size:13px !important;padding:2px 7px !important;}
       .ua-title{font-size:13px !important;} .ua-sec-hdr{font-size:13px !important;}
     }
-  ${_buildWatermarkCSS(".ua-content")}</style></head><body>
+  </style></head><body>
     <div class="ua-content">
+      ${_buildWatermarkHTML(false)}
       ${hdrHTML}
       <div style="border:1.5px solid #b8b8b8;margin:2px 0 2px;padding:3px 10px;background:#fafafa">
         ${uaPtBox}
@@ -22191,8 +22205,9 @@ function _buildStoolPrintHTML(r){
     .se-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 5mm 1mm 5mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{ .se-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
-  ${_buildWatermarkCSS(".se-content")}</style></head><body>
+  </style></head><body>
     <div class="se-content">
+      ${_buildWatermarkHTML(false)}
       ${hdrHTML}
       <div style="border:1.5px solid #b8b8b8;margin:3px 0 4px;padding:4px 10px;background:#fafafa">
         ${_sPtBox}
@@ -23492,8 +23507,9 @@ function _buildIUIPrintHTML(r){
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{.iui-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;}}
     table{border-collapse:collapse;width:100%}
-  ${_buildWatermarkCSS(".iui-content")}</style></head><body>
+  </style></head><body>
   <div class="iui-content">
+    ${_buildWatermarkHTML(false)}
     ${hdrHTML}
     <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:13px;letter-spacing:1px">
       In vitro sperm Activation Report Technique
@@ -24193,8 +24209,9 @@ function _buildDNAFragPrintHTML(r){
     .dna-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{.dna-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;}}
-  ${_buildWatermarkCSS(".dna-content")}</style></head><body>
+  </style></head><body>
   <div class="dna-content">
+    ${_buildWatermarkHTML(false)}
     ${hdrHTML}
     <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:14px;letter-spacing:1px">
       DNA FRAGMENTATION TEST REPORT
@@ -24873,8 +24890,9 @@ function _buildSemenPrintHTML(r){
     .sm-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{ .sm-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
-  ${_buildWatermarkCSS(".sm-content")}</style></head><body>
+  </style></head><body>
     <div class="sm-content">
+      ${_buildWatermarkHTML(false)}
       ${hdrHTML}
       <div style="background:${color};color:#fff;padding:2px 12px;text-align:center;font-weight:900;font-size:13px;letter-spacing:1px">
         SEMEN ANALYSIS REPORT (SPERMIOGRAM)
