@@ -12591,7 +12591,7 @@ function buildPrintHTML(req, opts){
 
   // CSS الإضافي للصفحات المتعددة
   const multiPageCss = `
-    .report-page{background:#ffffff;width:100%;position:relative;box-sizing:border-box;isolation:isolate;}
+    .report-page{background:#ffffff;width:100%;position:relative;box-sizing:border-box;}
     .report-page+.report-page{page-break-before:always;break-before:page;}
     .page-footer-spacer{display:block;}
     @media print{
@@ -13959,7 +13959,17 @@ function renderTestsDB(){
     return catOk&&srchOk;
   });
   document.getElementById('tests-count').textContent=list.length;
-  document.getElementById('tests-db-body').innerHTML=list.map(t=>`<tr>
+  document.getElementById('tests-db-body').innerHTML=list.map(t=>{
+    const isUAorStool=(t.isSpecialExam==='ua'||t.isSpecialExam==='stool');
+    let actionBtns='';
+    if(isUAorStool){
+      const settingsTab=t.isSpecialExam==='ua'?'ua':'stool';
+      actionBtns=`<button class="btn btn-sm btn-p" onclick="nav('settings');setTimeout(()=>{toggleStCard('stc-ua-stool');document.getElementById('stc-ua-stool').scrollIntoView({behavior:'smooth'});switchExamSettingsTab('${settingsTab}');},300)" title="إعدادات حقول ${t.nameEn}">⚙️ إعدادات</button>`;
+    } else {
+      actionBtns=`<button class="btn btn-sm btn-s" onclick="openEditTest('${t.id}')">✏️</button>
+      <button class="btn btn-sm btn-d" onclick="deleteTest('${t.id}')">🗑️</button>`;
+    }
+    return `<tr>
     <td><span class="bdg bdg-s">${t.code}</span></td>
     <td style="font-weight:600">${t.nameEn}${t.nameShort?`<br><span style="font-size:10px;color:var(--text2);font-weight:400">✂️ ${t.nameShort}</span>`:''}</td>
     <td><span class="bdg bdg-p">${t.cat}</span>${t.subCat&&t.subCat!==t.cat?`<br><span class="bdg" style="background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.3);color:var(--accent);font-size:9px;margin-top:2px">${t.subCat}</span>`:''}</td>
@@ -13967,11 +13977,9 @@ function renderTestsDB(){
     <td style="font-size:11px">${t.ref||'-'}</td>
     <td style="font-size:11px">${t.time}</td>
     <td style="color:var(--primary);font-weight:700">${t.price} ${settings.currency}</td>
-    <td><div style="display:flex;gap:5px">
-      <button class="btn btn-sm btn-s" onclick="openEditTest('${t.id}')">✏️</button>
-      <button class="btn btn-sm btn-d" onclick="deleteTest('${t.id}')">🗑️</button>
-    </div></td>
-  </tr>`).join('');
+    <td><div style="display:flex;gap:5px">${actionBtns}</div></td>
+  </tr>`;
+  }).join('');
 }
 function openEditTest(id){
   editTestId=id;
@@ -16165,8 +16173,9 @@ function _buildWatermarkHTML(fixedPos){
   var op=(typeof settings.wmOpacity==='number'?settings.wmOpacity:15)/100;
   var ww=(typeof settings.wmW==='number'&&settings.wmW>=100?settings.wmW:794);
   var wh=(typeof settings.wmH==='number'&&settings.wmH>=100?settings.wmH:620);
-  // mix-blend-mode:multiply يجعل العلامة تظهر عبر أي خلفية بيضاء تلقائياً
-  var style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:'+ww+'px;height:'+wh+'px;'
+  // العلامة المائية: تتمركز في وسط صفحة A4 الكاملة (297mm ≈ 1122px @ 96dpi)
+  // نستخدم position:fixed حتى تتمركز في وسط الورقة بغض النظر عن حجم المحتوى
+  var style='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:'+ww+'px;height:'+wh+'px;'
     +'z-index:0;pointer-events:none;'
     +'-webkit-print-color-adjust:exact;print-color-adjust:exact;'
     +'mix-blend-mode:multiply;';
@@ -21060,7 +21069,7 @@ function _buildCultureHTML(cid){
     *{margin:0;padding:0;box-sizing:border-box;}
     html,body{background:#fff;font-family:Arial,sans-serif;color:#000;font-size:16px;}
     body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;isolation:isolate;}
+    .content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:0 !important;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{ .footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
@@ -21586,7 +21595,7 @@ function _buildUAPrintHTML(r){
     *{margin:0;padding:0;box-sizing:border-box;}
     /* ⭐ الذيل ثابت أسفل الورقة (position:fixed) — مطابق لتقرير CBC */
     body{font-family:Arial,sans-serif;color:#000;font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .ua-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;isolation:isolate;}
+    .ua-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .ua-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{
@@ -22154,7 +22163,7 @@ function _buildStoolPrintHTML(r){
     *{margin:0;padding:0;box-sizing:border-box;}
     /* ⭐ الذيل ثابت أسفل الورقة (position:fixed) — مطابق لتقرير CBC */
     body{font-family:Arial,sans-serif;color:#000;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .se-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;isolation:isolate;}
+    .se-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .se-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 5mm 1mm 5mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{ .se-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
@@ -23453,7 +23462,7 @@ function _buildIUIPrintHTML(r){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:Arial,sans-serif;color:#000;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .iui-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;isolation:isolate;}
+    .iui-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .iui-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{.iui-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;}}
@@ -24154,7 +24163,7 @@ function _buildDNAFragPrintHTML(r){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:Arial,sans-serif;color:#000;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .dna-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;isolation:isolate;}
+    .dna-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .dna-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{.dna-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;}}
@@ -24833,7 +24842,7 @@ function _buildSemenPrintHTML(r){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:Arial,sans-serif;color:#000;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .sm-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;isolation:isolate;}
+    .sm-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .sm-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{ .sm-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
