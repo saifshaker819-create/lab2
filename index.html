@@ -23488,7 +23488,7 @@ function _buildIUIPrintHTML(r){
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:Arial,sans-serif;color:#000;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
+    body{font-family:Arial,sans-serif;color:#000;font-size:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
     .iui-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .iui-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -23498,7 +23498,7 @@ function _buildIUIPrintHTML(r){
   <div class="iui-content">
     ${_buildWatermarkHTML(false)}
     ${hdrHTML}
-    <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:13px;letter-spacing:1px">
+    <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:16px;letter-spacing:1px">
       In vitro sperm Activation Report Technique
     </div>
 
@@ -23509,41 +23509,41 @@ function _buildIUIPrintHTML(r){
 
     <!-- صف الأوقات -->
     <div style="display:flex;gap:6px;margin-bottom:4px">
-      <div style="flex:1;border:1px solid #b8b8b8;background:#f5f5f5;padding:3px 10px;font-size:11px">
+      <div style="flex:1;border:1px solid #b8b8b8;background:#f5f5f5;padding:3px 10px;font-size:16px">
         <b>Specimen Produced Time:</b> ${r.timeProduced||'—'}
         &nbsp;&nbsp;&nbsp;
         <b>Abstinence:</b> ${r.abstinence||'—'}
       </div>
-      <div style="flex:1;border:1px solid #b8b8b8;background:#f5f5f5;padding:3px 10px;font-size:11px">
+      <div style="flex:1;border:1px solid #b8b8b8;background:#f5f5f5;padding:3px 10px;font-size:16px">
         <b>Specimen Examination Time:</b> ${r.timeExam||'—'}
       </div>
     </div>
 
     <!-- الفحص الكلي -->
     <div style="border:1px solid #b8b8b8;margin-bottom:4px">
-      <div style="background:#cce0f5;padding:2px 8px;font-size:12px;font-weight:800">Macroscopic Examination</div>
+      <div style="background:#cce0f5;padding:2px 8px;font-size:16px;font-weight:800">Macroscopic Examination</div>
       <div style="display:flex;flex-wrap:wrap;padding:4px 8px;gap:12px;background:#fff">
-        <span style="font-size:12px"><b>Sample obtained by:</b> ${r.collection||'—'}</span>
-        <span style="font-size:12px"><b>Abstinence period:</b> ${r.abstinence||'—'}</span>
-        <span style="font-size:12px"><b>Volume:</b> ${r.volume||'—'} mL</span>
-        <span style="font-size:12px"><b>Liquefaction time:</b> ${r.liquefaction||'—'}</span>
-        <span style="font-size:12px"><b>Color:</b> ${r.color||'—'}</span>
-        <span style="font-size:12px"><b>Viscosity:</b> ${r.viscosity||'—'}</span>
-        <span style="font-size:12px"><b>Reaction:</b> ${r.reaction||'—'}</span>
-        <span style="font-size:12px"><b>Fructose test:</b> ${r.fructose||'—'}</span>
+        <span style="font-size:16px"><b>Sample obtained by:</b> ${r.collection||'—'}</span>
+        <span style="font-size:16px"><b>Abstinence period:</b> ${r.abstinence||'—'}</span>
+        <span style="font-size:16px"><b>Volume:</b> ${r.volume||'—'} mL</span>
+        <span style="font-size:16px"><b>Liquefaction time:</b> ${r.liquefaction||'—'}</span>
+        <span style="font-size:16px"><b>Color:</b> ${r.color||'—'}</span>
+        <span style="font-size:16px"><b>Viscosity:</b> ${r.viscosity||'—'}</span>
+        <span style="font-size:16px"><b>Reaction:</b> ${r.reaction||'—'}</span>
+        <span style="font-size:16px"><b>Fructose test:</b> ${r.fructose||'—'}</span>
       </div>
     </div>
 
     <!-- الفحص المجهري -->
     <div style="border:1px solid #b8b8b8;margin-bottom:4px">
-      <div style="background:#cce0f5;padding:2px 8px;font-size:12px;font-weight:800">Microscopic Examination</div>
+      <div style="background:#cce0f5;padding:2px 8px;font-size:16px;font-weight:800">Microscopic Examination</div>
       <div style="display:flex;flex-wrap:wrap;padding:4px 8px;gap:12px;background:#fff">
-        <span style="font-size:12px"><b>Total Sperm Count:</b> ${r.totalConc||'—'} million/mL = ${r.totalEjaculate||'—'} million/ejaculate</span>
-        <span style="font-size:12px"><b>Pus Cells:</b> ${r.pus||'—'} /HPF</span>
-        <span style="font-size:12px"><b>RBCs:</b> ${r.rbc||'—'} /HPF</span>
-        <span style="font-size:12px"><b>Agglutination:</b> ${r.agglutinationMicro||'—'}</span>
-        <span style="font-size:12px"><b>Epithelial cells:</b> ${r.epithelial||'—'}</span>
-        <span style="font-size:12px"><b>Spermatogenic cells:</b> ${r.spermatogenic||'—'} /HPF</span>
+        <span style="font-size:16px"><b>Total Sperm Count:</b> ${r.totalConc||'—'} million/mL = ${r.totalEjaculate||'—'} million/ejaculate</span>
+        <span style="font-size:16px"><b>Pus Cells:</b> ${r.pus||'—'} /HPF</span>
+        <span style="font-size:16px"><b>RBCs:</b> ${r.rbc||'—'} /HPF</span>
+        <span style="font-size:16px"><b>Agglutination:</b> ${r.agglutinationMicro||'—'}</span>
+        <span style="font-size:16px"><b>Epithelial cells:</b> ${r.epithelial||'—'}</span>
+        <span style="font-size:16px"><b>Spermatogenic cells:</b> ${r.spermatogenic||'—'} /HPF</span>
       </div>
     </div>
 
@@ -23551,16 +23551,16 @@ function _buildIUIPrintHTML(r){
     <table style="margin-bottom:4px;border:1px solid #b8b8b8">
       <thead>
         <tr style="background:#cce0f5">
-          <th style="padding:4px 8px;font-size:12px;text-align:left;border:1px solid #b8b8b8;width:38%"></th>
-          <th style="padding:4px 8px;font-size:12px;text-align:center;border:1px solid #b8b8b8;width:20%">Pre Activation</th>
-          <th style="padding:4px 8px;font-size:12px;text-align:center;border:1px solid #b8b8b8;width:20%">Post Activation</th>
-          <th style="padding:4px 8px;font-size:12px;text-align:left;border:1px solid #b8b8b8;width:22%">Reference (WHO)</th>
+          <th style="padding:4px 8px;font-size:16px;text-align:left;border:1px solid #b8b8b8;width:38%"></th>
+          <th style="padding:4px 8px;font-size:16px;text-align:center;border:1px solid #b8b8b8;width:20%">Pre Activation</th>
+          <th style="padding:4px 8px;font-size:16px;text-align:center;border:1px solid #b8b8b8;width:20%">Post Activation</th>
+          <th style="padding:4px 8px;font-size:16px;text-align:left;border:1px solid #b8b8b8;width:22%">Reference (WHO)</th>
         </tr>
         <tr style="background:#e8e8e8">
-          <td style="padding:2px 8px;font-size:11px;font-style:italic;border:1px solid #ddd">Sperm Concentration</td>
-          <td style="padding:2px 8px;font-size:12px;font-weight:700;text-align:center;border:1px solid #ddd">${r.preConc||'—'} million/ml</td>
-          <td style="padding:2px 8px;font-size:12px;font-weight:700;text-align:center;border:1px solid #ddd">${r.postConc||'—'} million/ml</td>
-          <td style="padding:2px 8px;font-size:11px;color:#777;border:1px solid #ddd">≥ 16 M/mL</td>
+          <td style="padding:2px 8px;font-size:16px;font-style:italic;border:1px solid #ddd">Sperm Concentration</td>
+          <td style="padding:2px 8px;font-size:16px;font-weight:700;text-align:center;border:1px solid #ddd">${r.preConc||'—'} million/ml</td>
+          <td style="padding:2px 8px;font-size:16px;font-weight:700;text-align:center;border:1px solid #ddd">${r.postConc||'—'} million/ml</td>
+          <td style="padding:2px 8px;font-size:16px;color:#777;border:1px solid #ddd">≥ 16 M/mL</td>
         </tr>
       </thead>
       <tbody>
@@ -23593,10 +23593,10 @@ function _buildIUIPrintHTML(r){
           '',false,false
         )}
         <tr style="background:#e8f5e8">
-          <td style="padding:3px 8px;font-size:12px;font-weight:900;color:#004400;border:1px solid #ddd">Total Motile Sperm</td>
-          <td style="padding:3px 8px;font-size:13px;font-weight:900;color:#c45000;text-align:center;border:1px solid #ddd">${fmt(r.preTotalMotileM)} M/ml &nbsp;|&nbsp; ${pct(r.preTotalMotile)}</td>
-          <td style="padding:3px 8px;font-size:13px;font-weight:900;color:#006600;text-align:center;border:1px solid #ddd">${fmt(r.postTotalMotileM)} M/ml &nbsp;|&nbsp; ${pct(r.postTotalMotile)}</td>
-          <td style="padding:3px 8px;font-size:11px;color:#777;border:1px solid #ddd">≥ 42%</td>
+          <td style="padding:3px 8px;font-size:16px;font-weight:900;color:#004400;border:1px solid #ddd">Total Motile Sperm</td>
+          <td style="padding:3px 8px;font-size:16px;font-weight:900;color:#c45000;text-align:center;border:1px solid #ddd">${fmt(r.preTotalMotileM)} M/ml &nbsp;|&nbsp; ${pct(r.preTotalMotile)}</td>
+          <td style="padding:3px 8px;font-size:16px;font-weight:900;color:#006600;text-align:center;border:1px solid #ddd">${fmt(r.postTotalMotileM)} M/ml &nbsp;|&nbsp; ${pct(r.postTotalMotile)}</td>
+          <td style="padding:3px 8px;font-size:16px;color:#777;border:1px solid #ddd">≥ 42%</td>
         </tr>
         ${tr(
           'Normal Morphology',
@@ -23614,7 +23614,7 @@ function _buildIUIPrintHTML(r){
       </tbody>
     </table>
 
-    ${r.note?`<div style="border:1px solid #b8b8b8;padding:4px 10px;font-size:12px"><b>Notes:</b> ${r.note}</div>`:''}
+    ${r.note?`<div style="border:1px solid #b8b8b8;padding:4px 10px;font-size:16px"><b>Notes:</b> ${r.note}</div>`:''}
   </div>
   <div class="iui-footer">${ftrHTML}</div>
   </body></html>`;
@@ -24191,7 +24191,7 @@ function _buildDNAFragPrintHTML(r){
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:Arial,sans-serif;color:#000;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
+    body{font-family:Arial,sans-serif;color:#000;font-size:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
     .dna-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .dna-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -24200,7 +24200,7 @@ function _buildDNAFragPrintHTML(r){
   <div class="dna-content">
     ${_buildWatermarkHTML(false)}
     ${hdrHTML}
-    <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:14px;letter-spacing:1px">
+    <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:16px;letter-spacing:1px">
       DNA FRAGMENTATION TEST REPORT
     </div>
 
@@ -24217,26 +24217,26 @@ function _buildDNAFragPrintHTML(r){
         <table style="width:100%;border-collapse:collapse;border:1px solid #b8b8b8">
           <thead>
             <tr style="background:#cce0f5">
-              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:left;border:1px solid #b8b8b8"></th>
-              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">%</th>
-              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">No.</th>
+              <th style="padding:3px 8px;font-size:16px;font-weight:800;color:#000;text-align:left;border:1px solid #b8b8b8"></th>
+              <th style="padding:3px 8px;font-size:16px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">%</th>
+              <th style="padding:3px 8px;font-size:16px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">No.</th>
             </tr>
           </thead>
           <tbody>
             <tr style="background:#fff">
-              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Non-fragmented</td>
-              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.nonfragPct||0).toFixed(2)}</td>
-              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.nonfragN||0}</td>
+              <td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;border:1px solid #ddd">Non-fragmented</td>
+              <td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.nonfragPct||0).toFixed(2)}</td>
+              <td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.nonfragN||0}</td>
             </tr>
             <tr style="background:#fff3f3">
-              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#cc0000;border:1px solid #ddd">Fragmented</td>
-              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#cc0000;text-align:center;border:1px solid #ddd">${(r.fragPct||0).toFixed(2)}</td>
-              <td style="padding:3px 8px;font-size:12px;font-weight:700;color:#cc0000;text-align:center;border:1px solid #ddd">${r.fragN||0}</td>
+              <td style="padding:3px 8px;font-size:16px;font-weight:700;color:#cc0000;border:1px solid #ddd">Fragmented</td>
+              <td style="padding:3px 8px;font-size:16px;font-weight:700;color:#cc0000;text-align:center;border:1px solid #ddd">${(r.fragPct||0).toFixed(2)}</td>
+              <td style="padding:3px 8px;font-size:16px;font-weight:700;color:#cc0000;text-align:center;border:1px solid #ddd">${r.fragN||0}</td>
             </tr>
             <tr style="background:#e8f0fb">
-              <td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;border:1px solid #ddd">Total Sperm</td>
-              <td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">100.00</td>
-              <td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">${total}</td>
+              <td style="padding:3px 8px;font-size:16px;font-weight:800;color:#000;border:1px solid #ddd">Total Sperm</td>
+              <td style="padding:3px 8px;font-size:16px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">100.00</td>
+              <td style="padding:3px 8px;font-size:16px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">${total}</td>
             </tr>
           </tbody>
         </table>
@@ -24246,18 +24246,18 @@ function _buildDNAFragPrintHTML(r){
         <table style="width:100%;border-collapse:collapse;border:1px solid #b8b8b8;margin-top:4px">
           <thead>
             <tr style="background:#cce0f5">
-              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:left;border:1px solid #b8b8b8"></th>
-              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">%</th>
-              <th style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">No.</th>
+              <th style="padding:3px 8px;font-size:16px;font-weight:800;color:#000;text-align:left;border:1px solid #b8b8b8"></th>
+              <th style="padding:3px 8px;font-size:16px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">%</th>
+              <th style="padding:3px 8px;font-size:16px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">No.</th>
             </tr>
           </thead>
           <tbody>
-            ${r.degradN ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Degraded</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.degradPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.degradN}</td></tr>` : ''}
-            ${r.noHaloN   ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Without Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.noHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.noHaloN}</td></tr>` : ''}
-            ${r.smallHaloN? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Small Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.smallHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.smallHaloN}</td></tr>` : ''}
-            ${r.medHaloN  ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Medium Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.medHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.medHaloN}</td></tr>` : ''}
-            ${r.bigHaloN  ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;border:1px solid #ddd">Big Halo</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.bigHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:12px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.bigHaloN}</td></tr>` : ''}
-            ${r.totalHalo ? `<tr style="background:#e8f0fb"><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;border:1px solid #ddd"></td><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">100.00</td><td style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">${r.total}</td></tr>` : ''}
+            ${r.degradN ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;border:1px solid #ddd">Degraded</td><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.degradPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.degradN}</td></tr>` : ''}
+            ${r.noHaloN   ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;border:1px solid #ddd">Without Halo</td><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.noHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.noHaloN}</td></tr>` : ''}
+            ${r.smallHaloN? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;border:1px solid #ddd">Small Halo</td><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.smallHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.smallHaloN}</td></tr>` : ''}
+            ${r.medHaloN  ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;border:1px solid #ddd">Medium Halo</td><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.medHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.medHaloN}</td></tr>` : ''}
+            ${r.bigHaloN  ? `<tr style="background:#fff"><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;border:1px solid #ddd">Big Halo</td><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${(r.bigHaloPct||0).toFixed(2)}</td><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;text-align:center;border:1px solid #ddd">${r.bigHaloN}</td></tr>` : ''}
+            ${r.totalHalo ? `<tr style="background:#e8f0fb"><td style="padding:3px 8px;font-size:16px;font-weight:800;color:#000;border:1px solid #ddd"></td><td style="padding:3px 8px;font-size:16px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">100.00</td><td style="padding:3px 8px;font-size:16px;font-weight:800;color:#000;text-align:center;border:1px solid #ddd">${r.total}</td></tr>` : ''}
           </tbody>
         </table>` : ''}
       </div>
@@ -24265,22 +24265,22 @@ function _buildDNAFragPrintHTML(r){
       <!-- DFI box على اليمين -->
       <div style="width:210px;flex-shrink:0">
         <table style="width:100%;border-collapse:collapse;border:1px solid #b8b8b8;margin-bottom:4px">
-          <thead><tr style="background:#cce0f5"><th colspan="2" style="padding:3px 8px;font-size:12px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">DNA Fragmentation Index</th></tr></thead>
+          <thead><tr style="background:#cce0f5"><th colspan="2" style="padding:3px 8px;font-size:16px;font-weight:800;color:#000;text-align:center;border:1px solid #b8b8b8">DNA Fragmentation Index</th></tr></thead>
           <tbody>
-            <tr><td style="padding:3px 8px;font-size:13px;font-weight:700;color:#000;border:1px solid #ddd">DFI</td>
-                <td style="padding:3px 8px;font-size:14px;font-weight:900;color:${fColor};text-align:center;border:1px solid #ddd">${dfi.toFixed(2)}&nbsp;%</td></tr>
-            <tr><td style="padding:3px 8px;font-size:12px;color:#000;border:1px solid #ddd">&lt; 15</td>
-                <td style="padding:3px 8px;font-size:12px;font-style:italic;color:#000;border:1px solid #ddd">Excellent fertility potential</td></tr>
-            <tr><td style="padding:3px 8px;font-size:12px;color:#000;border:1px solid #ddd">15 - 30</td>
-                <td style="padding:3px 8px;font-size:12px;font-style:italic;color:#000;border:1px solid #ddd">Good fertility potential</td></tr>
-            <tr><td style="padding:3px 8px;font-size:12px;color:#000;border:1px solid #ddd">&gt; 30</td>
-                <td style="padding:3px 8px;font-size:12px;font-style:italic;color:#000;border:1px solid #ddd">Poor fertility potential</td></tr>
+            <tr><td style="padding:3px 8px;font-size:16px;font-weight:700;color:#000;border:1px solid #ddd">DFI</td>
+                <td style="padding:3px 8px;font-size:16px;font-weight:900;color:${fColor};text-align:center;border:1px solid #ddd">${dfi.toFixed(2)}&nbsp;%</td></tr>
+            <tr><td style="padding:3px 8px;font-size:16px;color:#000;border:1px solid #ddd">&lt; 15</td>
+                <td style="padding:3px 8px;font-size:16px;font-style:italic;color:#000;border:1px solid #ddd">Excellent fertility potential</td></tr>
+            <tr><td style="padding:3px 8px;font-size:16px;color:#000;border:1px solid #ddd">15 - 30</td>
+                <td style="padding:3px 8px;font-size:16px;font-style:italic;color:#000;border:1px solid #ddd">Good fertility potential</td></tr>
+            <tr><td style="padding:3px 8px;font-size:16px;color:#000;border:1px solid #ddd">&gt; 30</td>
+                <td style="padding:3px 8px;font-size:16px;font-style:italic;color:#000;border:1px solid #ddd">Poor fertility potential</td></tr>
           </tbody>
         </table>
         <!-- Comment box -->
-        <div style="border:1px solid #b8b8b8;background:#cce0f5;text-align:center;padding:3px 6px;font-size:12px;font-weight:800;color:#000;margin-bottom:3px">Comment</div>
-        <div style="border:1.5px solid ${fColor};background:${fBg};text-align:center;padding:6px 8px;font-size:12px;font-weight:700;color:${fColor};margin-bottom:3px">The Sample has a <b>${dfi<15?'Excellent':dfi<=30?'Good':'Poor'}</b> fertility potential</div>
-        <div style="text-align:center;font-size:11px;font-style:italic;color:#333;margin-top:2px">according to WHO strict criteria</div>
+        <div style="border:1px solid #b8b8b8;background:#cce0f5;text-align:center;padding:3px 6px;font-size:16px;font-weight:800;color:#000;margin-bottom:3px">Comment</div>
+        <div style="border:1.5px solid ${fColor};background:${fBg};text-align:center;padding:6px 8px;font-size:16px;font-weight:700;color:${fColor};margin-bottom:3px">The Sample has a <b>${dfi<15?'Excellent':dfi<=30?'Good':'Poor'}</b> fertility potential</div>
+        <div style="text-align:center;font-size:16px;font-style:italic;color:#333;margin-top:2px">according to WHO strict criteria</div>
         ${_buildDNALastResult(r)}
       </div>
     </div>
@@ -24306,7 +24306,7 @@ function _buildDNAFragPrintHTML(r){
       </div>
       <!-- ملاحظات -->
       <div style="flex:1">
-        ${r.note ? `<div style="border:1.5px solid #b8b8b8;padding:5px 10px;border-radius:3px"><span style="font-size:12px;font-weight:800;color:#444">Notes: </span><span style="font-size:12px;color:#333">${r.note}</span></div>` : ''}
+        ${r.note ? `<div style="border:1.5px solid #b8b8b8;padding:5px 10px;border-radius:3px"><span style="font-size:16px;font-weight:800;color:#444">Notes: </span><span style="font-size:16px;color:#333">${r.note}</span></div>` : ''}
       </div>
     </div>
   </div>
