@@ -12550,8 +12550,8 @@ function buildPrintHTML(req, opts){
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
     <style>${css}</style></head>
     <body>
-    ${_buildWatermarkHTML(true)}
-    <div id="print-content" style="background:#ffffff;font-family:'Inter',Arial,sans-serif;direction:ltr;width:100%;padding:1mm 3mm 0 3mm">
+    <div id="print-content" style="background:#ffffff;font-family:'Inter',Arial,sans-serif;direction:ltr;width:100%;padding:1mm 3mm 0 3mm;position:relative;">
+      ${_buildWatermarkHTML(false)}
       ${hdr}${ptBox}<!--BLANK_BODY_PLACEHOLDER-->
       <div id="print-spacer" style="height:${totalFooterH+12}px"></div>
     </div>
@@ -12604,7 +12604,6 @@ function buildPrintHTML(req, opts){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8">
     <style>${css}${multiPageCss}</style></head>
     <body>
-    ${_buildWatermarkHTML(true)}
     <div id="all-pages-container"></div>
     <div id="print-footer" style="line-height:normal">
       ${ftrHtml}
@@ -12619,6 +12618,7 @@ function buildPrintHTML(req, opts){
       var CAT_CHUNKS = ${catChunksJson};
       var NOTES_HTML = ${JSON.stringify(notesHtml)};
       var TOTAL_FOOTER_H = ${totalFooterHVal};
+      var WM_HTML = ${JSON.stringify(_buildWatermarkHTML(false))};
       // ⭐ pageGroups: مصفوفة من مصفوفات أسماء المجموعات الفرعية لكل صفحة يدوية
       // مثلاً: [["Liver Function", "Lipid Profile"], ["Thyroid"]]
       // إذا فارغة/غير موجودة → سلوك pagination التلقائي القديم
@@ -12647,7 +12647,7 @@ function buildPrintHTML(req, opts){
         var div = document.createElement('div');
         div.className = 'report-page';
         div.style.padding = '1mm 3mm 0 3mm';
-        var html = HDR_HTML + COL_HDR_HTML;
+        var html = (WM_HTML||'') + HDR_HTML + COL_HDR_HTML;
         for(var i=0;i<chunksForPage.length;i++){
           // chunksForPage[i] قد يكون object {cat,html,catDividerHtml} أو string (توافق رجعي)
           var ch = chunksForPage[i];
@@ -21059,13 +21059,13 @@ function _buildCultureHTML(cid){
     *{margin:0;padding:0;box-sizing:border-box;}
     html,body{background:#fff;font-family:Arial,sans-serif;color:#000;font-size:16px;}
     body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
+    .content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:0 !important;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{ .footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
   </style></head><body>
-  ${_buildWatermarkHTML()}
   <div class="content">
+    ${_buildWatermarkHTML(false)}
     ${hdrHTML}
     ${ptBox}
     ${separator}
@@ -21585,7 +21585,7 @@ function _buildUAPrintHTML(r){
     *{margin:0;padding:0;box-sizing:border-box;}
     /* ⭐ الذيل ثابت أسفل الورقة (position:fixed) — مطابق لتقرير CBC */
     body{font-family:Arial,sans-serif;color:#000;font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .ua-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
+    .ua-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .ua-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{
@@ -21595,8 +21595,8 @@ function _buildUAPrintHTML(r){
       .ua-title{font-size:13px !important;} .ua-sec-hdr{font-size:13px !important;}
     }
   </style></head><body>
-    ${_buildWatermarkHTML()}
     <div class="ua-content">
+      ${_buildWatermarkHTML(false)}
       ${hdrHTML}
       <div style="border:1.5px solid #b8b8b8;margin:2px 0 2px;padding:3px 10px;background:#fafafa">
         ${uaPtBox}
@@ -22153,13 +22153,13 @@ function _buildStoolPrintHTML(r){
     *{margin:0;padding:0;box-sizing:border-box;}
     /* ⭐ الذيل ثابت أسفل الورقة (position:fixed) — مطابق لتقرير CBC */
     body{font-family:Arial,sans-serif;color:#000;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .se-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
+    .se-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .se-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 5mm 1mm 5mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{ .se-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
   </style></head><body>
-    ${_buildWatermarkHTML()}
     <div class="se-content">
+      ${_buildWatermarkHTML(false)}
       ${hdrHTML}
       <div style="border:1.5px solid #b8b8b8;margin:3px 0 4px;padding:4px 10px;background:#fafafa">
         ${_sPtBox}
@@ -23452,14 +23452,14 @@ function _buildIUIPrintHTML(r){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:Arial,sans-serif;color:#000;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .iui-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
+    .iui-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .iui-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{.iui-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;}}
     table{border-collapse:collapse;width:100%}
   </style></head><body>
-  ${_buildWatermarkHTML()}
   <div class="iui-content">
+    ${_buildWatermarkHTML(false)}
     ${hdrHTML}
     <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:13px;letter-spacing:1px">
       In vitro sperm Activation Report Technique
@@ -24153,13 +24153,13 @@ function _buildDNAFragPrintHTML(r){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:Arial,sans-serif;color:#000;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .dna-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
+    .dna-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .dna-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{.dna-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;}}
   </style></head><body>
-  ${_buildWatermarkHTML()}
   <div class="dna-content">
+    ${_buildWatermarkHTML(false)}
     ${hdrHTML}
     <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:14px;letter-spacing:1px">
       DNA FRAGMENTATION TEST REPORT
@@ -24832,13 +24832,13 @@ function _buildSemenPrintHTML(r){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:Arial,sans-serif;color:#000;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .sm-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
+    .sm-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
     .sm-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{ .sm-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
   </style></head><body>
-    ${_buildWatermarkHTML()}
     <div class="sm-content">
+      ${_buildWatermarkHTML(false)}
       ${hdrHTML}
       <div style="background:${color};color:#fff;padding:2px 12px;text-align:center;font-weight:900;font-size:13px;letter-spacing:1px">
         SEMEN ANALYSIS REPORT (SPERMIOGRAM)
