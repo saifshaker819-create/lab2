@@ -5082,8 +5082,8 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
     <div class="mbody" id="semen-modal-body"></div>
     <div class="mftr">
       <button class="btn btn-s" onclick="closeModal('m-semen-exam')">إلغاء</button>
-      <button class="btn btn-p btn-lg" onclick="saveSemenEntry(false)">💾 حفظ فقط</button>
-      <button class="btn btn-ok btn-lg" onclick="saveSemenEntry(true)">💾🖨️ حفظ وطباعة</button>
+      <button class="btn btn-ok btn-lg" onclick="printSemenReport(window._semenEditId||'_current')">🖨️ طباعة</button>
+      <button class="btn btn-p btn-lg" onclick="saveSemenEntry()">💾 حفظ النتيجة</button>
     </div>
   </div>
 </div>
@@ -5096,8 +5096,8 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
     <div class="mbody" id="dnafrag-modal-body"></div>
     <div class="mftr">
       <button class="btn btn-s" onclick="closeModal('m-dnafrag-exam')">إلغاء</button>
-      <button class="btn btn-p btn-lg" onclick="saveDNAFragEntry(false)">💾 حفظ فقط</button>
-      <button class="btn btn-ok btn-lg" onclick="saveDNAFragEntry(true)">💾🖨️ حفظ وطباعة</button>
+      <button class="btn btn-ok btn-lg" onclick="printDNAFragReport(window._dnafragEditId||'_current')">🖨️ طباعة</button>
+      <button class="btn btn-p btn-lg" onclick="saveDNAFragEntry()">💾 حفظ النتيجة</button>
     </div>
   </div>
 </div>
@@ -5109,8 +5109,8 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
     <div class="mbody" id="iui-modal-body"></div>
     <div class="mftr">
       <button class="btn btn-s" onclick="closeModal('m-iui-exam')">إلغاء</button>
-      <button class="btn btn-p btn-lg" onclick="saveIUIEntry(false)">💾 حفظ فقط</button>
-      <button class="btn btn-ok btn-lg" onclick="saveIUIEntry(true)">💾🖨️ حفظ وطباعة</button>
+      <button class="btn btn-ok btn-lg" onclick="printIUIReport(window._iuiEditId||'_current')">🖨️ طباعة</button>
+      <button class="btn btn-p btn-lg" onclick="saveIUIEntry()">💾 حفظ النتيجة</button>
     </div>
   </div>
 </div>
@@ -12004,9 +12004,8 @@ function buildPrintHTML(req, opts){
   const reportFontWeight = settings.printFontWeight || '700';
 
   // ─── CSS ──────────────────────────────────────────────
-  const hasFtrImg = !!(settings.footerImg && settings.ftrMode!=='txt');
-  const hasFtrTxt = settings.ftrMode==='txt' && !!(settings.ftrAddress||settings.ftrPhone||settings.ftrNote);
-  const hasFtrSimple = !hasFtrImg && !hasFtrTxt && settings.hdrMode!=='text' && !!settings.footer;
+  const hasFtrImg = settings.footerImg && settings.ftrMode!=='txt';
+  const hasFtrTxt = settings.ftrMode==='txt' && (settings.ftrAddress||settings.ftrPhone||settings.ftrNote);
   const sigOptions2 = settings.signatureOptions || {};
   const hasSig = !!(sigOptions2.showDoctor||sigOptions2.showLabname||sigOptions2.showSigImg);
   // التوقيع لم يعد يحجز شريطاً أفقياً كاملاً — يطفو على يمين الـ footer
@@ -12015,7 +12014,7 @@ function buildPrintHTML(req, opts){
   // زيادة الارتفاعات لتعويض unprintable area في الطابعات
   // قراءة ارتفاع التذييل من الإعدادات (افتراضي 50px لتطابق التقارير الأخرى)
   const _ftrUserH = (typeof settings.ftrImgH==='number' && settings.ftrImgH>=10 && settings.ftrImgH<=80) ? settings.ftrImgH : 50;
-  const footerH = hasFtrImg ? _ftrUserH : hasFtrTxt ? 46 : (settings.hdrMode==='text' ? 48 : hasFtrSimple ? 36 : 0);
+  const footerH = hasFtrImg ? _ftrUserH : hasFtrTxt ? 46 : (settings.hdrMode==='text' ? 48 : 0);
   const totalFooterH = footerH + sigH;
   // هامش سفلي للصفحة = إجمالي ارتفاع الذيل + 6mm احتياطي
   const pageBottomMm = totalFooterH>0 ? Math.ceil(totalFooterH*0.265) : 0;
@@ -12026,8 +12025,7 @@ function buildPrintHTML(req, opts){
     @page{margin:0 !important;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     body{font-family:${reportFontFamily};color:#000;font-weight:${reportFontWeight};
          -webkit-print-color-adjust:exact;print-color-adjust:exact;
-         padding:1mm 3mm 0 3mm;position:relative;}
-    .report-wm-layer{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:flex;align-items:center;justify-content:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+         padding:1mm 3mm 0 3mm;}
     /* الذيل ثابت في الحافة السفلية للورقة — bottom:0 لاستغلال كل المساحة المتاحة */
     /* مع 0mm margin في @page نضمن أن الذيل يلامس الحافة (الطابعة ستحترم منطقتها غير المطبوعة) */
     #print-footer{
@@ -12527,12 +12525,13 @@ function buildPrintHTML(req, opts){
   if(settings.hdrMode==='text'){
     const textFtr=buildTextFooter(settings);
     ftrInner = sigBlock + textFtr;
-  } else if(settings.footerImg && settings.ftrMode!=='txt'){
+  } else if(settings.footerImg){
     ftrInner = sigBlock +
       `<div style="width:100%;line-height:0"><img src="${settings.footerImg}" style="width:100%;height:${footerH}px;display:block;object-fit:fill;margin:0;padding:0"></div>` +
       (settings.footerCustomText?`<div style="background:#f5f7fa;border-top:1px solid #ccc;padding:4px 16px;font-family:'Inter',Arial,sans-serif;font-size:9px;color:#555;text-align:center;line-height:1.5;line-height:normal">${settings.footerCustomText}</div>`:'');
   } else if(settings.ftrMode==='txt'&&(settings.ftrAddress||settings.ftrPhone||settings.ftrNote)){
     // ⭐ الذيل النصي: العنوان يمين، رقم الهاتف يسار، حجم الخط 16
+    // ارتفاع الذيل لا يتأثر — فقط الخط داخله يكبر
     ftrInner = sigBlock + `<div style="background:#f5f7fa;border-top:2px solid #003366;padding:7px 20px;font-family:'Inter',Arial,sans-serif;font-size:16px;color:#444;direction:ltr;line-height:1.4">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <span style="text-align:left;flex:0 0 auto">${settings.ftrPhone?`📞 ${settings.ftrPhone}`:''}</span>
@@ -12540,8 +12539,6 @@ function buildPrintHTML(req, opts){
       </div>
       ${settings.ftrNote?`<div style="text-align:center;font-style:italic;font-size:13px;color:#666;margin-top:3px">${settings.ftrNote}</div>`:''}
     </div>`;
-  } else if(settings.footer){
-    ftrInner = sigBlock + `<div style="background:#f5f7fa;border-top:1px solid #003366;padding:5px 16px;font-family:'Inter',Arial,sans-serif;font-size:12px;color:#555;text-align:center">${settings.footer}</div>`;
   } else {
     ftrInner = sigBlock;
   }
@@ -12552,8 +12549,8 @@ function buildPrintHTML(req, opts){
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
     <style>${css}</style></head>
     <body>
-    <div id="print-content" style="background:#ffffff;font-family:'Inter',Arial,sans-serif;direction:ltr;width:100%;padding:1mm 3mm 0 3mm;position:relative;">
-      ${_buildWatermarkHTML(false)}
+    ${_buildWatermarkHTML()}
+    <div id="print-content" style="background:#ffffff;font-family:'Inter',Arial,sans-serif;direction:ltr;width:100%;padding:1mm 3mm 0 3mm">
       ${hdr}${ptBox}<!--BLANK_BODY_PLACEHOLDER-->
       <div id="print-spacer" style="height:${totalFooterH+12}px"></div>
     </div>
@@ -12620,7 +12617,6 @@ function buildPrintHTML(req, opts){
       var CAT_CHUNKS = ${catChunksJson};
       var NOTES_HTML = ${JSON.stringify(notesHtml)};
       var TOTAL_FOOTER_H = ${totalFooterHVal};
-      var WM_HTML = ${JSON.stringify(_buildWatermarkHTML(false))};
       // ⭐ pageGroups: مصفوفة من مصفوفات أسماء المجموعات الفرعية لكل صفحة يدوية
       // مثلاً: [["Liver Function", "Lipid Profile"], ["Thyroid"]]
       // إذا فارغة/غير موجودة → سلوك pagination التلقائي القديم
@@ -12649,7 +12645,7 @@ function buildPrintHTML(req, opts){
         var div = document.createElement('div');
         div.className = 'report-page';
         div.style.padding = '1mm 3mm 0 3mm';
-        var html = (WM_HTML||'') + HDR_HTML + COL_HDR_HTML;
+        var html = HDR_HTML + COL_HDR_HTML;
         for(var i=0;i<chunksForPage.length;i++){
           // chunksForPage[i] قد يكون object {cat,html,catDividerHtml} أو string (توافق رجعي)
           var ch = chunksForPage[i];
@@ -13961,17 +13957,7 @@ function renderTestsDB(){
     return catOk&&srchOk;
   });
   document.getElementById('tests-count').textContent=list.length;
-  document.getElementById('tests-db-body').innerHTML=list.map(t=>{
-    const isUAorStool=(t.isSpecialExam==='ua'||t.isSpecialExam==='stool');
-    let actionBtns='';
-    if(isUAorStool){
-      const settingsTab=t.isSpecialExam==='ua'?'ua':'stool';
-      actionBtns=`<button class="btn btn-sm btn-p" onclick="nav('settings');setTimeout(()=>{toggleStCard('stc-ua-stool');document.getElementById('stc-ua-stool').scrollIntoView({behavior:'smooth'});switchExamSettingsTab('${settingsTab}');},300)" title="إعدادات حقول ${t.nameEn}">⚙️ إعدادات</button>`;
-    } else {
-      actionBtns=`<button class="btn btn-sm btn-s" onclick="openEditTest('${t.id}')">✏️</button>
-      <button class="btn btn-sm btn-d" onclick="deleteTest('${t.id}')">🗑️</button>`;
-    }
-    return `<tr>
+  document.getElementById('tests-db-body').innerHTML=list.map(t=>`<tr>
     <td><span class="bdg bdg-s">${t.code}</span></td>
     <td style="font-weight:600">${t.nameEn}${t.nameShort?`<br><span style="font-size:10px;color:var(--text2);font-weight:400">✂️ ${t.nameShort}</span>`:''}</td>
     <td><span class="bdg bdg-p">${t.cat}</span>${t.subCat&&t.subCat!==t.cat?`<br><span class="bdg" style="background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.3);color:var(--accent);font-size:9px;margin-top:2px">${t.subCat}</span>`:''}</td>
@@ -13979,9 +13965,11 @@ function renderTestsDB(){
     <td style="font-size:11px">${t.ref||'-'}</td>
     <td style="font-size:11px">${t.time}</td>
     <td style="color:var(--primary);font-weight:700">${t.price} ${settings.currency}</td>
-    <td><div style="display:flex;gap:5px">${actionBtns}</div></td>
-  </tr>`;
-  }).join('');
+    <td><div style="display:flex;gap:5px">
+      <button class="btn btn-sm btn-s" onclick="openEditTest('${t.id}')">✏️</button>
+      <button class="btn btn-sm btn-d" onclick="deleteTest('${t.id}')">🗑️</button>
+    </div></td>
+  </tr>`).join('');
 }
 function openEditTest(id){
   editTestId=id;
@@ -16169,20 +16157,15 @@ function saveWatermarkSettings(){
 }
 
 // دالة مساعدة: بناء HTML العلامة المائية
-function _buildWatermarkHTML(fixedPos){
+function _buildWatermarkHTML(){
   var img=settings.wmImg||getBigCached('wmImg')||'';
   if(!img) return '';
   var op=(typeof settings.wmOpacity==='number'?settings.wmOpacity:15)/100;
   var ww=(typeof settings.wmW==='number'&&settings.wmW>=100?settings.wmW:794);
   var wh=(typeof settings.wmH==='number'&&settings.wmH>=100?settings.wmH:620);
-  // العلامة المائية: تتمركز في وسط صفحة A4 الكاملة (297mm ≈ 1122px @ 96dpi)
-  // نستخدم position:fixed حتى تتمركز في وسط الورقة بغض النظر عن حجم المحتوى
-  var style='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:'+ww+'px;height:'+wh+'px;'
-    +'z-index:0;pointer-events:none;'
-    +'-webkit-print-color-adjust:exact;print-color-adjust:exact;'
-    +'mix-blend-mode:multiply;';
-  var imgStyle='width:100%;height:100%;object-fit:contain;opacity:'+op.toFixed(2)+';display:block;mix-blend-mode:multiply;';
-  return '<div style="'+style+'"><img src="'+img+'" style="'+imgStyle+'"></div>';
+  return '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:'+ww+'px;height:'+wh+'px;z-index:0;pointer-events:none;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
+    +'<img src="'+img+'" style="width:100%;height:100%;object-fit:contain;opacity:'+op.toFixed(2)+';display:block">'
+    +'</div>';
 }
 
 function clearHeaderImg(){
@@ -19539,24 +19522,6 @@ function buildTextFooter(s){
   </div>`;
 }
 
-// ── دالة مساعدة موحدة لبناء ذيل تقارير Semen/DNA/IUI/Stool ──
-function _buildSpecialReportFooter(s){
-  if(s.hdrMode==='text' && s.hdrText) return buildTextFooter(s);
-  if(s.footerImg && s.ftrMode!=='txt')
-    return `<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
-  if(s.ftrMode==='txt' && (s.ftrAddress||s.ftrPhone||s.ftrNote))
-    return `<div style="background:#f5f7fa;border-top:2px solid ${s.hdrText?.color||'#003366'};padding:7px 20px;font-family:'Inter',Arial,sans-serif;font-size:14px;color:#444;direction:ltr;line-height:1.4">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-        <span style="text-align:left;flex:0 0 auto">${s.ftrPhone?'📞 '+s.ftrPhone:''}</span>
-        <span style="text-align:right;flex:0 0 auto">${s.ftrAddress?'📍 '+s.ftrAddress:''}</span>
-      </div>
-      ${s.ftrNote?`<div style="text-align:center;font-style:italic;font-size:12px;color:#666;margin-top:3px">${s.ftrNote}</div>`:''}
-    </div>`;
-  if(s.footer)
-    return `<div style="background:#f5f7fa;border-top:1px solid ${s.hdrText?.color||'#003366'};padding:5px 16px;font-family:'Inter',Arial,sans-serif;font-size:12px;color:#555;text-align:center">${s.footer}</div>`;
-  return '';
-}
-
 function _lighten(hex, pct){
   try{
     let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
@@ -21089,13 +21054,13 @@ function _buildCultureHTML(cid){
     *{margin:0;padding:0;box-sizing:border-box;}
     html,body{background:#fff;font-family:Arial,sans-serif;color:#000;font-size:16px;}
     body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
+    .content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
     .footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:0 !important;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{ .footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
   </style></head><body>
+  ${_buildWatermarkHTML()}
   <div class="content">
-    ${_buildWatermarkHTML(false)}
     ${hdrHTML}
     ${ptBox}
     ${separator}
@@ -21614,8 +21579,8 @@ function _buildUAPrintHTML(r){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
     /* ⭐ الذيل ثابت أسفل الورقة (position:fixed) — مطابق لتقرير CBC */
-    body{font-family:Arial,sans-serif;color:#000;font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .ua-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
+    body{font-family:Arial,sans-serif;color:#000;font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .ua-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
     .ua-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{
@@ -21625,8 +21590,8 @@ function _buildUAPrintHTML(r){
       .ua-title{font-size:13px !important;} .ua-sec-hdr{font-size:13px !important;}
     }
   </style></head><body>
+    ${_buildWatermarkHTML()}
     <div class="ua-content">
-      ${_buildWatermarkHTML(false)}
       ${hdrHTML}
       <div style="border:1.5px solid #b8b8b8;margin:2px 0 2px;padding:3px 10px;background:#fafafa">
         ${uaPtBox}
@@ -22061,8 +22026,6 @@ function _buildStoolPrintHTML(r){
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
   else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
-  else if(s.ftrMode==='txt'&&(s.ftrAddress||s.ftrPhone||s.ftrNote)) ftrHTML=`<div style="background:#f5f7fa;border-top:2px solid ${color};padding:7px 20px;font-family:'Inter',Arial,sans-serif;font-size:14px;color:#444;direction:ltr;line-height:1.4"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><span>${s.ftrPhone?'📞 '+s.ftrPhone:''}</span><span>${s.ftrAddress?'📍 '+s.ftrAddress:''}</span></div>${s.ftrNote?`<div style="text-align:center;font-style:italic;font-size:12px;color:#666;margin-top:3px">${s.ftrNote}</div>`:''}</div>`;
-  else if(s.footer) ftrHTML=`<div style="background:#f5f7fa;border-top:1px solid ${color};padding:5px 16px;font-family:'Inter',Arial,sans-serif;font-size:12px;color:#555;text-align:center">${s.footer}</div>`;
 
   const drName=r.doctorName||pt.doctorName||(doctors&&doctors.find&&doctors.find(d=>d.id===pt.doctorId)?.name)||'';
   const _sNameColor   = s.colorName||'#cc0011';
@@ -22184,14 +22147,14 @@ function _buildStoolPrintHTML(r){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
     /* ⭐ الذيل ثابت أسفل الورقة (position:fixed) — مطابق لتقرير CBC */
-    body{font-family:Arial,sans-serif;color:#000;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .se-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
+    body{font-family:Arial,sans-serif;color:#000;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .se-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
     .se-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 5mm 1mm 5mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{ .se-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
   </style></head><body>
+    ${_buildWatermarkHTML()}
     <div class="se-content">
-      ${_buildWatermarkHTML(false)}
       ${hdrHTML}
       <div style="border:1.5px solid #b8b8b8;margin:3px 0 4px;padding:4px 10px;background:#fafafa">
         ${_sPtBox}
@@ -23283,7 +23246,7 @@ function _getIUIDoctor(){
 
 function _getIUIField(id){ const el=document.getElementById('iui-'+id); return el?el.value||'':''; }
 
-function saveIUIEntry(andPrint){
+function saveIUIEntry(){
   const ptName = (document.getElementById('iui-pt-search')||{}).value.trim();
   let   ptId   = (document.getElementById('iui-pt-id')||{}).value;
   if(!ptName){ showNotif('تنبيه','اختر المريض','error'); return; }
@@ -23369,7 +23332,6 @@ function saveIUIEntry(andPrint){
   closeModal('m-iui-exam');
   renderIUIList();
   showNotif('تم','تم حفظ نتيجة IUI ✅','success');
-  if(andPrint){ setTimeout(function(){ printIUIReport(rec.id); }, 400); }
 }
 
 function deleteIUIRecord(id){
@@ -23416,8 +23378,6 @@ function _buildIUIPrintHTML(r){
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
   else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
-  else if(s.ftrMode==='txt'&&(s.ftrAddress||s.ftrPhone||s.ftrNote)) ftrHTML=`<div style="background:#f5f7fa;border-top:2px solid ${color};padding:7px 20px;font-family:'Inter',Arial,sans-serif;font-size:14px;color:#444;direction:ltr;line-height:1.4"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><span>${s.ftrPhone?'📞 '+s.ftrPhone:''}</span><span>${s.ftrAddress?'📍 '+s.ftrAddress:''}</span></div>${s.ftrNote?`<div style="text-align:center;font-style:italic;font-size:12px;color:#666;margin-top:3px">${s.ftrNote}</div>`:''}</div>`;
-  else if(s.footer) ftrHTML=`<div style="background:#f5f7fa;border-top:1px solid ${color};padding:5px 16px;font-family:'Inter',Arial,sans-serif;font-size:12px;color:#555;text-align:center">${s.footer}</div>`;
 
   const drName=r.doctorName||pt.doctorName||(doctors&&doctors.find&&doctors.find(d=>d.id===pt.doctorId)?.name)||'';
   const nameColor=s.colorName||'#cc0011';
@@ -23485,15 +23445,15 @@ function _buildIUIPrintHTML(r){
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:Arial,sans-serif;color:#000;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .iui-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
+    body{font-family:Arial,sans-serif;color:#000;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .iui-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
     .iui-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{.iui-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;}}
     table{border-collapse:collapse;width:100%}
   </style></head><body>
+  ${_buildWatermarkHTML()}
   <div class="iui-content">
-    ${_buildWatermarkHTML(false)}
     ${hdrHTML}
     <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:13px;letter-spacing:1px">
       In vitro sperm Activation Report Technique
@@ -23929,7 +23889,7 @@ function dnafragClearImg(){
   }
 }
 
-function saveDNAFragEntry(andPrint){
+function saveDNAFragEntry(){
   let ptName = (document.getElementById('dnafrag-pt-search')||{}).value.trim();
   let ptId   = (document.getElementById('dnafrag-pt-id')||{}).value;
   if(!ptName){ showNotif('تنبيه','اختر المريض','error'); return; }
@@ -23984,7 +23944,6 @@ function saveDNAFragEntry(andPrint){
   closeModal('m-dnafrag-exam');
   renderDNAFragList();
   showNotif('تم','تم حفظ نتيجة DNA Fragmentation ✅','success');
-  if(andPrint){ setTimeout(function(){ printDNAFragReport(rec.id); }, 400); }
 }
 
 function deleteDNAFragRecord(id){
@@ -24061,8 +24020,6 @@ function _buildDNAFragPrintHTML(r){
   let ftrHTML = '';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML = buildTextFooter(s);
   else if(s.footerImg) ftrHTML = `<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
-  else if(s.ftrMode==='txt'&&(s.ftrAddress||s.ftrPhone||s.ftrNote)) ftrHTML=`<div style="background:#f5f7fa;border-top:2px solid ${color};padding:7px 20px;font-family:'Inter',Arial,sans-serif;font-size:14px;color:#444;direction:ltr;line-height:1.4"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><span>${s.ftrPhone?'📞 '+s.ftrPhone:''}</span><span>${s.ftrAddress?'📍 '+s.ftrAddress:''}</span></div>${s.ftrNote?`<div style="text-align:center;font-style:italic;font-size:12px;color:#666;margin-top:3px">${s.ftrNote}</div>`:''}</div>`;
-  else if(s.footer) ftrHTML=`<div style="background:#f5f7fa;border-top:1px solid ${color};padding:5px 16px;font-family:'Inter',Arial,sans-serif;font-size:12px;color:#555;text-align:center">${s.footer}</div>`;
 
   const drName = r.doctorName||pt.doctorName||(doctors&&doctors.find&&doctors.find(d=>d.id===pt.doctorId)?.name)||'';
   const nameColor  = s.colorName||'#cc0011';
@@ -24188,14 +24145,14 @@ function _buildDNAFragPrintHTML(r){
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:Arial,sans-serif;color:#000;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .dna-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
+    body{font-family:Arial,sans-serif;color:#000;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .dna-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
     .dna-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{.dna-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;}}
   </style></head><body>
+  ${_buildWatermarkHTML()}
   <div class="dna-content">
-    ${_buildWatermarkHTML(false)}
     ${hdrHTML}
     <div style="background:${color};color:#fff;padding:3px 12px;text-align:center;font-weight:900;font-size:14px;letter-spacing:1px">
       DNA FRAGMENTATION TEST REPORT
@@ -24585,7 +24542,7 @@ function _semenMultiUpdate(fid){
   });
 }
 
-function saveSemenEntry(andPrint){
+function saveSemenEntry(){
   let ptName=(document.getElementById('semen-pt-search')||{}).value.trim();
   let ptId  =(document.getElementById('semen-pt-id')||{}).value;
   if(!ptName){showNotif('تنبيه','اختر المريض','error');return;}
@@ -24643,7 +24600,6 @@ function saveSemenEntry(andPrint){
   if(resSel&&resSel.value) loadResultEntry();
   window._specialExamInlineMode=false;
   showNotif('تم','تم حفظ تحليل السائل المنوي ✅','success');
-  if(andPrint){ setTimeout(function(){ printSemenReport(rec.id); }, 400); }
 }
 
 function deleteSemenRecord(id){
@@ -24692,8 +24648,6 @@ function _buildSemenPrintHTML(r){
   let ftrHTML='';
   if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
   else if(s.footerImg) ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
-  else if(s.ftrMode==='txt'&&(s.ftrAddress||s.ftrPhone||s.ftrNote)) ftrHTML=`<div style="background:#f5f7fa;border-top:2px solid ${color};padding:7px 20px;font-family:'Inter',Arial,sans-serif;font-size:14px;color:#444;direction:ltr;line-height:1.4"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><span>${s.ftrPhone?'📞 '+s.ftrPhone:''}</span><span>${s.ftrAddress?'📍 '+s.ftrAddress:''}</span></div>${s.ftrNote?`<div style="text-align:center;font-style:italic;font-size:12px;color:#666;margin-top:3px">${s.ftrNote}</div>`:''}</div>`;
-  else if(s.footer) ftrHTML=`<div style="background:#f5f7fa;border-top:1px solid ${color};padding:5px 16px;font-family:'Inter',Arial,sans-serif;font-size:12px;color:#555;text-align:center">${s.footer}</div>`;
 
   const drName=r.doctorName||pt.doctorName||(doctors&&doctors.find&&doctors.find(d=>d.id===pt.doctorId)?.name)||'';
   const _smNameColor   = s.colorName||'#cc0011';
@@ -24846,7 +24800,7 @@ function _buildSemenPrintHTML(r){
       }
       // خلية M/mL: أزرق فقط في Motility — فارغة شفافة في غيرها
       var mCellContent = mValStr
-        ? '<span style="display:inline-block;border:1px solid #90caf9;border-radius:3px;padding:0 4px;min-width:38px;text-align:center;background:#fff;color:#1565c0;font-weight:800;font-size:11px">'+mValStr+'</span><span style="font-size:10px;color:#1565c0;font-weight:700;margin-right:2px">&nbsp;million/ml</span>'
+        ? '<span style="display:inline-block;border:1px solid #90caf9;border-radius:3px;padding:0 3px;min-width:38px;text-align:center;background:#fff;color:#1565c0;font-weight:800;font-size:11px">'+mValStr+'</span>'
         : '';
       return '<tr style="background:'+rowBg+'">'
         +'<td style="font-size:12px;font-weight:700;color:#000;padding:2px 6px;border-bottom:1px solid #e0e0e0"><span style="color:#666;margin-right:3px">■</span>'+secDef.fields[fid]+'</td>'
@@ -24869,14 +24823,14 @@ function _buildSemenPrintHTML(r){
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:Arial,sans-serif;color:#000;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative;}
-    .sm-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;position:relative;}
+    body{font-family:Arial,sans-serif;color:#000;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .sm-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
     .sm-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
     @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     @media print{ .sm-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} }
   </style></head><body>
+    ${_buildWatermarkHTML()}
     <div class="sm-content">
-      ${_buildWatermarkHTML(false)}
       ${hdrHTML}
       <div style="background:${color};color:#fff;padding:2px 12px;text-align:center;font-weight:900;font-size:13px;letter-spacing:1px">
         SEMEN ANALYSIS REPORT (SPERMIOGRAM)
