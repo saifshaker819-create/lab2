@@ -22988,9 +22988,9 @@ const SEMEN_FIELDS = {
   motility: {
     label: '🏃 الحركة (WHO 2021)',
     fields: [
-      {id:'s_grade_a',      label:'Grade A — Rapid Progressive (%)', type:'number', normal:'', placeholder:'>=25%', min:'0',max:'100',step:'0.1', ref:'>= 25%'},
-      {id:'s_grade_b',      label:'Grade B — Slow Progressive (%)',  type:'number', normal:'', placeholder:'',       min:'0',max:'100',step:'0.1'},
-      {id:'s_pr',           label:'PR = A+B  Total Progressive (%)', type:'number-auto', normal:'', placeholder:'>=30%', min:'0',max:'100',step:'0.1', ref:'>= 30%', autoFrom:['s_grade_a','s_grade_b']},
+      {id:'s_grade_a',      label:'Grade A — Rapid Progressive (%)', type:'number', normal:'', placeholder:'>=15%', min:'0',max:'100',step:'0.1', ref:'>= 15%'},
+      {id:'s_grade_b',      label:'Grade B — Slow Progressive (%)',  type:'number', normal:'', placeholder:'>=20%',  min:'0',max:'100',step:'0.1', ref:'>= 20%'},
+      {id:'s_pr',           label:'PR = A+B  Total Progressive (%)', type:'number-auto', normal:'', placeholder:'>=35%', min:'0',max:'100',step:'0.1', ref:'>= 35%', autoFrom:['s_grade_a','s_grade_b']},
       {id:'s_grade_c',      label:'Grade C — Non-Progressive NP (%)',type:'number', normal:'', placeholder:'',       min:'0',max:'100',step:'0.1'},
       {id:'s_grade_d',      label:'Grade D — Immotile IM (%)',       type:'number', normal:'', placeholder:'',       min:'0',max:'100',step:'0.1'},
       {id:'s_total_motile', label:'Total Motile  PR+NP (%)',         type:'number', normal:'', placeholder:'>=42%',  min:'0',max:'100',step:'0.1', ref:'>= 42%'},
@@ -23129,6 +23129,10 @@ function _buildIUIModalBody(r){
       <input class="fc" id="iui-pt-phone" type="tel" placeholder="07xxxxxxxxx" value="${v('patientPhone')}">
     </div>
     <div class="fg" style="margin-bottom:0">
+      <label class="fl">العمر</label>
+      <input class="fc" id="iui-pt-age" type="text" placeholder="مثال: 32 سنة" value="${v('patientAge')}">
+    </div>
+    <div class="fg" style="margin-bottom:0">
       <label class="fl">وقت أخذ العينة</label>
       <input class="fc" type="time" id="iui-time-produced" value="${v('timeProduced')}">
     </div>
@@ -23149,7 +23153,6 @@ function _buildIUIModalBody(r){
       ${selIn('color','اللون',['Grayish white','Yellowish','Transparent','Reddish','Brown'])}
       ${selIn('viscosity','اللزوجة',['Normal','Viscous, grade (1)','Viscous, grade (2)','Viscous, grade (3)'])}
       ${selIn('reaction','التفاعل (pH)',['Alkaline (pH 7)','Alkaline (pH 7.2)','Alkaline (pH 7.5)','Alkaline (pH 8)','Alkaline (pH 8.5)','Neutral (pH 7)','Acidic'])}
-      ${selIn('fructose','اختبار الفركتوز',['Positive','Negative','Reduced'])}
     </div>
   </div>
 
@@ -23267,6 +23270,7 @@ function iuiSelectPatient(pid){
   document.getElementById('iui-pt-search').value = pt.name;
   document.getElementById('iui-pt-id').value = pt.id;
   const ph = document.getElementById('iui-pt-phone'); if(ph&&pt.phone) ph.value=pt.phone;
+  const ag = document.getElementById('iui-pt-age'); if(ag&&pt.ageDisplay) ag.value=pt.ageDisplay;
   document.getElementById('iui-pt-suggest').style.display='none';
 }
 function iuiDoctorSelChanged(){
@@ -23320,7 +23324,7 @@ function saveIUIEntry(andPrint){
   const rec = {
     id: window._iuiEditId||('iui-'+Date.now()),
     patientId:ptId, patientName:ptName,
-    patientAge:ptObj.ageDisplay||'', patientGender:ptObj.gender||'male',
+    patientAge:_getIUIField('pt-age')||ptObj.ageDisplay||'', patientGender:ptObj.gender||'male',
     patientPhone:_getIUIField('pt-phone'),
     doctorId:_getIUIDoctor().id, doctorName:_getIUIDoctor().name,
     date:_getIUIField('date')||new Date().toISOString().split('T')[0],
@@ -23330,7 +23334,7 @@ function saveIUIEntry(andPrint){
     collection:_getIUIField('collection'), abstinence:_getIUIField('abstinence'),
     volume:_getIUIField('volume'), liquefaction:_getIUIField('liquefaction'),
     color:_getIUIField('color'), viscosity:_getIUIField('viscosity'),
-    reaction:_getIUIField('reaction'), fructose:_getIUIField('fructose'),
+    reaction:_getIUIField('reaction'),
     // Microscopic
     totalConc:_getIUIField('total-conc'),
     totalEjaculate: preConc>0 ? f2(preConc*vol) : '',
@@ -23530,7 +23534,6 @@ function _buildIUIPrintHTML(r){
         <span style="font-size:16px"><b>Color:</b> ${r.color||'—'}</span>
         <span style="font-size:16px"><b>Viscosity:</b> ${r.viscosity||'—'}</span>
         <span style="font-size:16px"><b>Reaction:</b> ${r.reaction||'—'}</span>
-        <span style="font-size:16px"><b>Fructose test:</b> ${r.fructose||'—'}</span>
       </div>
     </div>
 
@@ -23641,7 +23644,7 @@ function printIUIReport(id){
       timeProduced:f('time-produced'), timeExam:f('time-exam'),
       collection:f('collection'), abstinence:f('abstinence'),
       volume:f('volume'), liquefaction:f('liquefaction'), color:f('color'),
-      viscosity:f('viscosity'), reaction:f('reaction'), fructose:f('fructose'),
+      viscosity:f('viscosity'), reaction:f('reaction'),
       totalConc:f('total-conc'), totalEjaculate:preConc>0?f2(preConc*vol):'',
       pus:f('pus'), rbc:f('rbc'), agglutinationMicro:f('agglutination-micro'),
       epithelial:f('epithelial'), spermatogenic:f('spermatogenic'),
@@ -23963,7 +23966,7 @@ function saveDNAFragEntry(andPrint){
   const rec = {
     id: window._dnafragEditId || ('dnafrag-'+Date.now()),
     patientId: ptId, patientName: ptName,
-    patientAge: ptObj.ageDisplay||'',
+    patientAge: (document.getElementById('semen-pt-age')||{}).value||ptObj.ageDisplay||'',
     patientGender: ptObj.gender||'male',
     patientPhone: (document.getElementById('dnafrag-pt-phone')||{}).value||'',
     doctorId: _getDNAFragDoctor().id,
@@ -24405,6 +24408,10 @@ function _buildSemenModalBody(r, req){
       <label class="fl">رقم الهاتف (للمشاركة عبر واتساب)</label>
       <input class="fc" id="semen-pt-phone" type="tel" placeholder="07xxxxxxxxx" value="${r?r.patientPhone||'':''}">
     </div>
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">العمر</label>
+      <input class="fc" id="semen-pt-age" type="text" placeholder="مثال: 32 سنة" value="${r?r.patientAge||'':''}">
+    </div>
   </div>`;
 
   Object.entries(SEMEN_FIELDS).forEach(([secKey,sec])=>{
@@ -24489,6 +24496,8 @@ function semenSelectPatient(pid){
   // auto-fill phone if available
   const phoneEl=document.getElementById('semen-pt-phone');
   if(phoneEl && pt.phone) phoneEl.value=pt.phone;
+  const ageEl=document.getElementById('semen-pt-age');
+  if(ageEl && pt.ageDisplay) ageEl.value=pt.ageDisplay;
   document.getElementById('semen-pt-suggest').style.display='none';
 }
 
@@ -24775,8 +24784,8 @@ function _buildSemenPrintHTML(r){
   };
   const SEMEN_REFS={
     s_volume:'>= 1.4 mL',s_ph:'7.2 – 8.0',s_conc:'>= 16 M/mL',s_total_count:'>= 39 million',
-    s_grade_a:'>= 25%',s_grade_b:'',s_grade_c:'',s_grade_d:'',
-    s_pr:'>= 30%',s_total_motile:'>= 42%',s_vitality:'>= 54%',s_normal_forms:'>= 14%',s_normal_shapes:'',s_abnormal_forms:'',
+    s_grade_a:'>= 15%',s_grade_b:'>= 20%',s_grade_c:'',s_grade_d:'',
+    s_pr:'>= 35%',s_total_motile:'>= 42%',s_vitality:'>= 54%',s_normal_forms:'>= 14%',s_normal_shapes:'',s_abnormal_forms:'',
     s_fructose:'Positive',s_zinc:'>= 2.4',s_citric_acid:'>= 52',
     s_wbc:'< 1 M/mL',s_rbc:'Absent',s_bacteria:'Absent',s_agglutination:'Nil',
     s_dna_frag:'< 15%',s_oxidative:'Normal',s_antisperm_ab:'Negative',s_round_cells:'< 5 M/mL',
