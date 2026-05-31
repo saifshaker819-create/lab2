@@ -23737,6 +23737,10 @@ function _buildDNAFragModalBody(r){
       <label class="fl">رقم الهاتف (اختياري)</label>
       <input class="fc" id="dnafrag-pt-phone" type="tel" placeholder="07xxxxxxxxx" value="${v('patientPhone')}">
     </div>
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">العمر</label>
+      <input class="fc" id="dnafrag-pt-age" type="text" placeholder="مثال: 32 سنة" value="${v('patientAge')}">
+    </div>
   </div>
 
   <!-- إدخال الأرقام -->
@@ -23832,6 +23836,8 @@ function dnafragSelectPatient(pid){
   document.getElementById('dnafrag-pt-id').value = pt.id;
   const phoneEl = document.getElementById('dnafrag-pt-phone');
   if(phoneEl && pt.phone) phoneEl.value = pt.phone;
+  const ageEl = document.getElementById('dnafrag-pt-age');
+  if(ageEl && pt.ageDisplay) ageEl.value = pt.ageDisplay;
   document.getElementById('dnafrag-pt-suggest').style.display = 'none';
 }
 function dnafragDoctorSelChanged(){
@@ -23966,7 +23972,7 @@ function saveDNAFragEntry(andPrint){
   const rec = {
     id: window._dnafragEditId || ('dnafrag-'+Date.now()),
     patientId: ptId, patientName: ptName,
-    patientAge: (document.getElementById('semen-pt-age')||{}).value||ptObj.ageDisplay||'',
+    patientAge: (document.getElementById('dnafrag-pt-age')||{}).value||ptObj.ageDisplay||'',
     patientGender: ptObj.gender||'male',
     patientPhone: (document.getElementById('dnafrag-pt-phone')||{}).value||'',
     doctorId: _getDNAFragDoctor().id,
@@ -24628,7 +24634,7 @@ function saveSemenEntry(andPrint){
     id: window._semenEditId||('semen-'+Date.now()),
     reqId: window._semenReqId||'',
     patientId:ptId, patientName:ptName,
-    patientAge: ptObj.ageDisplay||'',
+    patientAge: (document.getElementById('semen-pt-age')||{}).value||ptObj.ageDisplay||'',
     patientGender: ptObj.gender||'male',
     patientPhone:(document.getElementById('semen-pt-phone')||{}).value||'',
     doctorId:_getSemenDoctor().id,
