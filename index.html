@@ -2536,6 +2536,7 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
     <div class="ni" data-perm="requests" onclick="nav('requests')"><span class="ni-ic">📋</span>الطلبات<span class="ni-badge warn" id="nb-requests">0</span></div>
     <div class="ni" data-perm="results"  onclick="nav('results')"><span class="ni-ic">🧪</span>إدخال النتائج</div>
     <div class="ni" data-perm="culture"  onclick="nav('culture')"><span class="ni-ic">🦠</span>نتائج الزرع</div>
+    <div class="ni" data-perm="culture"  onclick="nav('ut')"><span class="ni-ic">🧪</span>Urine+Test</div>
     <div class="ni" data-perm="results"  onclick="nav('semen')"><span class="ni-ic">🔬</span>Semen Analysis</div>
     <div class="ni" data-perm="results"  onclick="nav('dnafrag')"><span class="ni-ic">🧬</span>DNA Fragmentation</div>
     <div class="ni" data-perm="results"  onclick="nav('iui')"><span class="ni-ic">💉</span>IUI Activation</div>
@@ -2786,6 +2787,22 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
           <div id="culture-list-body">
             <div class="empty"><div class="empty-ic">🦠</div><p>لا توجد نتائج زرع بعد</p></div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- URINE+TEST SECTION -->
+    <div class="sec" id="sec-ut">
+      <div class="gc" style="max-width:1100px;margin:0 auto">
+        <div class="gc-hdr">
+          <div class="gc-title">🧪 Urine+Test</div>
+          <button class="btn btn-p btn-sm" onclick="openNewUTModal()">➕ إدخال نتيجة جديدة</button>
+        </div>
+        <div class="gc-body">
+          <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+            <div class="srch-box" style="flex:1;min-width:200px"><span class="srch-ic">🔍</span><input class="srch-inp" id="ut-srch" lang="ar" dir="rtl" placeholder="ابحث باسم المريض أو رقمه..." oninput="renderUTList()"></div>
+          </div>
+          <div id="ut-list-body"><div class="empty"><div class="empty-ic">🧪</div><p>لا توجد نتائج بعد</p></div></div>
         </div>
       </div>
     </div>
@@ -5061,6 +5078,20 @@ body.light-mode .wnb-text .wnb-char.neon-trail {
   </div>
 </div>
 
+<!-- URINE+TEST ENTRY MODAL -->
+<div class="moverlay" id="m-ut">
+  <div class="modal" style="max-width:900px;max-height:92vh;overflow-y:auto">
+    <div class="mhdr"><div class="mtitle" id="ut-modal-title">🧪 Urine+Test</div><button class="mclose" onclick="closeModal('m-ut')">✕</button></div>
+    <div class="mbody" id="ut-modal-body"></div>
+    <div class="mftr">
+      <button class="btn btn-s" onclick="closeModal('m-ut')">إلغاء</button>
+      <button class="btn btn-ok btn-lg" onclick="saveAndPrintUT()">🖨️ حفظ وطباعة</button>
+      <button class="btn btn-p btn-lg" onclick="saveUTEntry()">💾 حفظ النتيجة</button>
+      <button class="btn btn-w btn-lg" onclick="saveAndShareUTWhatsApp()">📱 واتساب</button>
+    </div>
+  </div>
+</div>
+
 <!-- STOOL ENTRY MODAL -->
 <div class="moverlay" id="m-stool-exam">
   <div class="modal" style="max-width:860px;max-height:92vh;overflow-y:auto">
@@ -6521,7 +6552,7 @@ const IDB=(()=>{
 // البيانات الكبيرة — تذهب لـ IDB مباشرة ولا تُخزَّن في localStorage
 const _IDB_KEYS=new Set(['patients','requests','invoices','doctors','packages',
   'inventory','qc','tests','testGroups','billing',
-  'cultureRecords','uaRecords','stoolExamRecords','semenRecords']);
+  'cultureRecords','uaRecords','utRecords','stoolExamRecords','semenRecords']);
 
 // كاش الذاكرة — يُحدَّث عند كل قراءة/كتابة لتفادي أي تأخير
 const _MC={};
@@ -7333,6 +7364,7 @@ let settings={};
 let tests=[];
 let testGroups=[];
 let uaRecords=[];
+let utRecords=[];
 let stoolExamRecords=[];
 let semenRecords=[];
 let currentTestCat='All';
@@ -7353,7 +7385,7 @@ function initUserData(){
   packages=[{id:'pkg1',name:'Comprehensive Blood Panel',price:380,ic:'🩸',desc:'CBC + HbA1c + Lipid Panel + LFT + KFT'},{id:'pkg2',name:'Diabetes Panel',price:200,ic:'💉',desc:'FBS + HbA1c + Insulin + Microalbumin'},{id:'pkg3',name:'Thyroid Panel',price:250,ic:'🦋',desc:'TSH + FT3 + FT4 + Anti-TPO + Anti-Tg'},{id:'pkg4',name:'Vitamins Panel',price:320,ic:'💊',desc:'Vitamin D + B12 + Folate + Zinc + Iron'},{id:'pkg5',name:'Full Health Checkup',price:650,ic:'🌟',desc:'CBC + CMP + Lipid Panel + HbA1c + Thyroid + Vit D + B12'}];
   inventory=[{id:'i1',name:'HbA1c Reagent',qty:45,unit:'test',min:20,exp:'2025-12-31',sup:'Vista Lab'},{id:'i2',name:'CBC Reagent',qty:200,unit:'test',min:50,exp:'2025-10-30',sup:'MedLab Co'},{id:'i3',name:'TSH Kit',qty:8,unit:'kit',min:10,exp:'2025-09-15',sup:'BioTech'}];
   qcRecords=[]; testGroups=[]; billingRecords=[];
-  cultureRecords=[]; uaRecords=[]; stoolExamRecords=[]; semenRecords=[];
+  cultureRecords=[]; uaRecords=[]; utRecords=[]; stoolExamRecords=[]; semenRecords=[];
   // ⭐ تطبيق قائمة المحذوفات (من localStorage الفوري) قبل تحميل IDB
   // بهذا تظل التحاليل المحذوفة محذوفة حتى عند تحديث الصفحة أو رفع نسخة جديدة
   let _deletedIds = [];
@@ -7407,6 +7439,7 @@ async function _mergeIDBInBackground(){
       tests:'tests',
       qc:'qcRecords', testGroups:'testGroups', billing:'billingRecords',
       cultureRecords:'cultureRecords', uaRecords:'uaRecords',
+      utRecords:'utRecords',
       stoolExamRecords:'stoolExamRecords', semenRecords:'semenRecords'
     };
 
@@ -7420,7 +7453,7 @@ async function _mergeIDBInBackground(){
       const varName=keyMap[k];
       if(!idbVal||!Array.isArray(idbVal)||idbVal.length===0) return;
       const globals={patients,requests,invoices,doctors,packages,inventory,
-        qcRecords,testGroups,billingRecords,cultureRecords,uaRecords,
+        qcRecords,testGroups,billingRecords,cultureRecords,uaRecords,utRecords,
         stoolExamRecords,semenRecords};
       const current=globals[varName]||[];
       const currentIds=new Set(current.map(x=>x.id).filter(Boolean));
@@ -7463,7 +7496,7 @@ async function _mergeIDBInBackground(){
       }
       if(!idbVal||!Array.isArray(idbVal)||idbVal.length===0) continue;
       const globals={patients,requests,invoices,doctors,packages,inventory,
-        qcRecords,testGroups,billingRecords,cultureRecords,uaRecords,
+        qcRecords,testGroups,billingRecords,cultureRecords,uaRecords,utRecords,
         stoolExamRecords,semenRecords};
       const current=globals[varName]||[];
       const currentIds=new Set(current.map(x=>x.id).filter(Boolean));
@@ -7479,6 +7512,7 @@ async function _mergeIDBInBackground(){
         case 'billing':          billingRecords=current; break;
         case 'cultureRecords':   cultureRecords=current; break;
         case 'uaRecords':        uaRecords=current; break;
+        case 'utRecords':        utRecords=current; break;
         case 'stoolExamRecords': stoolExamRecords=current; break;
         case 'semenRecords':     semenRecords=current; break;
       }
@@ -8003,7 +8037,7 @@ function applyPermissionsToSidebar(){
 // ============================================================
 // NAVIGATION
 // ============================================================
-const pages={dashboard:['لوحة التحكم','الرئيسية / لوحة التحكم'],patients:['إدارة المرضى','الرئيسية / المرضى'],requests:['طلبات التحاليل','الرئيسية / الطلبات'],results:['إدخال النتائج','الرئيسية / النتائج'],print:['طباعة النتائج','الرئيسية / الطباعة'],invoices:['الفواتير','الرئيسية / المالية'],billing:['الحسابات','الرئيسية / الحسابات'],'tests-db':['قاعدة التحاليل','الرئيسية / التحاليل'],packages:['الباقات الطبية','الرئيسية / الباقات'],doctors:['الأطباء','الرئيسية / الأطباء'],inventory:['المخزون','الرئيسية / المخزون'],reports:['التقارير','الرئيسية / التقارير'],quality:['ضبط الجودة','الرئيسية / الجودة'],settings:['الإعدادات','الرئيسية / الإعدادات'],database:['قاعدة البيانات','الرئيسية / قاعدة البيانات'],culture:['🦠 نتائج الزرع','الرئيسية / الزرع'],ua:['💧 Urine Examination','Home / Urine'],stool:['🧫 Stool Examination','Home / Stool'],semen:['🔬 Semen Analysis','Home / Semen'],dnafrag:['🧬 DNA Fragmentation','Home / DNA Fragmentation'],iui:['💉 IUI Activation','Home / IUI Activation'],waitqueue:['⏳ طابور الانتظار','الرئيسية / طابور الانتظار'],lis:['🔬 ربط الأجهزة — LIS Bridge','الرئيسية / ربط الأجهزة'],esr:['⏱️ عداد ESR','الرئيسية / عداد ESR']};
+const pages={dashboard:['لوحة التحكم','الرئيسية / لوحة التحكم'],patients:['إدارة المرضى','الرئيسية / المرضى'],requests:['طلبات التحاليل','الرئيسية / الطلبات'],results:['إدخال النتائج','الرئيسية / النتائج'],print:['طباعة النتائج','الرئيسية / الطباعة'],invoices:['الفواتير','الرئيسية / المالية'],billing:['الحسابات','الرئيسية / الحسابات'],'tests-db':['قاعدة التحاليل','الرئيسية / التحاليل'],packages:['الباقات الطبية','الرئيسية / الباقات'],doctors:['الأطباء','الرئيسية / الأطباء'],inventory:['المخزون','الرئيسية / المخزون'],reports:['التقارير','الرئيسية / التقارير'],quality:['ضبط الجودة','الرئيسية / الجودة'],settings:['الإعدادات','الرئيسية / الإعدادات'],database:['قاعدة البيانات','الرئيسية / قاعدة البيانات'],culture:['🦠 نتائج الزرع','الرئيسية / الزرع'],ut:['🧪 Urine+Test','الرئيسية / Urine+Test'],ua:['💧 Urine Examination','Home / Urine'],stool:['🧫 Stool Examination','Home / Stool'],semen:['🔬 Semen Analysis','Home / Semen'],dnafrag:['🧬 DNA Fragmentation','Home / DNA Fragmentation'],iui:['💉 IUI Activation','Home / IUI Activation'],waitqueue:['⏳ طابور الانتظار','الرئيسية / طابور الانتظار'],lis:['🔬 ربط الأجهزة — LIS Bridge','الرئيسية / ربط الأجهزة'],esr:['⏱️ عداد ESR','الرئيسية / عداد ESR']};
 
 function nav(p){
   // إغلاق الشريط الجانبي على الجوال بعد الضغط
@@ -8086,6 +8120,7 @@ function nav(p){
   if(p==='database'){resetDbAuth();updateDbStats();setTimeout(_gdriveInitUI,100);setTimeout(loadAutoBackupUI,120);setTimeout(()=>_fsaUpdateIndicator(!!_fsaDirHandle),150);}
   if(p==='culture') renderCultureList();
   if(p==='ua') renderUAList();
+  if(p==='ut') renderUTList();
   if(p==='stool') renderStoolList();
   if(p==='semen') renderSemenList();
   if(p==='dnafrag') renderDNAFragList();
@@ -17989,7 +18024,7 @@ async function exportDatabase(){
     const pfx=DB._pfx();
     const archiveKeys=['patients','requests','invoices','doctors','packages',
       'inventory','qc','tests','testGroups','billing',
-      'cultureRecords','uaRecords','stoolExamRecords','semenRecords'];
+      'cultureRecords','uaRecords','utRecords','stoolExamRecords','semenRecords'];
     for(const k of archiveKeys){
       const val=await IDB.get(pfx+k);
       if(val!==null) idbData[pfx+k]=JSON.stringify(val);
@@ -19612,6 +19647,520 @@ document.addEventListener('click', e=>{
   if(res && !res.contains(e.target) && e.target!==inp) res.style.display='none';
 });
 
+
+// ============================================================
+// URINE+TEST SYSTEM — نظام فحص البول + الكيمياء الحيوية
+// ============================================================
+
+let utRecords_local = []; // alias used inside functions
+
+// ── حقول الأدرار (Macroscopy + Microscopy فقط) ────────────────
+const UT_URINE_FIELDS = {
+  macroscopy: {
+    label: 'MACROSCOPY',
+    fields: [
+      {id:'ut_appearance', label:'Appearance',    type:'select', options:['Clear','Slightly Turbid','Turbid','Very Turbid','Milky'], normal:'Clear'},
+      {id:'ut_color',      label:'Color',         type:'select', options:['Yellow','Pale Yellow','Dark Yellow','Amber','Orange','Red / Bloody','Brown / Cola','Cloudy Yellow','Green','Black'], normal:'Yellow'},
+      {id:'ut_reaction',   label:'Reaction',      type:'select', options:['Acidic','Alkaline','Neutral','5.0','5.5','6.0','6.5','7.0','7.5','8.0','8.5','9.0'], normal:'Acidic'},
+      {id:'ut_sugar',      label:'Sugar',         type:'select', options:['Absent','Trace','+','++','+++','++++'], normal:'Absent'},
+      {id:'ut_albumin',    label:'Albumin',       type:'select', options:['Absent','Trace','+','++','+++','++++'], normal:'Absent'},
+      {id:'ut_bilirubin',  label:'Bile Pigment',  type:'select', options:['Negative(-ve)','Trace','+','++','+++'], normal:'Negative(-ve)'},
+      {id:'ut_urobilinogen',label:'Urobilinogen', type:'select', options:['Normal','Absent','Trace','+','++','+++'], normal:'Normal'},
+    ]
+  },
+  microscopy: {
+    label: 'MICROSCOPY',
+    fields: [
+      {id:'ut_epithelial', label:'Epithelial Cells',type:'select', options:['Few','+','++','+++','++++'], normal:'Few'},
+      {id:'ut_pus_cells',  label:'Pus Cells',       type:'select', options:['1–2','2–4','4–6','5–7','6–8','8–10','10–15','15–20','20–25','25–30','30–35','35–40','40–45','TNTC','+','++','+++','++++'], normal:'1–2'},
+      {id:'ut_pus_unit',   label:'Pus Cells Unit',  type:'select', options:['H.P.F','L.P.F'], normal:'H.P.F'},
+      {id:'ut_rbc',        label:'R.B.Cs',          type:'select', options:['1–2','2–4','3–5','4–6','5–7','6–8','8–10','10–15','15–20','20–25','+','++','+++','++++'], normal:'1–2'},
+      {id:'ut_rbc_unit',   label:'RBC Unit',        type:'select', options:['H.P.F','L.P.F'], normal:'H.P.F'},
+      {id:'ut_crystals',   label:'Crystals',        type:'select', options:['Nil','Am.urate (+)','Am.urate (++)','Am.urate (+++)','Am.urate (+++)','Am.phosphate (+)','Am.phosphate (++)','Uric acid (+)','Uric acid (++)','Calcium oxalate (+)','Calcium oxalate (++)','Triple phosphate (+)','Triple phosphate (++)'], normal:'Nil'},
+      {id:'ut_casts',      label:'Casts',           type:'select', options:['Nil','Hyaline','Granular (fine)','Granular (coarse)','Waxy','RBC casts','WBC casts'], normal:'Nil'},
+      {id:'ut_others',     label:'Others',          type:'select', options:['Nil','Mucous thread (+)','Mucous thread (++)','Mucous thread (+++)','Bacteria (+)','Bacteria (++)','Bacteria (+++)','Yeast (+)','Yeast (++)'], normal:'Nil'},
+    ]
+  }
+};
+
+// ── جدول التحاليل الكيميائية الخمسة ────────────────────────
+// UT_CHEM_TESTS: static definitions — unit/ref get overridden at runtime from tests DB
+const UT_CHEM_TESTS = [
+  {id:'ut_rbs',  label:'R. Blood Sugar',       dbCode:'RBS',      unit:'mg/dL', ref:'< 140',   refRaw:'0-140',    qualitative:false},
+  {id:'ut_urea', label:'Blood Urea',            dbCode:'UREA',     unit:'mg/dL', ref:'10 - 50', refRaw:'10-50',    qualitative:false},
+  {id:'ut_creat',label:'S. Creatinine',         dbCode:'CREAT',    unit:'mg/dL', ref:'0.6-1.2', refRaw:'0.6-1.2', qualitative:false},
+  {id:'ut_tg',   label:'S. Triglycerides',      dbCode:'TG',       unit:'mg/dL', ref:'< 150',   refRaw:'0-150',    qualitative:false},
+  {id:'ut_preg', label:'Pregnancy Test (Blood)',dbCode:'PREG-SER', unit:'',      ref:'Negative', refRaw:'Negative', qualitative:true},
+];
+
+// Resolves live unit/ref from the main tests array for each chem test
+function _getUTChemMeta(t){
+  if(!tests||!tests.length) return {unit:t.unit, ref:t.ref, refRaw:t.refRaw};
+  const dbT=tests.find(x=>x.code===t.dbCode);
+  if(!dbT) return {unit:t.unit, ref:t.ref, refRaw:t.refRaw};
+  // For CREAT: use gender-aware ref if available (default to male ref)
+  const ref=dbT.refM||dbT.ref||t.ref;
+  const unit=dbT.unit||t.unit;
+  // Build refRaw for abnormal detection: extract numeric range from ref string
+  let refRaw=t.refRaw;
+  if(dbT.minVal!=null && dbT.maxVal!=null){
+    refRaw=`${dbT.minVal}-${dbT.maxVal}`;
+  }
+  return {unit, ref, refRaw};
+}
+
+function loadUTRecords(){ utRecords = load('utRecords',[]); }
+function saveUTRecords(){ save('utRecords', utRecords); }
+
+function renderUTList(){
+  loadUTRecords();
+  const srch=(document.getElementById('ut-srch')||{}).value||'';
+  const body=document.getElementById('ut-list-body'); if(!body) return;
+  let list=[...utRecords].reverse();
+  if(srch) list=list.filter(r=>(r.patientName+r.patientId).toLowerCase().includes(srch.toLowerCase()));
+  if(!list.length){body.innerHTML='<div class="empty"><div class="empty-ic">🧪</div><p>لا توجد نتائج</p></div>';return;}
+  body.innerHTML=list.map(r=>`<div style="background:var(--bg-glass);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div style="font-size:24px">🧪</div>
+    <div style="flex:1;min-width:180px">
+      <div style="font-size:15px;font-weight:900;direction:rtl">${r.patientName}</div>
+      <div style="font-size:11px;color:var(--text2)">${r.patientId} · ${r.date}</div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm btn-p" onclick="openEditUTModal('${r.id}')">✏️ تعديل</button>
+      <button class="btn btn-sm btn-ok" onclick="printUTReport('${r.id}')">🖨️ طباعة</button>
+      <button class="btn btn-sm btn-w" onclick="shareUTWhatsApp('${r.id}')">📱 واتساب</button>
+      <button class="btn btn-sm btn-d" onclick="deleteUTRecord('${r.id}')">🗑️</button>
+    </div>
+  </div>`).join('');
+}
+
+function openNewUTModal(){
+  window._editUTId=null;
+  document.getElementById('ut-modal-title').textContent='🧪 Urine+Test — New Entry';
+  _buildUTModalBody(null);
+  openModal('m-ut');
+}
+function openEditUTModal(id){
+  loadUTRecords();
+  const r=utRecords.find(x=>x.id===id); if(!r) return;
+  window._editUTId=id;
+  document.getElementById('ut-modal-title').textContent='✏️ Edit Urine+Test';
+  _buildUTModalBody(r);
+  openModal('m-ut');
+}
+
+function _buildUTModalBody(r){
+  const today=new Date().toISOString().split('T')[0];
+  const body=document.getElementById('ut-modal-body'); if(!body) return;
+  const ptName=r?r.patientName:'';
+  const ptId=r?r.patientId:'';
+  const savedAge=r?r.patientAge||'':'';
+  let html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:10px;padding:14px">
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">المريض</label>
+      <div style="position:relative">
+        <input class="fc" id="ut-pt-search" lang="ar" placeholder="ابحث باسم أو رقم..." oninput="utSearchPatient(this.value)" autocomplete="off" value="${ptName}">
+        <div id="ut-pt-suggest" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:9999;
+          background:#fff;color:#111;
+          border:1.5px solid #00d4ff;border-radius:9px;max-height:200px;overflow-y:auto;
+          box-shadow:0 8px 24px rgba(0,0,0,0.35)"></div>
+      </div>
+      <input type="hidden" id="ut-pt-id" value="${ptId}">
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">التاريخ</label>
+      <input class="fc" type="date" id="ut-date" value="${r?r.date:today}">
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">العمر <span style="font-size:10px;color:var(--text2)">(يتعبأ تلقائياً)</span></label>
+      <input class="fc" id="ut-age" placeholder="مثال: 35 سنة" value="${savedAge}" style="font-size:12px">
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label class="fl">الطبيب المحول <span style="font-size:10px;color:var(--text2)">(اختياري)</span></label>
+      <select class="fc" id="ut-doctor-sel" onchange="utDoctorSelChanged()">
+        <option value="">-- بدون طبيب --</option>
+        ${doctors.map(d=>`<option value="${d.id}" data-name="${d.name}" ${r&&r.doctorId===d.id?'selected':''}>${d.name}${d.spec?' \u2014 '+d.spec:''}</option>`).join('')}
+        <option value="__manual__">✏️ كتابة يدوية</option>
+      </select>
+      <input class="fc" id="ut-doctor-manual" placeholder="اسم الطبيب..." style="display:${r&&r.doctorName&&!doctors.find(d=>d.id===r.doctorId)?'block':'none'};margin-top:6px" value="${r&&r.doctorName&&!doctors.find(d=>d.id===r.doctorId)?r.doctorName:''}">
+    </div>
+  </div>`;
+
+  // ── قسم فحص البول (Macroscopy + Microscopy) ──
+  Object.entries(UT_URINE_FIELDS).forEach(([secKey,sec])=>{
+    html+=`<div style="background:rgba(0,212,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:900;color:#cc0011;border-bottom:2px solid #cc0011;padding-bottom:4px;margin-bottom:12px">${sec.label}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">`;
+    sec.fields.forEach(f=>{
+      const val=r?r[f.id]||f.normal||'':f.normal||'';
+      const isAbn=val&&f.normal&&val!==f.normal;
+      const hlStyle=isAbn?'border-color:var(--danger);background:rgba(255,34,68,0.04)':'';
+      html+=`<div class="fg" style="margin-bottom:0">
+        <label class="fl" style="font-size:11px">${f.label}</label>
+        <select class="fc" id="utf-${f.id}" style="font-size:12px;${hlStyle}" onchange="utHighlight('${f.id}','${f.normal||''}')">
+          ${f.options.map(o=>`<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+
+  // ── جدول التحاليل الكيميائية — يقرأ الوحدة والنطاق من قاعدة التحاليل ──
+  html+=`<div style="background:rgba(0,212,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="font-size:13px;font-weight:900;color:#cc0011;border-bottom:2px solid #cc0011;padding-bottom:4px;margin-bottom:12px">Chemical Tests</div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:rgba(0,212,255,0.08)">
+          <th style="padding:8px;text-align:left;border:1px solid var(--border)">Test</th>
+          <th style="padding:8px;text-align:center;border:1px solid var(--border)">Result</th>
+          <th style="padding:8px;text-align:center;border:1px solid var(--border)">Unit</th>
+          <th style="padding:8px;text-align:center;border:1px solid var(--border)">Reference Range</th>
+        </tr></thead>
+        <tbody>`;
+  UT_CHEM_TESTS.forEach(t=>{
+    const val=r?r[t.id]||'':'';
+    const meta=_getUTChemMeta(t);
+    if(t.qualitative){
+      html+=`<tr><td style="padding:8px;border:1px solid var(--border);font-weight:700">${t.label}</td>
+        <td style="padding:8px;border:1px solid var(--border);text-align:center">
+          <select class="fc" id="utf-${t.id}" style="font-size:12px;width:100%">
+            <option value="" ${!val?'selected':''}>-- --</option>
+            <option value="Negative" ${val==='Negative'?'selected':''}>Negative</option>
+            <option value="Positive" ${val==='Positive'?'selected':''}>Positive</option>
+          </select>
+        </td>
+        <td style="padding:8px;border:1px solid var(--border);text-align:center">${meta.unit||'\u2014'}</td>
+        <td style="padding:8px;border:1px solid var(--border);text-align:center;color:var(--text2)">${meta.ref}</td>
+      </tr>`;
+    } else {
+      html+=`<tr><td style="padding:8px;border:1px solid var(--border);font-weight:700">${t.label}</td>
+        <td style="padding:8px;border:1px solid var(--border);text-align:center">
+          <input class="fc" type="number" step="any" id="utf-${t.id}" value="${val}" placeholder="..." style="font-size:13px;text-align:center;width:100%">
+        </td>
+        <td style="padding:8px;border:1px solid var(--border);text-align:center">${meta.unit}</td>
+        <td style="padding:8px;border:1px solid var(--border);text-align:center;color:var(--text2)">${meta.ref}</td>
+      </tr>`;
+    }
+  });
+  html+=`</tbody></table></div></div>`;
+  body.innerHTML=html;
+}
+
+
+function utHighlight(fid,normal){
+  const el=document.getElementById('utf-'+fid); if(!el||!normal) return;
+  const isAbn=el.value&&el.value!==normal;
+  el.style.borderColor=isAbn?'var(--danger)':'';
+  el.style.background=isAbn?'rgba(255,34,68,0.04)':'';
+}
+function utSearchPatient(q){
+  const box=document.getElementById('ut-pt-suggest'); if(!box)return;
+  if(!q||q.length<1){box.style.display='none';return;}
+  const found=patients.filter(p=>(p.name||'').includes(q)||(p.id||'').includes(q)).slice(0,8);
+  if(!found.length){box.style.display='none';return;}
+  box.style.display='block';
+  box.innerHTML=found.map(p=>`<div onclick="utSelectPatient('${p.id}')" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #e0e0e0;font-size:13px;color:#111;background:#fff" onmouseover="this.style.background='#e8f8ff'" onmouseout="this.style.background='#fff'"><b style="color:#003366">${p.name}</b> <span style="color:#666;font-size:11px">${p.id}${p.ageDisplay?' · '+p.ageDisplay:''}</span></div>`).join('');
+}
+function utSelectPatient(pid){
+  const pt=patients.find(p=>p.id===pid); if(!pt)return;
+  document.getElementById('ut-pt-search').value=pt.name;
+  document.getElementById('ut-pt-id').value=pt.id;
+  document.getElementById('ut-pt-suggest').style.display='none';
+  // Auto-fill age if field exists
+  const ageEl=document.getElementById('ut-age');
+  if(ageEl && pt.ageDisplay) ageEl.value=pt.ageDisplay;
+}
+function utDoctorSelChanged(){
+  const sel=document.getElementById('ut-doctor-sel');
+  const manual=document.getElementById('ut-doctor-manual');
+  if(!sel||!manual) return;
+  manual.style.display=sel.value==='__manual__'?'block':'none';
+}
+function _getUTDoctor(){
+  const sel=document.getElementById('ut-doctor-sel');
+  if(!sel) return {id:'',name:''};
+  if(sel.value==='__manual__'){
+    const nm=(document.getElementById('ut-doctor-manual')||{}).value||'';
+    return {id:'',name:nm};
+  }
+  const opt=sel.options[sel.selectedIndex];
+  return {id:sel.value, name:sel.value?(opt?opt.dataset.name||opt.text:''):''}; 
+}
+function _collectUTRecord(){
+  const ptName=(document.getElementById('ut-pt-search')||{}).value.trim();
+  const ptId=(document.getElementById('ut-pt-id')||{}).value;
+  if(!ptName){showNotif('تنبيه','اختر المريض','error');return null;}
+  const dr=_getUTDoctor();
+  const ptObj=patients.find(p=>p.id===ptId)||{};
+  // Age: prefer manually entered value in ut-age field, fallback to patient record
+  const ageInputEl=document.getElementById('ut-age');
+  const patientAge=(ageInputEl&&ageInputEl.value.trim())||ptObj.ageDisplay||'';
+  const rec={
+    id:window._editUTId||('ut-'+Date.now()),
+    patientId:ptId, patientName:ptName,
+    patientAge:patientAge,
+    patientGender:ptObj.gender||'',
+    doctorId:dr.id, doctorName:dr.name,
+    date:(document.getElementById('ut-date')||{}).value||new Date().toISOString().split('T')[0],
+    createdAt:Date.now()
+  };
+  Object.values(UT_URINE_FIELDS).forEach(sec=>sec.fields.forEach(f=>{
+    const el=document.getElementById('utf-'+f.id);
+    if(el) rec[f.id]=el.value||'';
+  }));
+  UT_CHEM_TESTS.forEach(t=>{
+    const el=document.getElementById('utf-'+t.id);
+    if(el) rec[t.id]=el.value||'';
+  });
+  return rec;
+}
+function saveUTEntry(){
+  const rec=_collectUTRecord(); if(!rec) return;
+  loadUTRecords();
+  if(window._editUTId){ const idx=utRecords.findIndex(x=>x.id===window._editUTId); if(idx>-1)utRecords[idx]=rec; else utRecords.push(rec); }
+  else utRecords.push(rec);
+  saveUTRecords();
+  closeModal('m-ut');
+  renderUTList();
+  showNotif('تم','تم حفظ Urine+Test ✅','success');
+}
+function saveAndPrintUT(){
+  const rec=_collectUTRecord(); if(!rec) return;
+  loadUTRecords();
+  if(window._editUTId){ const idx=utRecords.findIndex(x=>x.id===window._editUTId); if(idx>-1)utRecords[idx]=rec; else utRecords.push(rec); }
+  else utRecords.push(rec);
+  saveUTRecords();
+  closeModal('m-ut');
+  showNotif('تم','جاري الطباعة 🖨️','success');
+  printUTReport(rec.id);
+  requestAnimationFrame(()=>renderUTList());
+}
+function deleteUTRecord(id){
+  if(!confirm('حذف هذا السجل؟'))return;
+  loadUTRecords(); utRecords=utRecords.filter(r=>r.id!==id); saveUTRecords(); renderUTList();
+}
+
+// ── بناء HTML للطباعة ────────────────────────────────────────
+function _buildUTPrintHTML(r){
+  if(typeof r==='string'){ loadUTRecords(); r=utRecords.find(x=>x.id===r); }
+  if(!r) return '';
+  const pt=patients.find(p=>p.id===r.patientId)||{name:r.patientName,id:r.patientId};
+  const s=settings||{};
+  const color=s.hdrText?.color||'#003366';
+  let hdrHTML='';
+  if(s.hdrMode==='text'&&s.hdrText) hdrHTML=buildTextHeader(s);
+  else if(s.headerImg) hdrHTML=`<img src="${s.headerImg}" style="width:100%;height:${(typeof s.hdrImgH==='number'&&s.hdrImgH>=70&&s.hdrImgH<=230)?s.hdrImgH:170}px;display:block;object-fit:fill">`;
+  else hdrHTML=`<div style="background:${color};color:#fff;padding:8px 18px;font-size:16px;font-weight:900">${s.name||'Medical Laboratory'}</div>`;
+  let ftrHTML='';
+  if(s.hdrMode==='text'&&s.hdrText) ftrHTML=buildTextFooter(s);
+  else if(s.footerImg&&s.ftrMode!=='txt') ftrHTML=`<img src="${s.footerImg}" style="width:100%;height:${(typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50}px;object-fit:fill;display:block">`;
+  else if(s.ftrMode==='txt'&&(s.ftrAddress||s.ftrPhone||s.ftrNote)) ftrHTML=`<div style="background:#f5f7fa;border-top:2px solid ${s.hdrText?.color||'#003366'};padding:7px 20px;font-family:'Inter',Arial,sans-serif;font-size:14px;color:#444;direction:ltr;line-height:1.4"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><span>${s.ftrPhone?'📞 '+s.ftrPhone:''}</span><span>${s.ftrAddress?'📍 '+s.ftrAddress:''}</span></div>${s.ftrNote?`<div style="text-align:center;font-style:italic;font-size:12px;color:#666;margin-top:3px">${s.ftrNote}</div>`:''}</div>`;
+  else if(s.footer) ftrHTML=`<div style="background:#f5f7fa;border-top:1px solid ${s.hdrText?.color||'#003366'};padding:5px 16px;font-family:'Inter',Arial,sans-serif;font-size:12px;color:#555;text-align:center">${s.footer}</div>`;
+
+  const drName=r.doctorName||pt.doctorName||(doctors&&doctors.find&&doctors.find(d=>d.id===pt.doctorId)?.name)||'';
+  const nameColor=s.colorName||'#cc0011';
+  const doctorColor=s.colorDoctor||'#cc0011';
+  const ptTitle=pt.title||'';
+  const ptFullName=ptTitle?ptTitle+' / '+(pt.name||r.patientName||'—'):(pt.name||r.patientName||'—');
+  const genderTxt=(pt.gender||r.patientGender)==='female'?'Female':'Male';
+  const ageTxt=(pt.ageDisplay||r.patientAge||'—').replace(/سنة/g,'Year').replace(/شهر/g,'Month').replace(/يوم/g,'Day');
+  const printTime=new Date().toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const barcodeId=(pt.barcode||(pt.id||r.patientId||'').replace(/[^A-Z0-9]/gi,'').toUpperCase().substring(0,12))||'00000000';
+
+  function _utBarcode128(text){
+    const C128={chars:' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~',widths:[[2,1,2,2,2,2],[2,2,2,1,2,2],[2,2,2,2,2,1],[1,2,1,2,2,3],[1,2,1,3,2,2],[1,3,1,2,2,2],[1,2,2,2,1,3],[1,2,2,3,1,2],[1,3,2,2,1,2],[2,2,1,2,1,3],[2,2,1,3,1,2],[2,3,1,2,1,2],[1,1,2,2,3,2],[1,2,2,1,3,2],[1,2,2,2,3,1],[1,1,3,2,2,2],[1,2,3,1,2,2],[1,2,3,2,2,1],[2,2,3,2,1,1],[2,2,1,1,3,2],[2,2,1,2,3,1],[2,1,3,2,1,2],[2,2,3,1,1,2],[3,1,2,1,3,1],[3,1,1,2,2,2],[3,2,1,1,2,2],[3,2,1,2,2,1],[3,1,2,2,1,2],[3,2,2,1,1,2],[3,2,2,2,1,1],[2,1,2,4,1,1],[2,1,4,2,1,1],[4,1,2,2,1,1],[4,1,1,1,4,1],[1,1,4,2,2,1],[2,1,1,1,4,2],[2,1,1,4,1,2],[2,4,1,2,1,1],[4,1,1,2,1,2],[1,2,4,1,1,2],[1,4,1,4,1,1],[2,2,1,4,1,1],[4,4,1,1,1,1],[1,1,2,3,2,2],[1,2,2,3,2,1],[2,2,2,3,1,1],[1,1,3,2,3,1],[2,1,1,4,2,1],[1,4,2,1,2,1],[2,1,4,1,1,3],[1,3,2,3,1,1],[2,1,1,1,1,5],[2,1,1,5,1,1],[5,1,1,2,1,1],[2,1,5,1,1,2],[2,1,3,1,3,1],[2,3,1,1,3,1],[1,3,1,3,2,1],[1,4,2,2,1,1],[1,2,2,4,1,1],[1,2,4,1,2,1],[1,4,1,2,2,1],[2,1,4,4,1,1],[3,1,2,1,1,3],[3,1,1,1,2,3],[3,3,1,1,2,1],[3,1,2,3,1,1],[2,1,1,3,3,1],[1,1,2,2,1,4],[1,2,1,1,4,2],[1,2,1,4,1,2],[1,4,1,1,2,2],[3,1,1,2,4,1],[1,3,2,1,4,1],[2,3,1,2,3,1],[1,4,2,1,1,3],[4,1,4,1,1,2],[2,1,1,1,3,4],[3,1,4,1,2,1],[1,1,4,2,1,3],[1,4,4,1,1,2],[3,3,1,2,1,2],[3,1,1,4,2,1],[2,1,2,2,4,1],[2,1,4,2,2,1],[4,2,1,2,1,2],[2,4,2,2,1,1],[1,3,4,1,1,2],[2,3,4,1,1,1],[1,2,4,2,2,1],[3,2,4,1,1,1],[4,2,4,1,1,1],[2,2,1,1,1,5],[2,1,1,2,1,5],[3,2,1,1,1,4],[2,2,1,2,3,2],[2,2,3,2,1,2],[2,2,1,1,4,2],[2,2,3,1,2,2],[2,1,4,1,3,1],[4,2,1,1,3,1],[1,1,2,4,2,2],[1,2,2,4,2,1],[1,2,4,4,1,1],[1,4,4,2,1,1],[4,2,2,1,1,2],[4,2,2,2,1,1],[4,1,2,1,2,2],[1,2,4,1,3,1],[4,1,2,2,2,1],[1,1,1,1,4,3],[1,1,1,3,4,1],[1,3,1,1,4,1],[1,1,4,1,1,3],[1,1,4,3,1,1],[4,1,1,1,1,3],[4,1,1,3,1,1],[1,1,3,1,4,1],[1,1,4,1,3,1],[3,1,1,1,4,1],[4,1,1,1,3,1],[2,1,1,4,1,2],[2,1,1,2,1,4],[2,1,1,2,3,2]]};
+    const START_B=104,STOP=[2,3,3,1,1,1,2];let codes=[START_B];let check=START_B;
+    for(let i=0;i<text.length;i++){const idx=C128.chars.indexOf(text[i]);if(idx<0)continue;codes.push(idx);check+=(i+1)*idx;}
+    codes.push(check%103);let bars=[];codes.forEach(c=>{C128.widths[c].forEach((w,i)=>bars.push({w,dark:i%2===0}));});
+    STOP.forEach((w,i)=>bars.push({w,dark:i%2===0}));bars.push({w:2,dark:false});
+    const h=38,totalW=bars.reduce((s,b)=>s+b.w*2,0);let x=0,rects='';
+    bars.forEach(b=>{if(b.dark)rects+=`<rect x="${x}" y="0" width="${b.w*2}" height="${h}" fill="#000"/>`;x+=b.w*2;});
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${h}" viewBox="0 0 ${totalW} ${h}" style="display:block">${rects}</svg>`;
+  }
+  const barcodeSvg=_utBarcode128(barcodeId);
+  const LBL=`font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.6px;white-space:nowrap;width:48px;flex-shrink:0`;
+  const _ptfs=s.ptFontSize||'15px';
+  const _ptWt=s.fontWeight||'800';
+  const _uaBL=(c,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:${_ptfs};font-weight:${_ptWt};color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  const _uaBLSA=(c,rtl)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 7px;font-size:13px;font-weight:${_ptWt};color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center${rtl?';direction:rtl':''}`;
+  const _uaRL=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><span style="${LBL}">${lbl}</span><span style="${_uaBL(c,rtl)}">${val}</span></div>`;
+  const _uaRL_SA=(lbl,val,c,rtl)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><span style="${LBL}">${lbl}</span><span style="${_uaBLSA(c,rtl)}">${val}</span></div>`;
+  const _uaLBLR=`font-size:8px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;width:36px;flex-shrink:0`;
+  const _uaBR=(c)=>`flex:1;border:1.5px solid #bbb;border-radius:3px;background:#fff;padding:1px 6px;font-size:13px;font-weight:700;color:${c||'#000'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block`;
+  const _uaRR=(lbl,val)=>`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><span style="${_uaLBLR}">${lbl}</span><span style="${_uaBR('#000')}">${val}</span></div>`;
+
+  const ptBox=`<div style="margin:3px 0;direction:ltr"><div style="display:flex;align-items:flex-start;gap:10px">
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+      ${_uaRL('Name',ptFullName,nameColor,true)}
+      ${_uaRL_SA('Sex/Age',genderTxt+' / '+ageTxt,'#000',false)}
+      ${_uaRL('Doctor',drName||'—',doctorColor,true)}
+    </div>
+    <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch">
+      <div style="text-align:right;margin-bottom:3px">
+        ${barcodeSvg}
+        <div style="font-size:8px;font-weight:900;color:#000;letter-spacing:2px;font-family:'Courier New',monospace;text-align:center;line-height:1">${barcodeId}</div>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        ${_uaRR('ID',pt.id||r.patientId||'—')}
+        ${_uaRR('Date',r.date||'—')}
+        ${_uaRR('Print',printTime)}
+      </div>
+    </div>
+  </div></div>`;
+
+  // ── بناء قسم البول (Macroscopy / Microscopy) ──
+  const renderUTSec=(sec)=>{
+    const rows=sec.fields.map((f,fi)=>{
+      const val=r[f.id]||'';
+      if(!val) return '';
+      const isAbn=f.normal&&val!==f.normal;
+      const rowBg=fi%2===0?'#ffffff':'#f9f9f9';
+      return `<tr style="background:${rowBg}">
+        <td style="font-size:14px;font-weight:700;color:#000;padding:2px 8px;width:38%;border:none;border-bottom:1px solid #e0e0e0"><span style="color:#000;margin-right:5px">■</span>${f.label}</td>
+        <td style="font-size:14px;font-weight:700;padding:2px 8px;width:32%;border:none;border-bottom:1px solid #e0e0e0;text-align:center">
+          <span style="display:inline-block;border:1.5px solid ${isAbn?'#cc0000':'#b0b0b0'};border-radius:4px;padding:1px 8px;min-width:80px;text-align:center;background:${isAbn?'#fff5f5':'#fff'};color:${isAbn?'#cc0000':'#000'};font-weight:${isAbn?'900':'700'}">${val}</span>
+        </td>
+        <td style="font-size:14px;font-weight:700;color:#000;padding:2px 8px;width:30%;border:none;border-bottom:1px solid #e0e0e0">${f.normal||'—'}</td>
+      </tr>`;
+    }).filter(Boolean).join('');
+    if(!rows) return '';
+    return `<div style="border:1.5px solid #b8b8b8;border-radius:0;margin-bottom:2px;overflow:hidden;page-break-inside:avoid">
+      <div style="background:#ffffff;padding:2px 8px;border-bottom:1px solid #b8b8b8">
+        <span style="font-size:14px;font-weight:900;color:#1a4fa0">${sec.label}</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#f0f0f0">
+          <th style="font-size:13px;font-weight:800;color:#000;padding:2px 8px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:38%">Parameter</th>
+          <th style="font-size:13px;font-weight:800;color:#000;padding:2px 8px;text-align:center;border:none;border-bottom:1.5px solid #b8b8b8;width:32%">Result</th>
+          <th style="font-size:13px;font-weight:800;color:#000;padding:2px 8px;text-align:left;border:none;border-bottom:1.5px solid #b8b8b8;width:30%">Normal Range</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  };
+
+  // ── بناء جدول التحاليل الكيميائية ──
+  const chemRows=UT_CHEM_TESTS.map((t,ti)=>{
+    const val=r[t.id]||'';
+    const meta=_getUTChemMeta(t);
+    const rowBg=ti%2===0?'#ffffff':'#f9f9f9';
+    let isAbn=false;
+    if(meta.refRaw&&meta.refRaw!=='Negative'&&val&&val!==''){
+      const parts=meta.refRaw.split('-');
+      if(parts.length===2){const mn=parseFloat(parts[0]),mx=parseFloat(parts[1]),v=parseFloat(val);if(!isNaN(mn)&&!isNaN(mx)&&!isNaN(v)) isAbn=v<mn||v>mx;}
+    } else if(meta.refRaw==='Negative'&&val&&val!==''&&val!=='Negative') isAbn=true;
+    return `<tr style="background:${rowBg}">
+      <td style="font-size:14px;font-weight:700;color:#000;padding:3px 8px;border-bottom:1px solid #e0e0e0">${t.label}</td>
+      <td style="font-size:14px;padding:3px 8px;border-bottom:1px solid #e0e0e0;text-align:center">
+        <span style="display:inline-block;border:1.5px solid ${isAbn?'#cc0000':'#b0b0b0'};border-radius:4px;padding:1px 12px;min-width:90px;text-align:center;background:${isAbn?'#fff5f5':'#fff'};color:${isAbn?'#cc0000':'#000'};font-weight:${isAbn?'900':'700'}">${val||'—'}</span>
+      </td>
+      <td style="font-size:13px;font-weight:700;color:#000;padding:3px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${meta.unit||''}</td>
+      <td style="font-size:13px;font-weight:600;color:#555;padding:3px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${meta.ref}</td>
+    </tr>`;
+  }).join('');
+
+  const urineSections=Object.values(UT_URINE_FIELDS).map(renderUTSec).filter(Boolean).join('');
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:Arial,sans-serif;color:#000;font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .ut-content{padding-bottom:${((typeof s.ftrImgH==='number'&&s.ftrImgH>=10&&s.ftrImgH<=80)?s.ftrImgH:50)+8}px;}
+    .ut-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;line-height:0;}
+    @page{margin:1mm 6mm 1mm 6mm;size:A4 portrait;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @media print{body{font-size:13px;} .ut-footer{position:fixed;bottom:3mm;left:0;right:0;background:#fff;z-index:9999;} th,td{font-size:13px !important;padding:2px 7px !important;}}
+  </style></head><body>
+    <div class="ut-content">
+      ${_buildWatermarkHTML?_buildWatermarkHTML(false):''}
+      ${hdrHTML}
+      <div style="border:1.5px solid #b8b8b8;margin:2px 0 2px;padding:3px 10px;background:#fafafa">${ptBox}</div>
+      <div style="color:#cc0000;padding:3px 16px;text-align:center;font-weight:900;font-size:16px;letter-spacing:1px;margin:2px 0;">
+        🧪 General Urine Examination
+      </div>
+      <div style="margin:0 0 2px;height:2px;background:${color}"></div>
+      ${urineSections}
+      <div style="border:1.5px solid #b8b8b8;margin-top:6px;overflow:hidden;page-break-inside:avoid">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr style="background:#f0f0f0">
+            <th style="font-size:13px;font-weight:800;color:#000;padding:3px 8px;text-align:left;border-bottom:1.5px solid #b8b8b8;width:35%">Test</th>
+            <th style="font-size:13px;font-weight:800;color:#000;padding:3px 8px;text-align:center;border-bottom:1.5px solid #b8b8b8;width:25%">Result</th>
+            <th style="font-size:13px;font-weight:800;color:#000;padding:3px 8px;text-align:center;border-bottom:1.5px solid #b8b8b8;width:15%">Unit</th>
+            <th style="font-size:13px;font-weight:800;color:#000;padding:3px 8px;text-align:center;border-bottom:1.5px solid #b8b8b8;width:25%">Reference Range</th>
+          </tr></thead>
+          <tbody>${chemRows}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="ut-footer">${ftrHTML}</div>
+  </body></html>`;
+}
+
+function printUTReport(id){
+  if(!utRecords||!utRecords.length) loadUTRecords();
+  const r=utRecords.find(x=>x.id===id); if(!r) return;
+  const html=_buildUTPrintHTML(r);
+  window._medlabPrinting=true;
+  setTimeout(function(){window._medlabPrinting=false;},4000);
+  _printViaIframe(html);
+  showNotif('طباعة','تم إرسال تقرير Urine+Test للطابعة 🖨️','success');
+}
+
+function shareUTWhatsApp(id){
+  loadUTRecords();
+  const r=utRecords.find(x=>x.id===id);
+  if(!r){showNotif('خطأ','السجل غير موجود','error');return;}
+  const pt=patients.find(p=>p.id===r.patientId)||{};
+  const phone=(pt&&pt.phone)||r.patientPhone||'';
+  if(!phone){showNotif('تنبيه','لا يوجد رقم هاتف للمريض — أضف الرقم أولاً','warning');return;}
+  const ptName=(pt&&pt.name)||r.patientName||'urine_test';
+  const capturedHtml=_buildUTPrintHTML(r);
+  if(!capturedHtml){showNotif('خطأ','تعذر إنشاء PDF','error');return;}
+  showNotif('جاري التحضير','جاري تحضير ملف PDF...','info');
+  const iframe=document.createElement('iframe');
+  iframe.style.cssText='position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;';
+  document.body.appendChild(iframe);
+  const iDoc=iframe.contentDocument||iframe.contentWindow.document;
+  iDoc.open(); iDoc.write(capturedHtml); iDoc.close();
+  setTimeout(function(){
+    html2canvas(iDoc.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff'}).then(async function(canvas){
+      try{document.body.removeChild(iframe);}catch(e){}
+      const imgData=canvas.toDataURL('image/jpeg',0.92);
+      const {jsPDF}=window.jspdf;
+      const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+      const pdfW=doc.internal.pageSize.getWidth();
+      const pdfH=doc.internal.pageSize.getHeight();
+      const ratio=canvas.height/canvas.width;
+      const imgH=pdfW*ratio;
+      let y=0;
+      while(y<imgH){if(y>0)doc.addPage();doc.addImage(imgData,'JPEG',0,y>0?-(y):0,pdfW,imgH);y+=pdfH;}
+      const fileName=ptName.replace(/\s+/g,'_')+'_urinetest.pdf';
+      await _fsaSavePDFToD(doc,fileName,()=>{
+        const intPhone=_formatPhoneForWhatsApp(phone);
+        setTimeout(function(){
+          _openWhatsAppDirect(intPhone);
+          showNotif('تم','تم حفظ PDF في D:\\MedLabPro ✅ افتح واتساب وأرفق الملف','success');
+        },600);
+      });
+    }).catch(function(){
+      try{if(iframe.parentNode)document.body.removeChild(iframe);}catch(e){}
+      showNotif('خطأ','تعذر إنشاء PDF','error');
+    });
+  },900);
+}
+
+function saveAndShareUTWhatsApp(){
+  const rec=_collectUTRecord(); if(!rec) return;
+  const ptObj=patients.find(p=>p.id===rec.patientId)||{};
+  const phone=(ptObj&&ptObj.phone)||'';
+  if(!phone){showNotif('تنبيه','لا يوجد رقم هاتف للمريض — أضف الرقم أولاً','warning');return;}
+  loadUTRecords();
+  if(window._editUTId){ const idx=utRecords.findIndex(x=>x.id===window._editUTId); if(idx>-1)utRecords[idx]=rec; else utRecords.push(rec); }
+  else utRecords.push(rec);
+  saveUTRecords();
+  closeModal('m-ut');
+  renderUTList();
+  showNotif('تم','تم الحفظ — جاري تحضير PDF...','success');
+  setTimeout(()=>shareUTWhatsApp(rec.id), 100);
+}
 
 // ============================================================
 // CULTURE & SENSITIVITY SYSTEM — نظام الزرع والحساسية (CLSI M100-Ed34, 2024)
@@ -26548,7 +27097,7 @@ document.addEventListener('DOMContentLoaded', function(){
 // 🔄 نظام المزامنة عبر Google Drive (File System Access API)
 // النسخة الذكية — version counter + merge + lock protection
 // ============================================================
-const SYNC_KEYS = ['patients','requests','invoices','packages','inventory','doctors','billing','testGroups','qc','cultureRecords','uaRecords','stoolExamRecords','semenRecords','phoneBook'];
+const SYNC_KEYS = ['patients','requests','invoices','packages','inventory','doctors','billing','testGroups','qc','cultureRecords','uaRecords','utRecords','stoolExamRecords','semenRecords','phoneBook'];
 const SYNC_FILE     = 'medlab-sync.json';
 const SYNC_LOCK     = 'medlab-sync.lock';   // ملف القفل لمنع التضارب
 const SYNC_INTERVAL = 15000;                // كل 15 ثانية (أكثر أماناً من 10)
@@ -28645,7 +29194,7 @@ async function _fsaBuildFullBackup(){
   const idbData = {};
   const archiveKeys=['patients','requests','invoices','doctors','packages',
     'inventory','qc','tests','testGroups','billing',
-    'cultureRecords','uaRecords','stoolExamRecords','semenRecords'];
+    'cultureRecords','uaRecords','utRecords','stoolExamRecords','semenRecords'];
   for(const k of archiveKeys){
     const val = await IDB.get(pfx+k);
     if(val!==null) idbData[pfx+k] = JSON.stringify(val);
@@ -29037,7 +29586,7 @@ async function _fsa_buildDownloadBackup(){
   const pfx = DB._pfx();
   const archiveKeys=['patients','requests','invoices','doctors','packages',
     'inventory','qc','tests','testGroups','billing',
-    'cultureRecords','uaRecords','stoolExamRecords','semenRecords'];
+    'cultureRecords','uaRecords','utRecords','stoolExamRecords','semenRecords'];
   for(const k of archiveKeys){
     try{
       const val = await IDB.get(pfx+k);
