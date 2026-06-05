@@ -19655,6 +19655,9 @@ document.addEventListener('click', e=>{
 let utRecords_local = []; // alias used inside functions
 
 // ── حقول الأدرار (Macroscopy + Microscopy فقط) ────────────────
+// Sequential options: 1-2, 2-3, 3-4 ... 29-30, +, ++, +++, ++++
+const _UT_SEQ_OPTS=(()=>{const a=[];for(let i=1;i<=29;i++)a.push(i+'-'+(i+1));return a.concat(['+','++','+++','++++']);})();
+
 const UT_URINE_FIELDS = {
   macroscopy: {
     label: 'MACROSCOPY',
@@ -19672,11 +19675,11 @@ const UT_URINE_FIELDS = {
     label: 'MICROSCOPY',
     fields: [
       {id:'ut_epithelial', label:'Epithelial Cells',type:'select', options:['Few','+','++','+++','++++'], normal:'Few'},
-      {id:'ut_pus_cells',  label:'Pus Cells',       type:'select', options:['1–2','2–4','4–6','5–7','6–8','8–10','10–15','15–20','20–25','25–30','30–35','35–40','40–45','TNTC','+','++','+++','++++'], normal:'1–2'},
+      {id:'ut_pus_cells',  label:'Pus Cells',       type:'select', options:_UT_SEQ_OPTS, normal:'1-2'},
       {id:'ut_pus_unit',   label:'Pus Cells Unit',  type:'select', options:['H.P.F','L.P.F'], normal:'H.P.F'},
-      {id:'ut_rbc',        label:'R.B.Cs',          type:'select', options:['1–2','2–4','3–5','4–6','5–7','6–8','8–10','10–15','15–20','20–25','+','++','+++','++++'], normal:'1–2'},
+      {id:'ut_rbc',        label:'R.B.Cs',          type:'select', options:_UT_SEQ_OPTS, normal:'1-2'},
       {id:'ut_rbc_unit',   label:'RBC Unit',        type:'select', options:['H.P.F','L.P.F'], normal:'H.P.F'},
-      {id:'ut_crystals',   label:'Crystals',        type:'select', options:['Nil','Am.urate (+)','Am.urate (++)','Am.urate (+++)','Am.urate (+++)','Am.phosphate (+)','Am.phosphate (++)','Uric acid (+)','Uric acid (++)','Calcium oxalate (+)','Calcium oxalate (++)','Triple phosphate (+)','Triple phosphate (++)'], normal:'Nil'},
+      {id:'ut_crystals',   label:'Crystals',        type:'select', options:['Nil','Am.urate (+)','Am.urate (++)','Am.urate (+++)','Am.phosphate (+)','Am.phosphate (++)','Uric acid (+)','Uric acid (++)','Calcium oxalate (+)','Calcium oxalate (++)','Triple phosphate (+)','Triple phosphate (++)'], normal:'Nil'},
       {id:'ut_casts',      label:'Casts',           type:'select', options:['Nil','Hyaline','Granular (fine)','Granular (coarse)','Waxy','RBC casts','WBC casts'], normal:'Nil'},
       {id:'ut_others',     label:'Others',          type:'select', options:['Nil','Mucous thread (+)','Mucous thread (++)','Mucous thread (+++)','Bacteria (+)','Bacteria (++)','Bacteria (+++)','Yeast (+)','Yeast (++)'], normal:'Nil'},
     ]
@@ -19755,31 +19758,49 @@ function _buildUTModalBody(r){
   const ptName=r?r.patientName:'';
   const ptId=r?r.patientId:'';
   const savedAge=r?r.patientAge||'':'';
-  let html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:10px;padding:14px">
-    <div class="fg" style="margin-bottom:0">
-      <label class="fl">المريض</label>
-      <div style="position:relative">
-        <input class="fc" id="ut-pt-search" lang="ar" placeholder="ابحث باسم أو رقم..." oninput="utSearchPatient(this.value)" autocomplete="off" value="${ptName}">
-        <div id="ut-pt-suggest" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:9999;
-          background:#fff;color:#111;
-          border:1.5px solid #00d4ff;border-radius:9px;max-height:200px;overflow-y:auto;
-          box-shadow:0 8px 24px rgba(0,0,0,0.35)"></div>
+  const savedTitle=r?r.patientTitle||'':'';
+  const savedGender=r?r.patientGender||'':'';
+  const _utTitles=[{v:'السيد',g:'male'},{v:'السيدة',g:'female'},{v:'الآنسة',g:'female'},{v:'الحاج',g:'male'},{v:'الحاجة',g:'female'},{v:'الاستاذ',g:'male'},{v:'الاستاذة',g:'female'},{v:'الطفل',g:'male'},{v:'الطفلة',g:'female'},{v:'الدكتور',g:'male'},{v:'الدكتورة',g:'female'}];
+  let html=`<div style="background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl">المريض</label>
+        <div style="position:relative">
+          <input class="fc" id="ut-pt-search" lang="ar" placeholder="ابحث باسم أو رقم..." oninput="utSearchPatient(this.value)" autocomplete="off" value="${ptName}">
+          <div id="ut-pt-suggest" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:9999;background:#fff;color:#111;border:1.5px solid #00d4ff;border-radius:9px;max-height:200px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.35)"></div>
+        </div>
+        <input type="hidden" id="ut-pt-id" value="${ptId}">
       </div>
-      <input type="hidden" id="ut-pt-id" value="${ptId}">
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl">التاريخ</label>
+        <input class="fc" type="date" id="ut-date" value="${r?r.date:today}">
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl">العمر <span style="font-size:10px;color:var(--text2)">(يتعبأ تلقائياً)</span></label>
+        <input class="fc" id="ut-age" placeholder="مثال: 35 سنة" value="${savedAge}" style="font-size:12px">
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl">الجنس</label>
+        <div style="display:flex;gap:8px">
+          <button type="button" id="ut-gender-male" onclick="utSetGender('male')" class="btn btn-sm ${savedGender==='male'?'btn-p':'btn-s'}" style="flex:1;font-family:'Cairo',sans-serif;font-weight:900">♂ ذكر</button>
+          <button type="button" id="ut-gender-female" onclick="utSetGender('female')" class="btn btn-sm ${savedGender==='female'?'btn-p':'btn-s'}" style="flex:1;font-family:'Cairo',sans-serif;font-weight:900">♀ أنثى</button>
+        </div>
+        <input type="hidden" id="ut-gender" value="${savedGender}">
+      </div>
     </div>
-    <div class="fg" style="margin-bottom:0">
-      <label class="fl">التاريخ</label>
-      <input class="fc" type="date" id="ut-date" value="${r?r.date:today}">
-    </div>
-    <div class="fg" style="margin-bottom:0">
-      <label class="fl">العمر <span style="font-size:10px;color:var(--text2)">(يتعبأ تلقائياً)</span></label>
-      <input class="fc" id="ut-age" placeholder="مثال: 35 سنة" value="${savedAge}" style="font-size:12px">
+    <div class="fg" style="margin-bottom:10px">
+      <label class="fl" style="font-family:'Cairo',sans-serif">اللقب <span style="font-size:10px;color:var(--text2)">(يحدد الجنس تلقائياً)</span></label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+        ${_utTitles.map(t=>`<button type="button" onclick="utSelectTitle('${t.v}','${t.g}')" id="ut-title-btn-${t.v.replace(/\s/g,'_')}" class="btn btn-sm ${savedTitle===t.v?'btn-p':'btn-s'}" style="font-family:'Cairo',sans-serif;font-weight:900;font-size:13px;padding:5px 10px">${savedTitle===t.v?'✓ ':''}${t.v}</button>`).join('')}
+        <button type="button" onclick="utClearTitle()" class="btn btn-sm btn-s" style="font-family:'Cairo',sans-serif;font-size:11px">✕ مسح اللقب</button>
+      </div>
+      <input type="hidden" id="ut-title" value="${savedTitle}">
     </div>
     <div class="fg" style="margin-bottom:0">
       <label class="fl">الطبيب المحول <span style="font-size:10px;color:var(--text2)">(اختياري)</span></label>
       <select class="fc" id="ut-doctor-sel" onchange="utDoctorSelChanged()">
         <option value="">-- بدون طبيب --</option>
-        ${doctors.map(d=>`<option value="${d.id}" data-name="${d.name}" ${r&&r.doctorId===d.id?'selected':''}>${d.name}${d.spec?' \u2014 '+d.spec:''}</option>`).join('')}
+        ${doctors.map(d=>`<option value="${d.id}" data-name="${d.name}" ${r&&r.doctorId===d.id?'selected':''}>${d.name}${d.spec?' — '+d.spec:''}</option>`).join('')}
         <option value="__manual__">✏️ كتابة يدوية</option>
       </select>
       <input class="fc" id="ut-doctor-manual" placeholder="اسم الطبيب..." style="display:${r&&r.doctorName&&!doctors.find(d=>d.id===r.doctorId)?'block':'none'};margin-top:6px" value="${r&&r.doctorName&&!doctors.find(d=>d.id===r.doctorId)?r.doctorName:''}">
@@ -19866,9 +19887,50 @@ function utSelectPatient(pid){
   document.getElementById('ut-pt-search').value=pt.name;
   document.getElementById('ut-pt-id').value=pt.id;
   document.getElementById('ut-pt-suggest').style.display='none';
-  // Auto-fill age if field exists
+  // Auto-fill age
   const ageEl=document.getElementById('ut-age');
   if(ageEl && pt.ageDisplay) ageEl.value=pt.ageDisplay;
+  // Auto-fill title if patient has one
+  if(pt.title){ utSelectTitle(pt.title, pt.gender||''); }
+  // Auto-fill gender
+  else if(pt.gender){ utSetGender(pt.gender); }
+}
+function utSelectTitle(titleVal, gender){
+  // Update hidden field
+  const inp=document.getElementById('ut-title');
+  if(inp) inp.value=titleVal;
+  // Highlight active button, reset others
+  document.querySelectorAll('[id^="ut-title-btn-"]').forEach(btn=>{
+    const isActive=btn.textContent.trim().replace(/^✓\s*/,'')===titleVal;
+    btn.className=btn.className.replace(/btn-p|btn-s/g,'').trim()+' '+(isActive?'btn-p':'btn-s');
+    btn.textContent=(isActive?'✓ ':'')+titleVal.replace(/^✓\s*/,'') ;
+  });
+  // Re-render all title buttons cleanly
+  document.querySelectorAll('[id^="ut-title-btn-"]').forEach(btn=>{
+    const bTitle=btn.id.replace('ut-title-btn-','').replace(/_/g,' ');
+    const isActive=bTitle===titleVal;
+    btn.className=btn.className.replace(/btn-p\b/g,'').replace(/btn-s\b/g,'').trim()+' '+(isActive?'btn-p':'btn-s');
+    btn.textContent=(isActive?'✓ ':'')+bTitle;
+  });
+  // Update gender from title
+  if(gender) utSetGender(gender);
+}
+function utClearTitle(){
+  const inp=document.getElementById('ut-title');
+  if(inp) inp.value='';
+  document.querySelectorAll('[id^="ut-title-btn-"]').forEach(btn=>{
+    btn.className=btn.className.replace(/btn-p\b/g,'').replace(/btn-s\b/g,'').trim()+' btn-s';
+    const bTitle=btn.id.replace('ut-title-btn-','').replace(/_/g,' ');
+    btn.textContent=bTitle;
+  });
+}
+function utSetGender(g){
+  const inp=document.getElementById('ut-gender');
+  if(inp) inp.value=g;
+  const mBtn=document.getElementById('ut-gender-male');
+  const fBtn=document.getElementById('ut-gender-female');
+  if(mBtn){ mBtn.className=mBtn.className.replace(/btn-p\b/g,'').replace(/btn-s\b/g,'').trim()+' '+(g==='male'?'btn-p':'btn-s'); }
+  if(fBtn){ fBtn.className=fBtn.className.replace(/btn-p\b/g,'').replace(/btn-s\b/g,'').trim()+' '+(g==='female'?'btn-p':'btn-s'); }
 }
 function utDoctorSelChanged(){
   const sel=document.getElementById('ut-doctor-sel');
@@ -19895,11 +19957,16 @@ function _collectUTRecord(){
   // Age: prefer manually entered value in ut-age field, fallback to patient record
   const ageInputEl=document.getElementById('ut-age');
   const patientAge=(ageInputEl&&ageInputEl.value.trim())||ptObj.ageDisplay||'';
+  const titleInputEl=document.getElementById('ut-title');
+  const patientTitle=(titleInputEl&&titleInputEl.value.trim())||ptObj.title||'';
+  const genderInputEl=document.getElementById('ut-gender');
+  const patientGender=(genderInputEl&&genderInputEl.value)||ptObj.gender||'';
   const rec={
     id:window._editUTId||('ut-'+Date.now()),
     patientId:ptId, patientName:ptName,
     patientAge:patientAge,
-    patientGender:ptObj.gender||'',
+    patientTitle:patientTitle,
+    patientGender:patientGender,
     doctorId:dr.id, doctorName:dr.name,
     date:(document.getElementById('ut-date')||{}).value||new Date().toISOString().split('T')[0],
     createdAt:Date.now()
@@ -19960,10 +20027,10 @@ function _buildUTPrintHTML(r){
   const drName=r.doctorName||pt.doctorName||(doctors&&doctors.find&&doctors.find(d=>d.id===pt.doctorId)?.name)||'';
   const nameColor=s.colorName||'#cc0011';
   const doctorColor=s.colorDoctor||'#cc0011';
-  const ptTitle=pt.title||'';
+  const ptTitle=r.patientTitle||pt.title||'';
   const ptFullName=ptTitle?ptTitle+' / '+(pt.name||r.patientName||'—'):(pt.name||r.patientName||'—');
-  const genderTxt=(pt.gender||r.patientGender)==='female'?'Female':'Male';
-  const ageTxt=(pt.ageDisplay||r.patientAge||'—').replace(/سنة/g,'Year').replace(/شهر/g,'Month').replace(/يوم/g,'Day');
+  const genderTxt=(r.patientGender||pt.gender)==='female'?'Female':'Male';
+  const ageTxt=(r.patientAge||pt.ageDisplay||'—').replace(/سنة/g,'Year').replace(/شهر/g,'Month').replace(/يوم/g,'Day');
   const printTime=new Date().toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const barcodeId=(pt.barcode||(pt.id||r.patientId||'').replace(/[^A-Z0-9]/gi,'').toUpperCase().substring(0,12))||'00000000';
 
