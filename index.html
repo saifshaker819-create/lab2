@@ -6241,6 +6241,10 @@ Menopause — 25–135 IU/L" style="font-size:12px;resize:vertical;line-height:1
     if(el.type === 'password' || el.type === 'number' || el.type === 'date' ||
        el.type === 'hidden'   || el.type === 'color'  || el.type === 'file') return;
 
+    // ── أثناء تكوين IME (لوحة المفاتيح العربية/الهاتف) لا نتدخّل إطلاقاً ──
+    // التدخّل هنا كان يسبب فقدان المسافة ودمج الكلمات
+    if(e.isComposing || e.keyCode === 229) return;
+
     // تجاهل مفاتيح التحكم (Ctrl, Alt, Meta)
     if(e.ctrlKey || e.altKey || e.metaKey) return;
 
@@ -6250,6 +6254,9 @@ Menopause — 25–135 IU/L" style="font-size:12px;resize:vertical;line-height:1
     var key = e.key;
     // تجاهل مفاتيح وظيفية وخاصة
     if(!key || key.length > 1) return; // Backspace, Enter, Arrow… لها length > 1
+
+    // ── المسافة تمرّ دائماً كما هي بدون أي تدخّل (تمنع دمج الكلمات) ──
+    if(key === ' ' || key === '\u00a0') return;
 
     if(lang === 'ar'){
       // ابحث في الجدول المناسب (Shift أو عادي)
@@ -21892,6 +21899,8 @@ function _countUAAbn(r){
 
 function openNewUAModal(){
   window._editUAId=null;
+  window._uaReqId=null;            // منع ربط الإدخال الجديد بطلب/مريض سابق
+  window._specialExamInlineMode=false;
   document.getElementById('ua-modal-title').textContent='💧 Urine Examination — New Entry';
   _buildUAModalBody(null);
   openModal('m-ua');
@@ -21900,6 +21909,8 @@ function openEditUAModal(id){
   loadUARecords();
   const r=uaRecords.find(x=>x.id===id); if(!r) return;
   window._editUAId=id;
+  window._uaReqId=r.reqId||null;   // استخدم رقم الطلب المحفوظ بالسجل نفسه فقط
+  window._specialExamInlineMode=false;
   document.getElementById('ua-modal-title').textContent='✏️ Edit Urine Examination';
   _buildUAModalBody(r);
   openModal('m-ua');
@@ -21917,10 +21928,10 @@ function _buildUAModalBody(r, req){
     <div class="fg" style="margin-bottom:0">
       <label class="fl">المريض</label>
       <div style="position:relative">
-        <input class="fc" id="ua-pt-search" lang="ar" placeholder="ابحث باسم أو رقم..." oninput="uaSearchPatient(this.value)" autocomplete="off" value="${ptName}" ${req?'readonly style="background:rgba(0,212,255,0.05)"':''}>
+        <input class="fc" id="ua-pt-search" lang="ar" placeholder="ابحث باسم أو رقم..." oninput="uaSearchPatient(this.value)" autocomplete="off" ${req?'readonly style="background:rgba(0,212,255,0.05)"':''}>
         <div id="ua-pt-suggest" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:9999;background:#080f20;border:1px solid var(--border);border-radius:9px;max-height:200px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.8)"></div>
       </div>
-      <input type="hidden" id="ua-pt-id" value="${ptId}">
+      <input type="hidden" id="ua-pt-id">
     </div>
     <div class="fg" style="margin-bottom:0">
       <label class="fl">التاريخ</label>
@@ -21975,6 +21986,11 @@ function _buildUAModalBody(r, req){
     html+=`</div></div>`;
   });
   body.innerHTML=html;
+  // ── تعيين اسم/معرّف المريض عبر الخاصية مباشرةً (يحفظ المسافات والأحرف الخاصة ويمنع ظهور اسم خاطئ) ──
+  const _uaSrch=document.getElementById('ua-pt-search');
+  const _uaIdEl=document.getElementById('ua-pt-id');
+  if(_uaSrch) _uaSrch.value=ptName||'';
+  if(_uaIdEl) _uaIdEl.value=ptId||'';
 }
 
 function uaHighlight(fid, normal){
@@ -22421,6 +22437,8 @@ function renderStoolList(){
 
 function openNewStoolModal(){
   window._editStoolId=null;
+  window._stoolReqId=null;         // منع ربط الإدخال الجديد بطلب/مريض سابق
+  window._specialExamInlineMode=false;
   document.getElementById('stool-modal-title').textContent='🧫 Stool Examination — New Entry';
   _buildStoolModalBody(null);
   openModal('m-stool-exam');
@@ -22429,6 +22447,8 @@ function openEditStoolModal(id){
   loadStoolExamRecords();
   const r=stoolExamRecords.find(x=>x.id===id); if(!r)return;
   window._editStoolId=id;
+  window._stoolReqId=r.reqId||null;  // استخدم رقم الطلب المحفوظ بالسجل نفسه فقط
+  window._specialExamInlineMode=false;
   document.getElementById('stool-modal-title').textContent='✏️ Edit Stool Examination';
   _buildStoolModalBody(r);
   openModal('m-stool-exam');
@@ -22445,10 +22465,10 @@ function _buildStoolModalBody(r, req){
     <div class="fg" style="margin-bottom:0">
       <label class="fl">المريض</label>
       <div style="position:relative">
-        <input class="fc" id="stool-pt-search" lang="ar" placeholder="ابحث باسم أو رقم..." oninput="stoolSearchPatient(this.value)" autocomplete="off" value="${ptName}" ${req?'readonly style="background:rgba(0,212,255,0.05)"':''}>
+        <input class="fc" id="stool-pt-search" lang="ar" placeholder="ابحث باسم أو رقم..." oninput="stoolSearchPatient(this.value)" autocomplete="off" ${req?'readonly style="background:rgba(0,212,255,0.05)"':''}>
         <div id="stool-pt-suggest" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:9999;background:#080f20;border:1px solid var(--border);border-radius:9px;max-height:200px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.8)"></div>
       </div>
-      <input type="hidden" id="stool-pt-id" value="${ptId}">
+      <input type="hidden" id="stool-pt-id">
     </div>
     <div class="fg" style="margin-bottom:0">
       <label class="fl">التاريخ</label>
@@ -22511,6 +22531,11 @@ function _buildStoolModalBody(r, req){
     html+=`</div></div>`;
   });
   body.innerHTML=html;
+  // ── تعيين اسم/معرّف المريض عبر الخاصية مباشرةً (يحفظ المسافات والأحرف الخاصة ويمنع ظهور اسم خاطئ) ──
+  const _stSrch=document.getElementById('stool-pt-search');
+  const _stIdEl=document.getElementById('stool-pt-id');
+  if(_stSrch) _stSrch.value=ptName||'';
+  if(_stIdEl) _stIdEl.value=ptId||'';
 }
 
 function stoolParaChanged(){
